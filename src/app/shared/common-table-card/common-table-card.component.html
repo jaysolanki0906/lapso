@@ -1,0 +1,89 @@
+<mat-card class="table-card-mat-custom">
+  <div class="header-row d-flex align-items-center mb-2">
+    <div></div>
+    <!-- Tabs right side -->
+    <mat-tab-group
+    class="custom-tabs"
+    [selectedIndex]="selectedTabIndex"
+    (selectedIndexChange)="onTabChangeMaterial($event)">
+    <mat-tab *ngFor="let tab of tabs" [label]="tab.label"></mat-tab>
+  </mat-tab-group>
+  </div>
+  <div class="divider"></div>
+
+  <!-- Search with Heading in the Box -->
+  <div class="search-heading search-heading-top">Search</div>
+<div class="search-row-mat search-row-red">
+  <ng-container *ngFor="let field of searchFields">
+    <mat-form-field appearance="outline" class="search-mat search-mat-extended">
+      <mat-label>{{field.placeholder}}</mat-label>
+      <input matInput [(ngModel)]="searchValues[field.key]"/>
+    </mat-form-field>
+  </ng-container>
+  <button mat-icon-button class="search-btn-red" (click)="onSearch()">
+    <mat-icon>search</mat-icon>
+  </button>
+  <button mat-icon-button class="clear-btn-red" (click)="onClear()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+  <!-- Table in grid display -->
+  <div class="table-responsive-mat">
+    <div class="mat-grid-table" *ngIf="!loading && data.length; else emptyOrLoading">
+      <div class="mat-grid-row mat-grid-header">
+        <div class="mat-grid-cell" *ngFor="let col of columns">{{ col.label }}</div>
+        <div class="mat-grid-cell actions-cell">Actions</div>
+      </div>
+      <!-- Grid Rows -->
+      <div class="mat-grid-row" *ngFor="let row of data">
+        <div class="mat-grid-cell" *ngFor="let col of columns">{{ row[col.key] }}</div>
+        <div class="mat-grid-cell actions-cell">
+          <button mat-icon-button color="primary" (click)="onEdit(row)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="accent" (click)="onView(row)">
+            <mat-icon>visibility</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="onDelete(row)">
+            <mat-icon>delete</mat-icon>
+          </button>
+          <mat-slide-toggle [checked]="row.active" (change)="onToggle(row, $event)" style="color: #ff3646;" class="slide-toggle-sm"></mat-slide-toggle>
+        </div>
+      </div>
+    </div>
+    <ng-template #emptyOrLoading>
+      <div class="mat-table-empty" *ngIf="loading">
+        <mat-progress-spinner diameter="32" mode="indeterminate"></mat-progress-spinner> Loading...
+      </div>
+      <div class="mat-table-empty" *ngIf="!loading && !data.length">
+        No records found.
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Pagination row -->
+  <div class="mat-pagination-row d-flex align-items-center justify-content-between mt-3 flex-wrap">
+    <!-- Left: Items per page selector -->
+    <div class="d-flex align-items-center">
+      <span>Items per page:</span>
+      <mat-form-field appearance="fill" class="mat-page-size-select">
+        <mat-select [(ngModel)]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
+          <mat-option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <!-- Right: Custom pagination controls -->
+    <div class="custom-paginator">
+      <button mat-button [disabled]="page === 1" (click)="goToPage(1)">First</button>
+      <button mat-button [disabled]="page === 1" (click)="goToPage(page - 1)">Previous</button>
+      <ng-container *ngFor="let pg of pageNumbers">
+        <button mat-button [color]="pg === page ? 'primary' : ''" [disabled]="pg === page" (click)="goToPage(pg)">
+          {{ pg }}
+        </button>
+      </ng-container>
+      <button mat-button [disabled]="page === totalPages" (click)="goToPage(page + 1)">Next</button>
+      <button mat-button [disabled]="page === totalPages" (click)="goToPage(totalPages)">Last</button>
+    </div>
+  </div>
+</mat-card>

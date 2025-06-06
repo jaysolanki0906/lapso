@@ -1,0 +1,38 @@
+<div class="layout-wrapper">
+  <app-header class="main-header"></app-header>
+  <div class="main-content-wrapper">
+    <app-sidebar class="side-nav"></app-sidebar>
+    <div class="main-content">
+      <div class="profile-container">
+        <div class="profile-header">
+          <span class="profile-icon"><i class="fa fa-user"></i></span>
+          <span class="profile-title">Profile</span>
+        </div>
+        <hr class="profile-divider" />
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+          <div class="profile-row">
+            <div class="profile-field">
+              <label>Full Name <span class="required">*</span></label>
+              <input formControlName="fullname" type="text" class="profile-input" placeholder="Full Name" />
+            </div>
+            <div class="profile-field">
+              <label>Email Address</label>
+              <input formControlName="email" type="email" class="profile-input" placeholder="Email Address" readonly />
+            </div>
+            <div class="profile-field profile-mobile">
+              <label>Mobile Number <span class="required">*</span></label>
+              <div class="mobile-input-group">
+                <span class="flag-box"><img src="https://flagcdn.com/in.svg" alt="IN" class="country-flag" /></span>
+                <input formControlName="country_code" class="country-code-input" readonly />
+                <input formControlName="mobile" type="text" class="profile-input mobile-number-input" placeholder="Mobile Number" />
+              </div>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button type="submit" class="save-btn" [disabled]="!profileForm.valid">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

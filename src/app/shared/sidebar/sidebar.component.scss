@@ -1,0 +1,136 @@
+.sidebar {
+  width: 310px;
+  min-height: 100vh;
+  background: #fff;
+  border-right: 1px solid #eaeaea;
+  z-index: 1000; 
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.sidebar-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  /* Optional: Smooth scrolling and hide default scrollbar style for Webkit browsers */
+  scrollbar-width: thin;
+  scrollbar-color: #eaeaea #fff;
+}
+.sidebar-content::-webkit-scrollbar {
+  width: 8px;
+}
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: #eaeaea;
+  border-radius: 4px;
+}
+.sidebar-content::-webkit-scrollbar-track {
+  background: #fff;
+}
+
+nav {
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    li {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 32px;
+      font-size: 17px;
+      color: #525866;
+      cursor: pointer;
+      transition: background 0.2s;
+      mat-icon {
+        font-size: 22px;
+        color: #525866;
+      }
+      &:hover {
+        background: #f7f8fa;
+      }
+      &.expanded > .service-contract-header {
+        font-weight: 600;
+      }
+      .service-contract-header {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        width: 100%;
+        cursor: pointer;
+        .arrow {
+          margin-left: auto;
+          transition: transform 0.2s;
+          &.rotate {
+            transform: rotate(180deg);
+          }
+        }
+      }
+      .sub-menu {
+        list-style: none;
+        padding: 0 0 0 38px;
+        margin: 0;
+        .sub-item {
+          font-size: 15px;
+          color: #525866;
+          padding: 8px 0;
+          &:hover {
+            background: none;
+          }
+          &.disabled {
+            color: #bfc4d4;
+          }
+        }
+      }
+    }
+  }
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 32px 0 16px 0;
+  text-align: center;
+  color: #525866;
+  font-size: 15px;
+  b {
+    font-weight: 600;
+  }
+}
+.sidebar-content nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sidebar-content nav ul li > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: background 0.2s;
+}
+.sidebar-content nav ul li > div:hover {
+  background: #f7f7f7;
+}
+.sidebar-content nav ul li mat-icon {
+  font-size: 22px;
+  vertical-align: middle;
+}
+.sidebar-content nav ul li span {
+  font-size: 16px;
+  vertical-align: middle;
+}
+.service-contract-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 16px;
+}
+.service-contract-header .arrow {
+  margin-left: auto;
+  transition: transform 0.3s;
+}
+.service-contract-header .arrow.rotate {
+  transform: rotate(180deg);
+}

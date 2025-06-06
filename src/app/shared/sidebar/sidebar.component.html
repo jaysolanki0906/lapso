@@ -1,0 +1,59 @@
+<div class="sidebar">
+  <div class="sidebar-content">
+    <nav>
+      <ul>
+        <li>
+          <div (click)="dashboardredirection()">
+            <mat-icon>dashboard</mat-icon>
+            <span>Dashboard</span>
+          </div>
+        </li>
+        <li>
+          <div (click)="productredirection()">
+            <mat-icon>inventory_2</mat-icon>
+            <span>Products</span>
+          </div>
+        </li>
+        <li>
+          <mat-icon>shopping_cart</mat-icon>
+          <span>Warranty Vouchers</span>
+        </li>
+        <li>
+          <div (click)="saleredirection()">
+            <mat-icon>description</mat-icon>
+            <span>Sales Vouchers</span>
+          </div>
+        </li>
+        <!-- Service Contract row -->
+        <li>
+          <div class="service-contract-header" (click)="toggleServiceContract()">
+            <mat-icon>local_shipping</mat-icon>
+            <span>Service Contract</span>
+            <mat-icon class="arrow" [class.rotate]="serviceContractExpanded">expand_more</mat-icon>
+          </div>
+        </li>
+        <!-- Sub-menu appears as a new list item below when expanded -->
+        <ng-container *ngIf="serviceContractExpanded">
+          <li class="service-sub-menu">
+            <ul>
+              <li class="sub-item disabled">Services</li>
+              <li class="sub-item disabled">Service Vouchers</li>
+              <li class="sub-item disabled">Service Calls</li>
+            </ul>
+          </li>
+        </ng-container>
+        <li>
+          <mat-icon>groups</mat-icon>
+          <span>Contacts</span>
+        </li>
+        <li>
+          <mat-icon>feedback</mat-icon>
+          <span>Rating & Feedback</span>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <div class="sidebar-footer">
+    <span><b>Version:</b> 1.0.12</span>
+  </div>
+</div>

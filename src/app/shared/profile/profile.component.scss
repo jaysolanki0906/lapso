@@ -1,0 +1,170 @@
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+}
+.main-content-wrapper {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.side-nav {
+  width: 250px;
+  min-width: 220px;
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+  min-height: 100vh;
+}
+.main-content {
+  flex: 1;
+  top:0px;
+  margin-left:65px;
+  background: #f7f7f7;
+  // min-height: 100vh;
+  padding: 0px;
+}
+.profile-container {
+  margin: 0;
+  margin: 24px 0 0 0;
+  background: #fafbfc;
+  border-radius: 8px;
+  min-height: calc(100vh - 80px);
+  padding-bottom: 64px;
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 0 0 16px;
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #222;
+}
+.profile-icon {
+  color: #ff4154;
+  font-size: 1.3rem;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+}
+.profile-title {
+  font-size: 1.3rem;
+}
+.profile-divider {
+  margin: 16px 0 32px 0;
+  border: none;
+  border-top: 1px solid #e0e3e7;
+}
+
+.profile-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 32px;
+  margin: 0 0 0 16px;
+}
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 250px;
+  max-width: 480px;
+}
+.profile-field label {
+  font-size: 1.1rem;
+  color: #444;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.required {
+  color: #ff4154;
+}
+.profile-input {
+  padding: 14px 12px;
+  border: 1px solid #ecf0f5;
+  border-radius: 7px;
+  background: #fcfdfe;
+  font-size: 1rem;
+  outline: none;
+  color: #343a40;
+  transition: border 0.2s;
+}
+.profile-input:focus {
+  border-color: #b3b3b3;
+}
+.profile-mobile {
+  min-width: 300px;
+  max-width: 350px;
+}
+.mobile-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flag-box {
+  background: #fff;
+  border: 1px solid #ecf0f5;
+  border-radius: 7px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+.country-flag {
+  width: 24px;
+  height: 18px;
+  margin-right: 3px;
+}
+.country-code-input {
+  width: 48px;
+  text-align: center;
+  border: 1px solid #ecf0f5;
+  border-radius: 7px;
+  background: #fcfdfe;
+  font-size: 1rem;
+  height: 44px;
+  outline: none;
+  margin-right: 3px;
+}
+.mobile-number-input {
+  flex: 1;
+  min-width: 110px;
+}
+.profile-actions {
+  margin-top: 36px;
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 32px;
+}
+.save-btn {
+  background: #ff4154;
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 9px 26px;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.save-btn:disabled {
+  background: #ffb3bd;
+  cursor: not-allowed;
+}
+@media (max-width: 1024px) {
+  .profile-row {
+    flex-direction: column;
+    gap: 18px;
+    margin-right: 16px;
+  }
+  .profile-actions {
+    margin-left: 0;
+    margin-top: 24px;
+    margin-right: 0;
+    justify-content: flex-start;
+  }
+}

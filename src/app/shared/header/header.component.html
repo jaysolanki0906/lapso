@@ -1,0 +1,42 @@
+<div class="header">
+  <div class="sidebar-header">
+    <div class="sidebar"><img src="https://dev-lapso-organisation-web.iconflux.info/assets/img/logo.png" alt="Lapso Logo" class="logo" />
+    </div>
+    <button class="close-btn">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn">
+      <mat-icon>settings</mat-icon>
+    </button>
+    <div class="user-initial">{{ (userProfile$ | async)?.fullname?.charAt(0) }}</div>
+    <div class="user-menu-wrapper">
+      <div class="user-info" (click)="toggleMenu()" tabindex="0">
+        <span class="company">
+          {{ (userProfile$ | async)?.fullname }}
+          <mat-icon class="down">expand_more</mat-icon>
+        </span>
+        <span class="role">{{ (userProfile$ | async)?.role }}</span>
+      </div>
+      <div 
+        class="profile-menu"
+        *ngIf="menuOpen"
+        (mouseleave)="closeMenu()"
+      >
+        <div class="menu-item" (click)="goToProfile()">
+  <mat-icon>person</mat-icon>
+  Profile
+</div>
+        <div class="menu-item" (click)="openChangePassword()">
+          <mat-icon>lock</mat-icon>
+          Change Password
+        </div>
+        <div class="menu-item logout" (click)="logout()">
+          <mat-icon style="color: #ff4154;">logout</mat-icon>
+          <span>Logout</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

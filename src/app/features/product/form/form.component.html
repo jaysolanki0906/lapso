@@ -1,0 +1,69 @@
+<form>
+  <div class="row">
+    <div class="mb-3 col-md-6">
+      <label class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+      <select class="form-select" [(ngModel)]="product.category" name="category" required>
+        <option [ngValue]="null">Select Category</option>
+        <option *ngFor="let cat of categories" [ngValue]="cat">{{ cat.title }}</option>
+      </select>
+      <div class="form-text text-danger" *ngIf="!product.category">Please select Category.</div>
+    </div>
+    <div class="mb-3 col-md-6">
+      <label class="form-label fw-bold">Brand <span class="text-danger">*</span></label>
+      <select class="form-select" [(ngModel)]="product.brand" name="brand" required>
+        <option [ngValue]="null">Select Brand</option>
+        <option *ngFor="let brand of brands" [ngValue]="brand">{{ brand.title }}</option>
+      </select>
+      <div class="form-text text-danger" *ngIf="!product.brand">Please select Brand.</div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="mb-3 col-md-6">
+      <label class="form-label fw-bold">Product Name <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" placeholder="Product Name" [(ngModel)]="product.productName" name="productName" required>
+    </div>
+    <div class="mb-3 col-md-6">
+      <label class="form-label fw-bold">Product Code</label>
+      <input type="text" class="form-control" placeholder="Product Code" [(ngModel)]="product.productCode" name="productCode">
+    </div>
+  </div>
+  <div class="row">
+    <div class="mb-3 col-md-6">
+      <label class="form-label fw-bold">Model Number</label>
+      <input type="text" class="form-control" placeholder="Model Number" [(ngModel)]="product.modelNumber" name="modelNumber">
+    </div>
+    <div class="mb-3 col-md-6">
+      <label class="form-label fw-bold">Product Description</label>
+      <textarea class="form-control" rows="2" placeholder="Product Description" [(ngModel)]="product.description" name="description"></textarea>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6 mb-3">
+      <label class="form-label fw-bold">Warranty (Days)</label>
+      <input type="number" class="form-control" placeholder="Enter Warranty" [(ngModel)]="product.warranty" name="warranty">
+    </div>
+    <div class="col-6 mb-3">
+      <label class="form-label fw-bold">Guarantee (Days)</label>
+      <input type="number" class="form-control" placeholder="Enter Guarantee" [(ngModel)]="product.guarantee" name="guarantee">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6 mb-3">
+      <label class="form-label fw-bold">Price</label>
+      <input type="number" class="form-control" placeholder="Price" [(ngModel)]="product.price" name="price">
+    </div>
+    <div class="col-6 mb-3">
+      <label class="form-label fw-bold">Tax (in %)</label>
+      <select class="form-select" [(ngModel)]="product.tax" name="taxSelect">
+        <option value="">Select Tax</option>
+        <option value="5">GST 5%</option>
+        <option value="12">GST 12%</option>
+        <option value="18">GST 18%</option>
+        <option value="28">GST 28%</option>
+      </select>
+    </div>
+  </div>
+  <div class="mt-3 text-end">
+    <button type="submit" class="btn btn-danger px-4">Save Product</button>
+  </div>
+</form>

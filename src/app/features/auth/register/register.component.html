@@ -1,0 +1,100 @@
+<div class="register-container">
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+    <h2>Sign Up</h2>
+
+    <label for="companyName">Company Name *</label>
+    <input
+      id="companyName"
+      type="text"
+      formControlName="companyName"
+      placeholder="Enter Company Name"
+      required
+    />
+    <div *ngIf="submitted && registerForm.get('companyName')?.invalid" class="error">
+      Company Name is required.
+    </div>
+
+    <label for="fullName">Full Name *</label>
+    <input
+      id="fullName"
+      type="text"
+      formControlName="fullName"
+      placeholder="Ex. Jhon Doe"
+      required
+    />
+    <div *ngIf="submitted && registerForm.get('fullName')?.invalid" class="error">
+      Full Name is required.
+    </div>
+
+    <label for="mobile">Mobile Number *</label>
+    <div class="input-prefix">
+      <span class="country-code">+91</span>
+      <input
+        id="mobile"
+        type="text"
+        maxlength="10"
+        formControlName="mobile"
+        placeholder="Enter Mobile Number"
+        required
+      />
+    </div>
+    <div *ngIf="submitted && registerForm.get('mobile')?.invalid" class="error">
+      Enter a valid 10-digit mobile number.
+    </div>
+
+    <label for="email">Email Address *</label>
+    <input
+      id="email"
+      type="email"
+      formControlName="email"
+      placeholder="Ex. jhone.doe@gmail.com"
+      required
+    />
+    <div *ngIf="submitted && registerForm.get('email')?.invalid" class="error">
+      Valid email is required.
+    </div>
+
+    
+
+    <label for="password">Password *</label>
+    <input
+      id="password"
+      [type]="hidePassword ? 'password' : 'text'"
+      formControlName="password"
+      placeholder="Password"
+      required
+    />
+    <div *ngIf="submitted && registerForm.get('password')?.invalid" class="error">
+      Password must be at least 8 characters, include an uppercase letter, a number, and a special character.
+    </div>
+
+    <label for="confirmPassword">Confirm Password *</label>
+    <input
+      id="confirmPassword"
+      [type]="hideConfirmPassword ? 'password' : 'text'"
+      formControlName="confirmPassword"
+      placeholder="Confirm Password"
+      required
+    />
+    <div *ngIf="submitted && registerForm.get('confirmPassword')?.invalid" class="error">
+      Confirm Password is required.
+    </div>
+    <div *ngIf="submitted && registerForm.hasError('passwordMismatch')" class="error">
+      Passwords do not match.
+    </div>
+
+    <label for="businessType">Business Type</label>
+    <select id="businessType" formControlName="businessType">
+      <option value="RETAILER" selected>Retailer</option>
+      <option value="WHOLESALER">Wholesaler</option>
+      <option value="MANUFACTURER">Manufacturer</option>
+    </select>
+
+    <button type="submit">Sign Up</button>
+
+    <p class="login-link">
+      Already have an account?
+      <a routerLink="/login">Sign In Instead</a>
+    </p>
+  </form>
+</div>
