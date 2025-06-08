@@ -1,60 +1,124 @@
-<form>
+<form #f="ngForm" (ngSubmit)="onSubmit(f)">
   <div class="row">
     <div class="mb-3 col-md-6">
       <label class="form-label fw-bold">Category <span class="text-danger">*</span></label>
-      <select class="form-select" [(ngModel)]="product.category" name="category" required>
+      <select class="form-select"
+              [(ngModel)]="product.category"
+              name="category"
+              required
+              (ngModelChange)="onCategoryChange()"
+              [disabled]="mode === 'view'">
         <option [ngValue]="null">Select Category</option>
         <option *ngFor="let cat of categories" [ngValue]="cat">{{ cat.title }}</option>
       </select>
-      <div class="form-text text-danger" *ngIf="!product.category">Please select Category.</div>
+      <div class="form-text text-danger" *ngIf="!product.category && f.submitted">Please select Category.</div>
     </div>
     <div class="mb-3 col-md-6">
       <label class="form-label fw-bold">Brand <span class="text-danger">*</span></label>
-      <select class="form-select" [(ngModel)]="product.brand" name="brand" required>
+      <select class="form-select"
+              [(ngModel)]="product.brand"
+              name="brand"
+              required
+              (ngModelChange)="onBrandChange()"
+              [disabled]="mode === 'view'">
         <option [ngValue]="null">Select Brand</option>
         <option *ngFor="let brand of brands" [ngValue]="brand">{{ brand.title }}</option>
       </select>
-      <div class="form-text text-danger" *ngIf="!product.brand">Please select Brand.</div>
+      <div class="form-text text-danger" *ngIf="!product.brand && f.submitted">Please select Brand.</div>
     </div>
   </div>
   <div class="row">
     <div class="mb-3 col-md-6">
       <label class="form-label fw-bold">Product Name <span class="text-danger">*</span></label>
-      <input type="text" class="form-control" placeholder="Product Name" [(ngModel)]="product.productName" name="productName" required>
+      <input type="text" class="form-control" placeholder="Product Name"
+             [(ngModel)]="product.productName" name="productName" required [disabled]="mode === 'view'">
     </div>
     <div class="mb-3 col-md-6">
       <label class="form-label fw-bold">Product Code</label>
-      <input type="text" class="form-control" placeholder="Product Code" [(ngModel)]="product.productCode" name="productCode">
+      <input type="text" class="form-control" placeholder="Product Code"
+             [(ngModel)]="product.productCode" name="productCode" [disabled]="mode === 'view'">
     </div>
   </div>
   <div class="row">
     <div class="mb-3 col-md-6">
       <label class="form-label fw-bold">Model Number</label>
-      <input type="text" class="form-control" placeholder="Model Number" [(ngModel)]="product.modelNumber" name="modelNumber">
+      <input type="text" class="form-control" placeholder="Model Number"
+             [(ngModel)]="product.modelNumber" name="modelNumber" [disabled]="mode === 'view'">
     </div>
     <div class="mb-3 col-md-6">
       <label class="form-label fw-bold">Product Description</label>
-      <textarea class="form-control" rows="2" placeholder="Product Description" [(ngModel)]="product.description" name="description"></textarea>
+      <textarea class="form-control" rows="2" placeholder="Product Description"
+                [(ngModel)]="product.description" name="description" [disabled]="mode === 'view'"></textarea>
     </div>
   </div>
-  <div class="row">
+  <div class="row align-items-end">
     <div class="col-6 mb-3">
-      <label class="form-label fw-bold">Warranty (Days)</label>
-      <input type="number" class="form-control" placeholder="Enter Warranty" [(ngModel)]="product.warranty" name="warranty">
+      <div class="form-check mb-1">
+        <input class="form-check-input"
+               type="checkbox"
+               [(ngModel)]="product.hasWarranty"
+               name="hasWarranty"
+               id="hasWarranty"
+               [disabled]="mode === 'view'">
+        <label class="form-check-label" for="hasWarranty">Default Warranty</label>
+      </div>
+      <div class="input-group">
+        <select class="form-select"
+                [(ngModel)]="product.warrantyUnit"
+                name="warrantyUnit"
+                [disabled]="!product.hasWarranty || mode === 'view'">
+          <option value="DAYS">Days</option>
+          <option value="MONTHS">Months</option>
+          <option value="YEARS">Years</option>
+        </select>
+        <input type="number"
+               class="form-control"
+               placeholder="Enter Warranty"
+               [(ngModel)]="product.warranty"
+               name="warranty"
+               [disabled]="!product.hasWarranty || mode === 'view'">
+      </div>
     </div>
     <div class="col-6 mb-3">
-      <label class="form-label fw-bold">Guarantee (Days)</label>
-      <input type="number" class="form-control" placeholder="Enter Guarantee" [(ngModel)]="product.guarantee" name="guarantee">
+      <div class="form-check mb-1">
+        <input class="form-check-input"
+               type="checkbox"
+               [(ngModel)]="product.hasGuarantee"
+               name="hasGuarantee"
+               id="hasGuarantee"
+               [disabled]="mode === 'view'">
+        <label class="form-check-label" for="hasGuarantee">Default Guarantee</label>
+      </div>
+      <div class="input-group">
+        <select class="form-select"
+                [(ngModel)]="product.guaranteeUnit"
+                name="guaranteeUnit"
+                [disabled]="!product.hasGuarantee || mode === 'view'">
+          <option value="DAYS">Days</option>
+          <option value="MONTHS">Months</option>
+          <option value="YEARS">Years</option>
+        </select>
+        <input type="number"
+               class="form-control"
+               placeholder="Enter Guarantee"
+               [(ngModel)]="product.guarantee"
+               name="guarantee"
+               [disabled]="!product.hasGuarantee || mode === 'view'">
+      </div>
     </div>
   </div>
   <div class="row">
     <div class="col-6 mb-3">
       <label class="form-label fw-bold">Price</label>
-      <input type="number" class="form-control" placeholder="Price" [(ngModel)]="product.price" name="price">
+      <input type="number" class="form-control" placeholder="Price"
+             [(ngModel)]="product.price" name="price" [disabled]="mode === 'view'">
     </div>
     <div class="col-6 mb-3">
       <label class="form-label fw-bold">Tax (in %)</label>
-      <select class="form-select" [(ngModel)]="product.tax" name="taxSelect">
+      <select class="form-select"
+              [(ngModel)]="product.tax"
+              name="taxSelect"
+              [disabled]="mode === 'view'">
         <option value="">Select Tax</option>
         <option value="5">GST 5%</option>
         <option value="12">GST 12%</option>
@@ -64,6 +128,18 @@
     </div>
   </div>
   <div class="mt-3 text-end">
-    <button type="submit" class="btn btn-danger px-4">Save Product</button>
+    <button *ngIf="mode !== 'view'" type="submit" class="btn btn-danger px-4" [disabled]="submitting">
+      {{ mode === 'edit' ? 'Update Product' : 'Save Product' }}
+    </button>
+    <button *ngIf="mode === 'view'" type="button" class="btn btn-secondary px-4" disabled>
+      View Only
+    </button>
+    <button *ngIf="mode === 'edit' && productData?.id"
+            type="button"
+            class="btn btn-outline-danger px-4"
+            (click)="onDelete()"
+            [disabled]="deleting">
+      {{ deleting ? 'Deleting...' : 'Delete Product' }}
+    </button>
   </div>
 </form>

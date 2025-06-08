@@ -65,4 +65,8 @@ export class UserService {
   fetchorgid():Observable<any>{
     return this.api.get<any>("organization");
   }
+  getuserid(): string | null {
+    const profile = this.userProfileSubject.value;
+    return profile ? profile.id : null;
+  }
 }

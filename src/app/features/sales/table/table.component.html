@@ -1,0 +1,46 @@
+<div class="main-content">
+  <div class="products-list-header">
+    <div>
+      <div class="products-list-title">Sales Voucher List</div>
+      <div class="products-list-sub">Manage your Sale Vouchers</div>
+    </div>
+    <button
+      class="add-product-btn"
+      type="button"
+      (click)="onAddProduct()"
+    >
+      <span class="add-product-icon-circle">
+        <mat-icon class="add-product-plus">add</mat-icon>
+      </span>
+      Add Invoice
+    </button>
+  </div>
+
+  <app-common-table-card
+    [searchFields]="searchFields"
+    [columns]="columns"
+    [showToggle]="false"
+    [data]="filteredData"
+    [total]="total"
+    [page]="page"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[10, 20, 50, 100]"
+    (pageChange)="onPageChange($event)"
+    (search)="onSearch($event)"
+    (clear)="onClear()"
+    (edit)="onEdit($event)"
+    (view)="onView($event)"
+    (delete)="onDelete($event)"
+    (toggle)="onToggle($event)"
+  ></app-common-table-card>
+
+  <app-invoice-form
+    *ngIf="showForm"
+    [mode]="editDataUrl ? 'edit' : 'add'"
+    [orgId]="orgId"
+    [dataUrl]="editDataUrl"
+    (updateNeeded)="onFormDone()"
+    (cancel)="onCloseForm()"
+    style="margin-top: 24px;"
+  ></app-invoice-form>
+</div>

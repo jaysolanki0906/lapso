@@ -33,4 +33,13 @@ export class ProductService {
     const queryString = query.length ? `?${query.join('&')}` : '';
     return this.api.get(`${org_id}/items${queryString}`);
   }
+  addproduct(org_id:string,paylod:any):Observable<any> {
+    return this.api.post(`${org_id}/items`, paylod);
+  }
+  updateProduct(orgId: string, id: number | string, payload: any): Observable<any> {
+    return this.api.put(`${orgId}/items/${id}`, payload);
+  }
+  deleteProduct(orgId: string, id: number | string) {
+  return this.api.delete(`${orgId}/items/${id}`);
+}
 }

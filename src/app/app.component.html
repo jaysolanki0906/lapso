@@ -1,4 +1,10 @@
-<router-outlet></router-outlet>
+<app-header></app-header>
+<div class="main-layout">
+  <app-sidebar></app-sidebar>
+  <div class="main-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>
 <div class="loader-overlay" *ngIf="loaderService.loading$ | async">
-      <div class="spinner"></div>
-    </div>
+  <div class="spinner"></div>
+</div>

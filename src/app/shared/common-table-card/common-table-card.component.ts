@@ -55,13 +55,14 @@ export class CommonTableCardComponent implements OnInit {
   @Input() columns: TableColumn[] = [];
 
   @Input() data: any[] = [];
-
   @Input() total: number = 0;
   @Input() page: number = 1;
   @Input() pageSize: number = 20;
   @Input() pageSizeOptions: number[] = [10, 20, 50, 100];
-
   @Input() loading: boolean = false;
+
+  // 👇 Add this input to control action toggle visibility
+  @Input() showToggle: boolean = true;
 
   @Output() tabChange = new EventEmitter<string>();
   @Output() search = new EventEmitter<{ [key: string]: string }>();
@@ -78,12 +79,10 @@ export class CommonTableCardComponent implements OnInit {
     }
   }
 
-  // For mat-tab-group [selectedIndex]
   get selectedTabIndex(): number {
     return this.tabs.findIndex(tab => tab.value === this.activeTab);
   }
 
-  // For mat-table columns
   get displayedColumns(): string[] {
     return [...this.columns.map(col => col.key), 'actions'];
   }
@@ -114,11 +113,11 @@ export class CommonTableCardComponent implements OnInit {
   onDelete(row: any) { this.delete.emit(row); }
 
   onToggle(row: any, event: any) {
-    this.toggle.emit({ row, value: event.checked });
+    const payload = { ...row, status: event.checked ? 'ACTIVE' : 'INACTIVE' };
+    this.toggle.emit(payload);
   }
 
   onMaterialPage(event: PageEvent) {
-    // MatPaginator starts pageIndex at 0
     this.page = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.pageChange.emit({ page: this.page, pageSize: this.pageSize });
@@ -129,12 +128,12 @@ export class CommonTableCardComponent implements OnInit {
     this.page = 1;
     this.pageChange.emit({ page: this.page, pageSize: this.pageSize });
   }
+
   get totalPages(): number {
     return Math.max(Math.ceil(this.total / this.pageSize), 1);
   }
 
   get pageNumbers(): number[] {
-    // Show up to 5 page numbers centered around the current page
     const total = this.totalPages;
     const current = this.page;
     let start = Math.max(current - 2, 1);
