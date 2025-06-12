@@ -1,25 +1,21 @@
   <div class="main-content">
     <div class="products-list-header">
       <div>
-        <div class="products-list-title">Products List</div>
-        <div class="products-list-sub">Manage your Products</div>
+        <div class="products-list-title">Service Voucher List</div>
+        <div class="products-list-sub">Manage your Service</div>
       </div>
       <button
         class="add-product-btn"
         type="button"
         (click)="onAddProduct()"
-        data-bs-toggle="offcanvas"
-        data-bs-target="#addProductOffcanvas"
-        aria-controls="addProductOffcanvas"
       >
         <span class="add-product-icon-circle">
           <mat-icon class="add-product-plus">add</mat-icon>
         </span>
-        Add Product
+        Add New
       </button>
     </div>
 
-    <!-- Bootstrap Offcanvas for Form -->
     <div class="offcanvas offcanvas-end add-product-offcanvas"
          tabindex="-1"
          id="addProductOffcanvas"
@@ -30,25 +26,17 @@
                 data-bs-dismiss="offcanvas"
                 aria-label="Close"></button>
       </div>
-      <div class="offcanvas-body">
-        <app-form
-  [orgId]="orgId"
-  [mode]="formMode"
-  [productData]="selectedProduct"
-  (updateNeeded)="fetchItems()"
-></app-form>
-      </div>
     </div>
 
     <app-common-table-card
-      [tabs]="tabs"
       [activeTab]="activeTab"
       [searchFields]="searchFields"
       [columns]="columns"
+      [showToggle]="false"
+      [callbtn]="true"
       [data]="filteredData"
       [total]="filteredData.length"
       [page]="page"
-      [callbtn]="false"
       [pageSize]="pageSize"
       [pageSizeOptions]="[10, 20, 50]"
       (tabChange)="onTabChange($event)"
@@ -57,7 +45,6 @@
       (edit)="onEdit($event)"
       (view)="onView($event)"
       (delete)="onDelete($event)"
-      (toggle)="onToggle($event)"
       (pageChange)="onPageChange($event)"
     ></app-common-table-card>
   </div>

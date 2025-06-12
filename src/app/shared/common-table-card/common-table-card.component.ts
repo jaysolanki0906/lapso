@@ -60,8 +60,8 @@ export class CommonTableCardComponent implements OnInit {
   @Input() pageSize: number = 20;
   @Input() pageSizeOptions: number[] = [10, 20, 50, 100];
   @Input() loading: boolean = false;
+  @Input() callbtn: boolean = false;
 
-  // 👇 Add this input to control action toggle visibility
   @Input() showToggle: boolean = true;
 
   @Output() tabChange = new EventEmitter<string>();
@@ -72,6 +72,8 @@ export class CommonTableCardComponent implements OnInit {
   @Output() delete = new EventEmitter<any>();
   @Output() toggle = new EventEmitter<{ row: any, value: boolean }>();
   @Output() pageChange = new EventEmitter<{ page: number, pageSize: number }>();
+  @Output() call = new EventEmitter<any>();
+
 
   ngOnInit() {
     for (let field of this.searchFields) {
@@ -152,4 +154,9 @@ export class CommonTableCardComponent implements OnInit {
     this.page = pg;
     this.pageChange.emit({ page: this.page, pageSize: this.pageSize });
   }
+  onCall(row: any) { this.call.emit(row); }
+  getNestedValue(obj: any, path: string): any {
+  if (!obj || !path) return '';
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj) ?? '';
+}
 }

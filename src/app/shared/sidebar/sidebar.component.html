@@ -15,10 +15,6 @@
           </div>
         </li>
         <li>
-          <mat-icon>shopping_cart</mat-icon>
-          <span>Warranty Vouchers</span>
-        </li>
-        <li>
           <div (click)="saleredirection()">
             <mat-icon>description</mat-icon>
             <span>Sales Vouchers</span>
@@ -36,20 +32,13 @@
         <ng-container *ngIf="serviceContractExpanded">
           <li class="service-sub-menu">
             <ul>
-              <li class="sub-item disabled">Services</li>
-              <li class="sub-item disabled">Service Vouchers</li>
-              <li class="sub-item disabled">Service Calls</li>
+              <li class="sub-item disabled" (click)="redirectservice()">Services</li>
+              <li class="sub-item disabled" (click)="redirectservicevoucher()">Service Vouchers</li>
+              <li class="sub-item disabled" (click)="redirectservicecalls()">Service Calls</li>
             </ul>
           </li>
         </ng-container>
-        <li>
-          <mat-icon>groups</mat-icon>
-          <span>Contacts</span>
-        </li>
-        <li>
-          <mat-icon>feedback</mat-icon>
-          <span>Rating & Feedback</span>
-        </li>
+        
       </ul>
     </nav>
   </div>

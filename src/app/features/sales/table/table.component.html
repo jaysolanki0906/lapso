@@ -28,19 +28,9 @@
     (pageChange)="onPageChange($event)"
     (search)="onSearch($event)"
     (clear)="onClear()"
+    [callbtn]="false"
     (edit)="onEdit($event)"
     (view)="onView($event)"
     (delete)="onDelete($event)"
-    (toggle)="onToggle($event)"
   ></app-common-table-card>
-
-  <app-invoice-form
-    *ngIf="showForm"
-    [mode]="editDataUrl ? 'edit' : 'add'"
-    [orgId]="orgId"
-    [dataUrl]="editDataUrl"
-    (updateNeeded)="onFormDone()"
-    (cancel)="onCloseForm()"
-    style="margin-top: 24px;"
-  ></app-invoice-form>
 </div>

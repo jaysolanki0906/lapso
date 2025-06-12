@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, AbstractControl, FormControl } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, filter, map } from 'rxjs/operators';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { FormComponent as ProductFormComponent } from '../../product/form/form.component';
 import { formatDate } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-invoice-form',
@@ -15,30 +16,31 @@ import { formatDate } from '@angular/common';
   styleUrls: ['./sales-form.component.scss'],
   standalone: true,
 })
-export class SalesFormComponent implements OnInit, OnChanges {
+export class SalesFormComponent implements OnInit {
   @Input() mode: 'add' | 'edit' = 'add';
   @Input() orgId: string = '';
-  @Input() dataUrl: string | null = null;
-  @Output() updateNeeded = new EventEmitter<void>();
-  @Output() cancel = new EventEmitter<void>();
 
   invoiceForm: FormGroup;
   products: any[] = [];
   customerSuggestions: any[] = [];
   customerSearchLoading = false;
+   formHeading: string = 'Add Product'; // Add this line
+  formMode: 'add' | 'edit' | 'view' = 'add'; // Add this line
+  selectedProduct: any = null; // Add this line
 
   netAmount: number = 0;
   taxAmount: number = 0;
   grandTotal: number = 0;
 
-  formHeading = 'Add Product';
-  formMode: 'add' | 'edit' | 'view' = 'add';
-  selectedProduct: any = null;
+  voucherId: string | null = null;
+  orgSub?: Subscription;
 
   constructor(
     private fb: FormBuilder,
     private invoiceservice: InvoiceService,
     private organisationService: OrganizationService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     const today = formatDate(new Date(), 'yyyy-MM-dd', 'en-IN');
     this.invoiceForm = this.fb.group({
@@ -52,65 +54,53 @@ export class SalesFormComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    if (this.orgId) {
-      this.fetchproduct(this.orgId);
-      if (this.mode === 'edit' && this.dataUrl) {
-        this.loadDataFromUrl(this.orgId, this.dataUrl);
-      } else {
-        this.fetchAndSetInvoiceNumber(this.orgId);
-        this.initItems();
-      }
-    }
+    this.orgSub = this.organisationService.organization$.subscribe(org => {
+      if (org && org.org_id) {
+        this.orgId = org.org_id;
 
-    this.invoiceForm.get('customerName')!.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      map(val => val?.trim()),
-      filter(val => !!val && val.length > 2),
-      switchMap(val => {
-        if (this.orgId) {
-          this.customerSearchLoading = true;
-          return this.invoiceservice.fetchcontact(this.orgId, val);
+        this.voucherId = this.route.snapshot.paramMap.get('voucherId');
+        this.fetchproduct(this.orgId);
+
+        if (this.voucherId) {
+          this.mode = 'edit';
+          this.loadDataForEdit(this.orgId, this.voucherId);
+        } else {
+          this.mode = 'add';
+          this.fetchAndSetInvoiceNumber(this.orgId);
+          this.initItems();
         }
-        return of({ data: [] });
-      })
-    ).subscribe({
-      next: (res: any) => {
-        this.customerSuggestions = res?.data ?? [];
-        this.customerSearchLoading = false;
-      },
-      error: () => {
-        this.customerSuggestions = [];
-        this.customerSearchLoading = false;
+
+        this.invoiceForm.get('customerName')!.valueChanges.pipe(
+          debounceTime(300),
+          distinctUntilChanged(),
+          map(val => val?.trim()),
+          filter(val => !!val && val.length > 2),
+          switchMap(val => {
+            this.customerSearchLoading = true;
+            return this.invoiceservice.fetchcontact(this.orgId, val);
+          })
+        ).subscribe({
+          next: (res: any) => {
+            this.customerSuggestions = res?.data ?? [];
+            this.customerSearchLoading = false;
+          },
+          error: () => {
+            this.customerSuggestions = [];
+            this.customerSearchLoading = false;
+          }
+        });
+
+        this.items.valueChanges.subscribe(() => this.calculateTotals());
       }
     });
-
-    this.items.valueChanges.subscribe(() => this.calculateTotals());
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (
-      this.mode === 'edit' &&
-      this.orgId &&
-      this.dataUrl &&
-      (changes['orgId'] || changes['dataUrl'] || changes['mode'])
-    ) {
-      this.loadDataFromUrl(this.orgId, this.dataUrl);
-    }
-    if (
-      this.mode === 'add' &&
-      (changes['orgId'] || changes['dataUrl'] || changes['mode'])
-    ) {
-      this.fetchAndSetInvoiceNumber(this.orgId);
-      this.initItems();
-    }
+  ngOnDestroy(): void {
+    this.orgSub?.unsubscribe();
   }
 
-  loadDataFromUrl(orgId: string, dataUrl: string) {
-    // dataUrl: "abc/vouchers/xyz"
-    const parts = dataUrl.split('/');
-    const cust_id = parts[parts.length - 1];
-    this.invoiceservice.editvoucher(orgId, cust_id).subscribe({
+  loadDataForEdit(orgId: string, voucherId: string) {
+    this.invoiceservice.editvoucher(orgId, voucherId).subscribe({
       next: (data: any) => {
         if (data) {
           this.patchFormForEdit(data);
@@ -171,7 +161,7 @@ export class SalesFormComponent implements OnInit, OnChanges {
   }
 
   routeback() {
-    this.cancel.emit();
+    this.router.navigate(['sales'], { relativeTo: this.route });
   }
 
   onProductSelected(item: AbstractControl, productId: string) {
@@ -229,8 +219,7 @@ export class SalesFormComponent implements OnInit, OnChanges {
   }
 
   patchFormForEdit(voucher: any) {
-    while (this.items.length) this.items.removeAt(0);
-
+    // Patch main fields
     this.invoiceForm.patchValue({
       invoiceDate: voucher.voucher_date || formatDate(new Date(), 'yyyy-MM-dd', 'en-IN'),
       invoiceNumber: voucher.voucher_number || '',
@@ -239,30 +228,34 @@ export class SalesFormComponent implements OnInit, OnChanges {
       note: voucher.note || '',
     });
 
-    if (voucher.assets && Array.isArray(voucher.assets) && voucher.assets.length) {
-      voucher.assets.forEach((asset: any) => {
-        const voucherItem = asset.voucher_items || {};
+    // Clear items
+    while (this.items.length) this.items.removeAt(0);
+
+    // Patch items array (if present)
+    if (voucher.items && Array.isArray(voucher.items) && voucher.items.length) {
+      voucher.items.forEach((item: any) => {
         const group = this.createItemGroup();
         group.patchValue({
-          product: asset.product_id || voucherItem.product_id || null,
-          description: asset.desc || voucherItem.desc || '',
-          warrantyChecked: asset.has_warranty || voucherItem.has_warranty || false,
-          warrantyType: this.reverseWarrantyUnit(asset.warranty_unit || voucherItem.warranty_unit),
-          warrantyPeriod: asset.warranty_value || voucherItem.warranty_value || '',
-          guaranteeChecked: asset.has_guarantee || voucherItem.has_guarantee || false,
-          guaranteeType: this.reverseWarrantyUnit(asset.guarantee_unit || voucherItem.guarantee_unit),
-          guaranteePeriod: asset.guarantee_value || voucherItem.guarantee_value || '',
-          quantity: voucherItem.qty || 1,
-          unit: voucherItem.unit || 'Unit',
-          price: voucherItem.price || asset.price || '',
-          tax: voucherItem.tax || asset.tax || '',
-          total: voucherItem.total_price || asset.total_price || ''
+          product: item.item_id || null,
+          description: item.item_desc || '',
+          quantity: item.qty || 1,
+          unit: item.unit || 'Unit',
+          price: item.price || '',
+          tax: item.tax || '',
+          total: item.total_price || '',
+          warrantyChecked: !!item.has_warranty,
+          warrantyType: this.reverseWarrantyUnit(item.warranty_unit),
+          warrantyPeriod: item.warranty_value || '',
+          guaranteeChecked: !!item.has_guarantee,
+          guaranteeType: this.reverseWarrantyUnit(item.guarantee_unit),
+          guaranteePeriod: item.guarantee_value || '',
         });
         this.items.push(group);
       });
     } else {
       this.addItem();
     }
+
     this.calculateTotals();
   }
 
@@ -361,15 +354,28 @@ export class SalesFormComponent implements OnInit, OnChanges {
       items
     };
 
-    this.invoiceservice.savevincoice(this.orgId, payload).subscribe({
-      next: (res) => {
-        alert('Invoice saved successfully!');
-        this.updateNeeded.emit();
-      },
-      error: (err) => {
-        alert('Error saving invoice!');
-      }
-    });
+    if (this.mode === 'edit' && this.voucherId) {
+      // Call update API in edit mode
+      this.invoiceservice.saveinvoice(this.orgId, this.voucherId, payload).subscribe({
+        next: (res) => {
+          alert('Invoice updated successfully!');
+          this.routeback();
+        },
+        error: (err) => {
+          alert('Error updating invoice!');
+        }
+      });
+    } else {
+      this.invoiceservice.savevincoice(this.orgId, payload).subscribe({
+        next: (res) => {
+          alert('Invoice saved successfully!');
+          this.routeback();
+        },
+        error: (err) => {
+          alert('Error saving invoice!');
+        }
+      });
+    }
   }
 
   getWarrantyUnit(val: string) {

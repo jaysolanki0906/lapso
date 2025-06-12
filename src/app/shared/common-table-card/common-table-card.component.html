@@ -34,12 +34,11 @@
       </div>
       <div class="mat-grid-row" *ngFor="let row of data">
         <div class="mat-grid-cell" *ngFor="let col of columns">
-          <ng-container *ngIf="col.key !== 'status'">
-            {{ row[col.key] }}
+          <ng-container >
+            {{ getNestedValue(row, col.key) }}
           </ng-container>
         </div>
         <div class="mat-grid-cell actions-cell">
-          <!-- 👇 Only show toggle if showToggle is true -->
           <mat-slide-toggle
             *ngIf="showToggle"
             [checked]="row.status === 'ACTIVE'"
@@ -56,6 +55,9 @@
           </button>
           <button mat-icon-button color="warn" (click)="onDelete(row)">
             <mat-icon>delete</mat-icon>
+          </button>
+          <button mat-icon-button color="primary" *ngIf='callbtn' (click)="onCall(row)">
+            <mat-icon>call</mat-icon>
           </button>
         </div>
       </div>

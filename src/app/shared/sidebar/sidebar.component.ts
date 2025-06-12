@@ -28,4 +28,14 @@ export class SidebarComponent {
   saleredirection(){
     this.router.navigate(['sales']);
   }
+  redirectservice(){
+    this.router.navigate(['service']);
+  }
+  redirectservicevoucher()
+  {
+    this.router.navigate(['servicevoucher']);
+  }
+  redirectservicecalls(){
+    this.router.navigate(['servicecall']);
+  }
 }

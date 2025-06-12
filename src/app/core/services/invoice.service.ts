@@ -29,4 +29,10 @@ export class InvoiceService {
   editvoucher(org_id:string,cust_id:string): Observable<any> {
     return this.api.get(`${org_id}/vouchers/${cust_id}`);
   }
+  saveinvoice(org_id:string,cust_id:string,paylod:any): Observable<any> {
+    return this.api.put(`${org_id}/vouchers/${cust_id}`,paylod);
+  }
+  deletinvoice(org_id:string,cust_id:string): Observable<any> {
+    return this.api.delete(`${org_id}/vouchers/${cust_id}`);
+  }
 }

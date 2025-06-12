@@ -1,0 +1,109 @@
+<div class="offcanvas-body">
+  <form #f="ngForm" (ngSubmit)="onSubmit(f)">
+    <!-- Search Section -->
+    <div class="mb-4 position-relative">
+      <label class="form-label fw-semibold text-primary">Search By Customer No, Name or Voucher No</label>
+      <div class="input-group">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search By Customer No, Name or Voucher No"
+          [disabled]="mode === 'view'"
+          [(ngModel)]="searchValue"
+          name="searchValue"
+          (input)="onSearchInputChange($event)"
+          autocomplete="off">
+        <button class="btn btn-outline-secondary" type="button" tabindex="-1">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+      </div>
+      <ul class="dropdown-menu show w-100 mt-0"
+          *ngIf="showDropdown && mode !== 'view'"
+          style="max-height:200px;overflow:auto;position:absolute;z-index:999;">
+        <li *ngFor="let option of searchResults">
+          <a class="dropdown-item" href="#" (click)="onSelectVoucher(option); $event.preventDefault();">
+            {{option.cust_name}} ({{option.voucher_number}}) - {{option.cust_mobile}}
+          </a>
+        </li>
+        <li *ngIf="!searchResults.length && searchValue.length >= 3 && !searching">
+          <span class="dropdown-item text-muted">No results</span>
+        </li>
+        <li *ngIf="searching">
+          <span class="dropdown-item text-muted">Searching...</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label fw-semibold text-primary">Service Type</label>
+        <select class="form-select"
+                [(ngModel)]="serviceCall.service_type"
+                name="service_type"
+                required
+                [disabled]="mode === 'view'">
+          <option [ngValue]="null">Schedule Service</option>
+          <option value="SCHEDULED">Scheduled</option>
+          <option value="COMPLAINTS">Complaints</option>
+        </select>
+        <div class="form-text text-danger" *ngIf="!serviceCall.service_type && f.submitted">Please select Service Type.</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold text-primary">Service Date</label>
+        <input type="date" 
+               class="form-control"
+               [(ngModel)]="serviceCall.service_date"
+               name="service_date"
+               required
+               [disabled]="mode === 'view'">
+        <div class="form-text text-danger" *ngIf="!serviceCall.service_date && f.submitted">Please select Service Date.</div>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label class="form-label fw-semibold text-primary">Purpose</label>
+        <textarea class="form-control"
+                  [(ngModel)]="serviceCall.purpose"
+                  name="purpose"
+                  rows="3"
+                  placeholder="Purpose"
+                  required
+                  [disabled]="mode === 'view'"></textarea>
+        <div class="form-text text-danger" *ngIf="!serviceCall.purpose && f.submitted">Please enter Purpose.</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold text-primary">Assigned To</label>
+        <select class="form-select"
+            [(ngModel)]="serviceCall.assigned_to"
+            name="assigned_to"
+            [disabled]="mode === 'view' || loadingAssignees">
+          <option value="">Select Assigned</option>
+          <option *ngFor="let tech of assignedToList" [value]="tech.id">{{ tech.fullname }}</option>
+        </select>
+        <div *ngIf="loadingAssignees" class="form-text text-primary">Loading technicians...</div>
+      </div>
+    </div>
+
+    <input type="hidden" [(ngModel)]="serviceCall.service_name" name="service_name">
+    <input type="hidden" [(ngModel)]="serviceCall.customer_name" name="customer_name">
+    <input type="hidden" [(ngModel)]="serviceCall.customer_number" name="customer_number">
+    <input type="hidden" [(ngModel)]="serviceCall.address" name="address">
+    <input type="hidden" [(ngModel)]="serviceCall.status" name="status">
+
+    <div class="d-flex justify-content-end">
+      <button *ngIf="mode !== 'view'" 
+              type="submit" 
+              class="btn btn-danger px-4 fw-semibold" 
+              [disabled]="submitting">
+        {{ submitting ? (mode === 'edit' ? 'Updating...' : 'Adding...') : (mode === 'edit' ? 'Update call' : 'Add call') }}
+      </button>
+      <button *ngIf="mode === 'view'" 
+              type="button" 
+              class="btn btn-secondary px-4 fw-semibold" 
+              disabled>
+        View Only
+      </button>
+    </div>
+  </form>
+</div>
