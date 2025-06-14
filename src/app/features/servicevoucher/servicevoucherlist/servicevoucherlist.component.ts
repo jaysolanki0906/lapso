@@ -9,6 +9,8 @@ import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { ErrorHandlerService } from '../../../core/services/error-handler.service';
+import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
+import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-servicevoucherlist',
@@ -17,6 +19,8 @@ import { ErrorHandlerService } from '../../../core/services/error-handler.servic
     CommonTableCardComponent,
     MatButtonModule,
     MatIconModule,
+    SidebarComponent,
+    HeaderComponent
   ],
   templateUrl: './servicevoucherlist.component.html',
   styleUrl: './servicevoucherlist.component.scss'

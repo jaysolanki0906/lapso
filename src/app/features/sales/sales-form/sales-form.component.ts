@@ -1,32 +1,36 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, AbstractControl, FormControl } from '@angular/forms';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, filter, map } from 'rxjs/operators';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { FormComponent as ProductFormComponent } from '../../product/form/form.component';
 import { formatDate } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ErrorHandlerService } from '../../../core/services/error-handler.service';
+import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
+import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-invoice-form',
   templateUrl: './sales-form.component.html',
-  imports: [ReactiveFormsModule, CommonModule, ProductFormComponent],
+  imports: [ReactiveFormsModule, CommonModule, ProductFormComponent,SidebarComponent,HeaderComponent],
   styleUrls: ['./sales-form.component.scss'],
   standalone: true,
 })
 export class SalesFormComponent implements OnInit {
   @Input() mode: 'add' | 'edit' = 'add';
   @Input() orgId: string = '';
+  lastAddedProductId: string | null = null;
 
   invoiceForm: FormGroup;
   products: any[] = [];
   customerSuggestions: any[] = [];
   customerSearchLoading = false;
-   formHeading: string = 'Add Product'; // Add this line
-  formMode: 'add' | 'edit' | 'view' = 'add'; // Add this line
-  selectedProduct: any = null; // Add this line
+  formHeading: string = 'Add Product';
+  formMode: 'add' | 'edit' | 'view' = 'add';
+  selectedProduct: any = null;
 
   netAmount: number = 0;
   taxAmount: number = 0;
@@ -40,14 +44,15 @@ export class SalesFormComponent implements OnInit {
     private invoiceservice: InvoiceService,
     private organisationService: OrganizationService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private err: ErrorHandlerService
   ) {
     const today = formatDate(new Date(), 'yyyy-MM-dd', 'en-IN');
     this.invoiceForm = this.fb.group({
       invoiceDate: [today, Validators.required],
       invoiceNumber: ['', Validators.required],
       customerName: ['', Validators.required],
-      customerMobile: [{ value: '', disabled: true }, Validators.required],
+      customerMobile: ['', Validators.required],
       note: [''],
       items: this.fb.array([]),
     });
@@ -59,16 +64,16 @@ export class SalesFormComponent implements OnInit {
         this.orgId = org.org_id;
 
         this.voucherId = this.route.snapshot.paramMap.get('voucherId');
-        this.fetchproduct(this.orgId);
-
-        if (this.voucherId) {
-          this.mode = 'edit';
-          this.loadDataForEdit(this.orgId, this.voucherId);
-        } else {
-          this.mode = 'add';
-          this.fetchAndSetInvoiceNumber(this.orgId);
-          this.initItems();
-        }
+        this.fetchproduct(this.orgId).subscribe(() => {
+          if (this.voucherId) {
+            this.mode = 'edit';
+            this.loadDataForEdit(this.orgId, this.voucherId);
+          } else {
+            this.mode = 'add';
+            this.fetchAndSetInvoiceNumber(this.orgId);
+            this.initItems();
+          }
+        });
 
         this.invoiceForm.get('customerName')!.valueChanges.pipe(
           debounceTime(300),
@@ -118,7 +123,7 @@ export class SalesFormComponent implements OnInit {
 
   createItemGroup(): FormGroup {
     return this.fb.group({
-      product: [null, Validators.required],
+      product: ['', Validators.required], // always string for dropdown selection
       description: [''],
       warrantyChecked: [false],
       warrantyType: ['Days'],
@@ -161,12 +166,12 @@ export class SalesFormComponent implements OnInit {
   }
 
   routeback() {
-    this.router.navigate(['sales'], { relativeTo: this.route });
+    this.router.navigate(['sales']);
   }
 
   onProductSelected(item: AbstractControl, productId: string) {
     const group = item as FormGroup;
-    const product = this.products.find((p: any) => p.id === productId);
+    const product = this.products.find((p: any) => String(p.id) === String(productId));
     if (product) {
       group.patchValue({
         description: product.description || '',
@@ -228,28 +233,28 @@ export class SalesFormComponent implements OnInit {
       note: voucher.note || '',
     });
 
-    // Clear items
-    while (this.items.length) this.items.removeAt(0);
+    this.items.clear();
 
-    // Patch items array (if present)
-    if (voucher.items && Array.isArray(voucher.items) && voucher.items.length) {
-      voucher.items.forEach((item: any) => {
+    if (voucher.assets) {
+      voucher.assets.forEach((asset: any) => {
+        const vi = asset.voucher_items || asset;
         const group = this.createItemGroup();
         group.patchValue({
-          product: item.item_id || null,
-          description: item.item_desc || '',
-          quantity: item.qty || 1,
-          unit: item.unit || 'Unit',
-          price: item.price || '',
-          tax: item.tax || '',
-          total: item.total_price || '',
-          warrantyChecked: !!item.has_warranty,
-          warrantyType: this.reverseWarrantyUnit(item.warranty_unit),
-          warrantyPeriod: item.warranty_value || '',
-          guaranteeChecked: !!item.has_guarantee,
-          guaranteeType: this.reverseWarrantyUnit(item.guarantee_unit),
-          guaranteePeriod: item.guarantee_value || '',
+          product: vi.item_id,
+          description: vi.desc || asset.desc || '',
+          quantity: vi.qty || 1,
+          unit: vi.unit || 'Unit',
+          price: vi.price || '',
+          tax: vi.tax || '',
+          total: vi.total_price || '',
+          warrantyChecked: vi.has_warranty,
+          warrantyType: this.reverseWarrantyUnit(vi.warranty_unit),
+          warrantyPeriod: vi.warranty_value || '',
+          guaranteeChecked: vi.has_guarantee,
+          guaranteeType: this.reverseWarrantyUnit(vi.guarantee_unit),
+          guaranteePeriod: vi.guarantee_value || '',
         });
+        console.log("this is group ",group,"this is vi ",vi);
         this.items.push(group);
       });
     } else {
@@ -259,15 +264,16 @@ export class SalesFormComponent implements OnInit {
     this.calculateTotals();
   }
 
-  fetchproduct(orgid: string) {
-    this.invoiceservice.filtertostoreproduct(orgid).subscribe({
-      next: (data: any) => {
-        this.products = Array.isArray(data) ? data : data?.data ?? [];
-      },
-      error: (err: any) => {
-        alert('Error fetching products');
-      },
-    });
+  fetchproduct(orgid: string): Observable<any> {
+    return this.invoiceservice.filtertostoreproduct(orgid).pipe(
+      map((data: any) => {
+        this.products = (Array.isArray(data) ? data : data?.data ?? []).map((prod: any) => ({
+          ...prod,
+          id: String(prod.id),
+        }));
+        return this.products;
+      })
+    );
   }
 
   onCustomerSuggestionSelect(cust: any) {
@@ -305,7 +311,7 @@ export class SalesFormComponent implements OnInit {
   }
 
   fetchItems() {
-    this.fetchproduct(this.orgId);
+    this.fetchproduct(this.orgId).subscribe();
   }
 
   onSubmitInvoice() {
@@ -362,7 +368,7 @@ export class SalesFormComponent implements OnInit {
           this.routeback();
         },
         error: (err) => {
-          alert('Error updating invoice!');
+          this.err.showToast(err,'error');
         }
       });
     } else {
@@ -372,7 +378,7 @@ export class SalesFormComponent implements OnInit {
           this.routeback();
         },
         error: (err) => {
-          alert('Error saving invoice!');
+          this.err.showToast(err,'error');
         }
       });
     }
@@ -442,4 +448,17 @@ export class SalesFormComponent implements OnInit {
     }
     return formatDate(date, 'yyyy-MM-dd', 'en-IN');
   }
+  onProductAdded() {
+  this.fetchproduct(this.orgId).subscribe((products) => {
+    const newest = products[products.length - 1];
+    this.lastAddedProductId = newest?.id || null;
+    this.addItem();
+    if (this.lastAddedProductId) {
+      const lastIndex = this.items.length - 1;
+      const itemGroup = this.items.at(lastIndex);
+      itemGroup.get('product')?.setValue(this.lastAddedProductId);
+      this.onProductSelected(itemGroup, this.lastAddedProductId);
+    }
+  });
+}
 }

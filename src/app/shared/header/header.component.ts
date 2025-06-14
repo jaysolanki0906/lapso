@@ -30,7 +30,9 @@ export class HeaderComponent {
       this.userService.fetchAndStoreProfile().subscribe();
     }
   }
-
+  redirescttosettings(){
+    this.router.navigate(['/settings/user-management']);
+  }
   openChangePassword() {
     this.dialog.open(ChangePasswordDialogComponent, {
       width: '540px',

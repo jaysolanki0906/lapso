@@ -8,6 +8,8 @@ import { ServicesService } from '../../../core/services/services.service';
 import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
+import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-servicelist',
@@ -16,6 +18,8 @@ import Swal from 'sweetalert2';
     CommonTableCardComponent,
     MatButtonModule,
     MatIconModule,
+    SidebarComponent,
+    HeaderComponent
   ],
   templateUrl: './servicelist.component.html',
   styleUrl: './servicelist.component.scss'

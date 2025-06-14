@@ -1,3 +1,7 @@
+<app-header></app-header>
+<div class="main-layout">
+  <app-sidebar></app-sidebar>
+  <div class="main-content">
 <div class="main-content">
   <div class="invoice-form-page">
     <div class="header-row">
@@ -45,7 +49,7 @@
           </div>
           <div class="form-group">
             <label>Customer Mobile Number <span class="required">*</span></label>
-            <input type="text" formControlName="customerMobile" placeholder="Enter Customer Mobile Number" [readonly]="true" />
+            <input type="text" formControlName="customerMobile" placeholder="Enter Customer Mobile Number"/>
           </div>
         </div>
 
@@ -99,30 +103,28 @@
                 </button>
               </td>
               <td>
-  <div class="flex align-center">
-    <select
-      class="form-select"
-      formControlName="product"
-      (change)="onProductSelected(item, item.get('product')?.value)">
-      <option value="">Select Product</option>
-      <option *ngFor="let prod of products" [value]="prod.id">
-        {{ prod.name }}
-      </option>
-    </select>
-    <button
-      type="button"
-      class="btn btn-link p-0 ms-2"
-      style="font-size: 1.05em; line-height:1; vertical-align: middle;"
-      data-bs-toggle="offcanvas"
-      data-bs-target="#addProductOffcanvas"
-      aria-controls="addProductOffcanvas"
-      title="Add Product"
-    >
-      +
-    </button>
-  </div>
-  <textarea formControlName="description" placeholder="Product Description"></textarea>
-</td>
+                <div class="flex align-center">
+                  <select
+                    class="form-select"
+                    formControlName="product"
+                    (change)="onProductSelected(item, item.get('product')?.value)">
+                    <option value="">Select Product</option>
+                    <option *ngFor="let prod of products" [value]="prod.id">{{ prod.name }}</option>
+                  </select>
+                  <button
+                    type="button"
+                    class="btn btn-link p-0 ms-2"
+                    style="font-size: 1.05em; line-height:1; vertical-align: middle;"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#addProductOffcanvas"
+                    aria-controls="addProductOffcanvas"
+                    title="Add Product"
+                  >
+                  +
+                  </button>
+                </div>
+                <textarea formControlName="description" placeholder="Product Description"></textarea>
+              </td>
               <td>
                 <div class="war-guar-row">
                   <label>
@@ -159,7 +161,12 @@
                 <input type="text" formControlName="price" placeholder="Price" />
               </td>
               <td>
-                <input type="text" formControlName="tax" placeholder="Tax Sel" />
+                <select class="form-select" formControlName="tax">
+  <option value="">Select Tax</option>
+  <option value="1.00">1%</option>
+  <option value="5.00">5%</option>
+  <option value="6.00">6%</option>
+</select>
               </td>
               <td>
                 <input type="text" [formControl]="getTotalControl(item)" />
@@ -209,9 +216,12 @@
       <app-form
         [orgId]="orgId"
         [mode]="formMode"
+        (updateNeeded)="onProductAdded()"
         [productData]="selectedProduct"
         (updateNeeded)="fetchItems()"
       ></app-form>
     </div>
   </div>
+</div>
+</div>
 </div>

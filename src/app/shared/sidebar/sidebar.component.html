@@ -2,43 +2,41 @@
   <div class="sidebar-content">
     <nav>
       <ul>
-        <li>
+        <li *ngIf="canViewDashboard">
           <div (click)="dashboardredirection()">
             <mat-icon>dashboard</mat-icon>
             <span>Dashboard</span>
           </div>
         </li>
-        <li>
+        <li *ngIf="canViewProducts">
           <div (click)="productredirection()">
             <mat-icon>inventory_2</mat-icon>
             <span>Products</span>
           </div>
         </li>
-        <li>
+        <li *ngIf="canViewSalesVouchers">
           <div (click)="saleredirection()">
             <mat-icon>description</mat-icon>
             <span>Sales Vouchers</span>
           </div>
         </li>
-        <!-- Service Contract row -->
-        <li>
+        <!-- Show Service Contract dropdown ONLY if any child permission is present -->
+        <li *ngIf="canViewServiceContractDropdown">
           <div class="service-contract-header" (click)="toggleServiceContract()">
             <mat-icon>local_shipping</mat-icon>
             <span>Service Contract</span>
             <mat-icon class="arrow" [class.rotate]="serviceContractExpanded">expand_more</mat-icon>
           </div>
         </li>
-        <!-- Sub-menu appears as a new list item below when expanded -->
-        <ng-container *ngIf="serviceContractExpanded">
+        <ng-container *ngIf="serviceContractExpanded && canViewServiceContractDropdown">
           <li class="service-sub-menu">
             <ul>
-              <li class="sub-item disabled" (click)="redirectservice()">Services</li>
-              <li class="sub-item disabled" (click)="redirectservicevoucher()">Service Vouchers</li>
-              <li class="sub-item disabled" (click)="redirectservicecalls()">Service Calls</li>
+              <li class="sub-item" *ngIf="canViewServices" (click)="redirectservice()">Services</li>
+              <li class="sub-item" *ngIf="canViewServiceVouchers" (click)="redirectservicevoucher()">Service Vouchers</li>
+              <li class="sub-item" *ngIf="canViewServiceCalls" (click)="redirectservicecalls()">Service Calls</li>
             </ul>
           </li>
         </ng-container>
-        
       </ul>
     </nav>
   </div>

@@ -48,4 +48,33 @@ export class ErrorHandlerService {
     }
   });
 }
+public confirmSwal(
+  title: string,
+  message: string,
+  name: string,
+  confirmButtonText: string = 'Yes, delete user',
+  confirmButtonColor: string = '#ef4444'
+): Promise<boolean> {
+  return Swal.fire({
+    title: title,
+    html: `<div style="display: flex; flex-direction: column; gap: 8px;">
+             <div>${message} <strong>${name}</strong>?</div>
+             <center><small class="text-muted">⚠️ This action cannot be undone.</small></center>
+           </div>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: confirmButtonColor,
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: confirmButtonText,
+    cancelButtonText: 'Cancel',
+    reverseButtons: true,
+    focusCancel: true,
+    width: 600,
+    customClass: {
+      popup: 'swal-horizontal-layout'
+    }
+  }).then((result) => {
+    return !!result.isConfirmed;
+  });
+}
 }

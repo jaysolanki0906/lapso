@@ -17,7 +17,9 @@ import { finalize } from 'rxjs/operators';
     CommonTableCardComponent,
     MatButtonModule,
     MatIconModule,
-    FormComponent
+    FormComponent,
+    SidebarComponent,
+    HeaderComponent
   ],
   templateUrl: './products-send.component.html',
   styleUrl: './products-send.component.scss'
@@ -30,7 +32,7 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
   activeTab = 'ACTIVE';
 
   searchFields = [
-    { placeholder: 'Search by Product or Code', key: 'query' }
+    {title:'Product or Code',placeholder: 'Search by Product or Code', key: 'query' }
   ];
 
   columns: TableColumn[] = [

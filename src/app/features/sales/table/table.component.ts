@@ -8,6 +8,8 @@ import { ErrorHandlerService } from '../../../core/services/error-handler.servic
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
+import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
+import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-table',
@@ -16,7 +18,9 @@ import Swal from 'sweetalert2';
     CommonModule,
     MatIconModule,
     ReactiveFormsModule,
-    CommonTableCardComponent
+    CommonTableCardComponent,
+    SidebarComponent,
+    HeaderComponent
   ],
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss'
@@ -27,9 +31,12 @@ export class TableComponent implements OnInit {
   orgId: string = '';
   showForm = false;
 
-  searchFields = [
-    { placeholder: 'Search by Customer or Voucher', key: 'query' }
-  ];
+ searchFields = [
+  { title: 'Voucher Number', placeholder: 'Voucher Number', key: 'invoice_number' },
+  { title: 'Mobile Number', placeholder: 'Mobile Number', key: 'mobile' },
+];
+
+  searchValues: { [key: string]: string } = {};
 
   columns: TableColumn[] = [
     { key: 'cust_name', label: 'Customer Name' },
@@ -61,10 +68,21 @@ export class TableComponent implements OnInit {
         this.cdRef.detectChanges(); // Fixes ExpressionChangedAfterItHasBeenCheckedError
       }
     });
+
+    this.searchFields.forEach(f => this.searchValues[f.key] = '');
   }
 
-  fetchItems() {
-    this.invoice.getdata(this.orgId, this.page, this.pageSize).subscribe({
+  fetchItems(searchObj?: { [key: string]: string }) {
+    // Compose the filter params dynamically
+    const params: any = {
+      page: this.page,
+      pageSize: this.pageSize
+    };
+    if (searchObj) {
+      Object.assign(params, searchObj);
+    }
+    // Pass filter params to the service
+    this.invoice.getdata(this.orgId, params.page, params.pageSize, params).subscribe({
       next: (data: any) => {
         this.filteredData = data.rows;
         this.total = data.total;
@@ -75,10 +93,23 @@ export class TableComponent implements OnInit {
     });
   }
 
+  onSearch(event: { [key: string]: string }) {
+  const hasAnyValue = Object.values(event).some(val => val && val.trim() !== '');
+  if (hasAnyValue) {
+    this.page = 1;
+    this.fetchItems(event); 
+  }
+}
+
+  onClear() {
+  this.page = 1;
+  this.fetchItems({});
+}
+
   onPageChange(event: { page: number, pageSize: number }) {
     this.page = event.page;
     this.pageSize = event.pageSize;
-    this.fetchItems();
+    this.fetchItems(this.searchValues);
   }
 
   onAddProduct() {
@@ -86,12 +117,12 @@ export class TableComponent implements OnInit {
   }
 
   onEdit(event: any) {
-    this.router.navigate(['edit', event.id], { relativeTo: this.route });
-  }
+  this.router.navigate(['edit', event.id], { relativeTo: this.route });
+}
 
   onFormDone() {
     this.showForm = false;
-    this.fetchItems();
+    this.fetchItems(this.searchValues);
   }
 
   onCloseForm() {
@@ -99,27 +130,16 @@ export class TableComponent implements OnInit {
   }
 
   onTabChange(event: any) {}
-  onSearch(event: any) {}
-  onClear() {}
-  onDelete(event: any) {
-     Swal.fire({
-    title: 'Are you sure?',
-    text: 'Do you really want to delete this product?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, delete it!',
-    cancelButtonText: 'Cancel'
-  }).then((result) => {
-    if (result.isConfirmed) {
+  async onDelete(event: any) {
+    const conf=await this.err.confirmSwal('Delet voucher',`Are you sure you want to delete voucher number `,`${event.voucher_number}`);
+    if (conf) {
     this.invoice.deletinvoice(this.orgId,event.id).subscribe({
-  next: res => {
-    this.fetchItems();
-  },
-  error: err => {
-  }
-});
+      next: res => {
+        this.fetchItems(this.searchValues);
+      },
+      error: err => {}
+    });
     }
-  });
 }
   onToggle(event: any) {}
 
@@ -133,6 +153,7 @@ export class TableComponent implements OnInit {
       }
     });
   }
+
 
   showVoucherSwal(voucher: any) {
     // Extract the first asset for table row (if any)

@@ -13,7 +13,7 @@ import { SidebarComponent } from './shared/sidebar/sidebar.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet,HttpClientModule,CommonModule,AsyncPipe,HeaderComponent,SidebarComponent],
+  imports: [RouterOutlet,HttpClientModule,CommonModule,AsyncPipe],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })

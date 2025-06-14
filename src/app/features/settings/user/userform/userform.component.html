@@ -1,0 +1,129 @@
+<div class="backdrop" [class.show]="isOpen" (click)="onClose()"></div>
+<div class="offcanvas" [class.show]="isOpen">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      {{ mode === 'edit' ? 'Edit User' : mode === 'view' ? 'View User' : 'Add User' }}
+    </h5>
+    <button type="button" class="btn-close" (click)="onClose()">
+      <span>&times;</span>
+    </button>
+  </div>
+  <div class="offcanvas-body">
+    <form #userFormRef="ngForm" (ngSubmit)="onSave(userFormRef)" *ngIf="mode !== 'view'; else viewMode">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fullName">Full Name <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="fullName"
+            name="fullName"
+            [(ngModel)]="userForm.fullName"
+            placeholder="Ex. John Doe"
+            class="form-control"
+            required
+            #fullName="ngModel"
+          >
+          <div class="error" *ngIf="fullName.invalid && fullName.touched">
+            Name is required.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="email">Email <span class="required">*</span></label>
+          <input 
+            type="email" 
+            id="email"
+            name="email"
+            [(ngModel)]="userForm.email"
+            placeholder="Ex. john.doe@gmail.com"
+            class="form-control"
+            required
+            email
+            #email="ngModel"
+          >
+          <div class="error" *ngIf="email.invalid && email.touched">
+            <div *ngIf="email.errors?.['required']">Email is required.</div>
+            <div *ngIf="email.errors?.['email']">Invalid email format.</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
+          <input 
+            type="tel" 
+            id="mobileNumber"
+            name="mobileNumber"
+            [(ngModel)]="userForm.mobileNumber"
+            placeholder="Enter Mobile Number"
+            class="form-control"
+            required
+            pattern="^[0-9]{10}$"
+            #mobileNumber="ngModel"
+          >
+          <div class="error" *ngIf="mobileNumber.invalid && mobileNumber.touched">
+            <div *ngIf="mobileNumber.errors?.['required']">Mobile number is required.</div>
+            <div *ngIf="mobileNumber.errors?.['pattern']">Mobile must be a 10-digit number.</div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="role">Role <span class="required">*</span></label>
+          <select 
+            id="role"
+            name="role"
+            [(ngModel)]="userForm.role"
+            class="form-control"
+            required
+            #role="ngModel"
+          >
+            <option value="" disabled>Select Role</option>
+            <option *ngFor="let role of roles" [value]="role.value">
+              {{ role.label }}
+            </option>
+          </select>
+          <div class="error" *ngIf="role.invalid && role.touched">
+            Role is required.
+          </div>
+        </div>
+      </div>
+
+      <!-- Extra field for status in EDIT mode -->
+      <div class="form-row" *ngIf="mode === 'edit'">
+        <div class="form-group">
+          <label for="status">Status <span class="required">*</span></label>
+          <select 
+            id="status"
+            name="status"
+            [(ngModel)]="userForm.status"
+            class="form-control"
+            required
+            #status="ngModel"
+          >
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <div class="error" *ngIf="status.invalid && status.touched">
+            Status is required.
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="!userFormRef.form.valid">
+          Save
+        </button>
+      </div>
+    </form>
+    <ng-template #viewMode>
+      <div class="view-only">
+        <div><strong>Name:</strong> {{ userForm.fullName }}</div>
+        <div><strong>Email:</strong> {{ userForm.email }}</div>
+        <div><strong>Mobile:</strong> {{ userForm.mobileNumber }}</div>
+        <div><strong>Role:</strong> {{ getRoleLabel(userForm.role) }}</div>
+        <div><strong>Status:</strong> {{ userForm.status || 'Active' }}</div>
+      </div>
+    </ng-template>
+  </div>
+</div>

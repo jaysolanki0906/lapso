@@ -7,7 +7,7 @@
     </button>
   </div>
   <div class="header-right">
-    <button class="icon-btn">
+    <button class="icon-btn" (click)="redirescttosettings()">
       <mat-icon>settings</mat-icon>
     </button>
     <div class="user-initial">{{ (userProfile$ | async)?.fullname?.charAt(0) }}</div>

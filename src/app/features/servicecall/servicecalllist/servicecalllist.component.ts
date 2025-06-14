@@ -7,11 +7,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { ServicecallformComponent } from '../servicecallform/servicecallform.component';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
+import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
+import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-servicecalllist',
   templateUrl: './servicecalllist.component.html',
-  imports: [CommonTableCardComponent, MatIconModule, ServicecallformComponent, CommonModule],
+  imports: [CommonTableCardComponent,HeaderComponent, MatIconModule, ServicecallformComponent, CommonModule,SidebarComponent],
   styleUrls: ['./servicecalllist.component.scss']
 })
 export class ServicecalllistComponent implements OnInit, OnDestroy {

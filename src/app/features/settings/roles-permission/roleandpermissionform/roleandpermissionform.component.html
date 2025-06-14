@@ -1,0 +1,46 @@
+<div class="backdrop" [class.show]="isOpen" (click)="onClose()"></div>
+<div class="offcanvas" [class.show]="isOpen">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      {{ mode === 'edit' ? 'Edit User' : mode === 'view' ? 'View User' : 'Add User' }}
+    </h5>
+    <button type="button" class="btn-close" (click)="onClose()">
+      <span>&times;</span>
+    </button>
+  </div>
+  <div class="offcanvas-body">
+    <form #userFormRef="ngForm" (ngSubmit)="onSave(userFormRef)" *ngIf="mode !== 'view'; else viewMode">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fullName">Role Title <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="fullName"
+            name="fullName"
+            [(ngModel)]="userForm.fullName"
+            placeholder="Ex. John Doe"
+            class="form-control"
+            required
+            #fullName="ngModel"
+          >
+          <div class="error" *ngIf="fullName.invalid && fullName.touched">
+            Name is required.
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="!userFormRef.form.valid">
+          Save
+        </button>
+      </div>
+    </form>
+    <ng-template #viewMode>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Role Title</label>
+          <div class="form-control-static">{{ userForm.fullName }}</div>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

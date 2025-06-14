@@ -1,6 +1,6 @@
 <mat-card class="table-card-mat-custom">
-  <div class="header-row d-flex align-items-center mb-2">
-    <div></div>
+  <!-- Enhanced Header Section -->
+  <div class="header-row" *ngIf="activeTab">
     <mat-tab-group
       class="custom-tabs"
       [selectedIndex]="selectedTabIndex"
@@ -8,89 +8,176 @@
       <mat-tab *ngFor="let tab of tabs" [label]="tab.label"></mat-tab>
     </mat-tab-group>
   </div>
-  <div class="divider"></div>
 
-  <div class="search-heading search-heading-top">Search</div>
-  <div class="search-row-mat search-row-red">
-    <ng-container *ngFor="let field of searchFields">
+  <!-- Enhanced Search Section -->
+<div class="search-row-mat search-row-red">
+  <ng-container *ngFor="let field of searchFields">
+    <div class="search-field-group">
+      <div class="search-field-title">{{ field.title }}</div>
       <mat-form-field appearance="outline" class="search-mat search-mat-extended">
-        <mat-label>{{field.placeholder}}</mat-label>
-        <input matInput [(ngModel)]="searchValues[field.key]"/>
+        <input 
+          matInput 
+          [(ngModel)]="searchValues[field.key]"
+          (keyup.enter)="onSearch()"
+          placeholder="{{field.placeholder}}"/>
+        <mat-icon matSuffix *ngIf="field.icon">{{field.icon}}</mat-icon>
       </mat-form-field>
-    </ng-container>
-    <button mat-icon-button class="search-btn-red" (click)="onSearch()">
+    </div>
+  </ng-container>
+  
+  <!-- Enhanced Action Buttons -->
+  <div class="search-actions">
+    <button 
+      mat-icon-button 
+      class="search-btn-red" 
+      (click)="onSearch()"
+      matTooltip="Search records"
+      [disabled]="loading">
       <mat-icon>search</mat-icon>
     </button>
-    <button mat-icon-button class="clear-btn-red" (click)="onClear()">
-      <mat-icon>close</mat-icon>
+    <button 
+      mat-icon-button 
+      class="clear-btn-red" 
+      (click)="onClear()"
+      matTooltip="Clear filters"
+      [disabled]="loading">
+      <mat-icon>clear</mat-icon>
     </button>
   </div>
+</div>
 
+  <!-- Table Section - Redesigned to match the reference UI -->
   <div class="table-responsive-mat">
-    <div class="mat-grid-table" *ngIf="!loading && data.length; else emptyOrLoading">
-      <div class="mat-grid-row mat-grid-header">
-        <div class="mat-grid-cell" *ngFor="let col of columns">{{ col.label }}</div>
-        <div class="mat-grid-cell actions-cell">Actions</div>
-      </div>
-      <div class="mat-grid-row" *ngFor="let row of data">
-        <div class="mat-grid-cell" *ngFor="let col of columns">
-          <ng-container >
-            {{ getNestedValue(row, col.key) }}
-          </ng-container>
-        </div>
-        <div class="mat-grid-cell actions-cell">
-          <mat-slide-toggle
-            *ngIf="showToggle"
-            [checked]="row.status === 'ACTIVE'"
-            (change)="onToggle(row, $event)"
-            color="primary"
-            class="slide-toggle-sm"
-            [disabled]="row.toggling">
-          </mat-slide-toggle>
-          <button mat-icon-button color="primary" (click)="onEdit(row)">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button color="accent" (click)="onView(row)">
-            <mat-icon>visibility</mat-icon>
-          </button>
-          <button mat-icon-button color="warn" (click)="onDelete(row)">
-            <mat-icon>delete</mat-icon>
-          </button>
-          <button mat-icon-button color="primary" *ngIf='callbtn' (click)="onCall(row)">
-            <mat-icon>call</mat-icon>
-          </button>
-        </div>
-      </div>
-    </div>
+    <table class="mat-custom-table" *ngIf="!loading && data.length; else emptyOrLoading">
+      <thead>
+        <tr>
+          <th *ngFor="let col of columns">{{ col.label }}</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of data; let i = index; trackBy: trackByFn"
+            [ngClass]="{'row-inactive': getNestedValue(row, statusKey) === 'INACTIVE'}">
+          <td *ngFor="let col of columns">
+            <ng-container [ngSwitch]="col.type">
+              <span *ngSwitchCase="'status'" class="status-badge"
+                [ngClass]="{
+                  'active': getNestedValue(row, col.key) === 'ACTIVE',
+                  'inactive': getNestedValue(row, col.key) === 'INACTIVE'
+                }">
+                {{ getNestedValue(row, col.key) | titlecase }}
+              </span>
+              <span *ngSwitchCase="'date'">
+                {{ getNestedValue(row, col.key) | date:'MMM dd, yyyy' }}
+              </span>
+              <span *ngSwitchCase="'currency'">
+                {{ getNestedValue(row, col.key) | currency:'USD':'symbol':'1.2-2' }}
+              </span>
+              <span *ngSwitchDefault>
+                {{ getNestedValue(row, col.key) || '-' }}
+              </span>
+            </ng-container>
+          </td>
+          <td class="user-actions">
+            <button class="action-btn edit" (click)="onEdit(row)" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="action-btn view" (click)="onView(row)" title="View">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+            <button class="action-btn delete" (click)="onDelete(row)" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"></polyline>
+                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+              </svg>
+            </button>
+            <button class="action-btn copy" *ngIf="callbtn" (click)="onCall(row)" title="Copy">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="m5,15H4a2,2 0 0,1 -2,-2V4A2,2 0 0,1 4,2H13a2,2 0 0,1 2,2v1"></path>
+          </svg>
+        </button>
+        <div class="form-check form-switch">
+  <input 
+    class="form-check-input toggle-warn" 
+    type="checkbox" 
+    role="switch" 
+    id="flexSwitchCheckChecked" 
+    checked>
+</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- Empty/Loading States -->
     <ng-template #emptyOrLoading>
       <div class="mat-table-empty" *ngIf="loading">
-        <mat-progress-spinner diameter="32" mode="indeterminate"></mat-progress-spinner> Loading...
+        <mat-progress-spinner diameter="40" mode="indeterminate" color="primary"></mat-progress-spinner>
+        <p>Loading data...</p>
       </div>
       <div class="mat-table-empty" *ngIf="!loading && !data.length">
-        No records found.
+        <mat-icon style="font-size: 48px; width: 48px; height: 48px; color: #9ca3af; margin-bottom: 1rem;">inbox</mat-icon>
+        <p>No records found.</p>
+        <p style="font-size: 14px; color: #9ca3af;">Try adjusting your search criteria.</p>
       </div>
     </ng-template>
   </div>
 
-  <div class="mat-pagination-row d-flex align-items-center justify-content-between mt-3 flex-wrap">
+  <!-- Pagination Section -->
+  <div class="mat-pagination-row">
     <div class="d-flex align-items-center">
-      <span>Items per page:</span>
-      <mat-form-field appearance="fill" class="mat-page-size-select">
+      <span>Showing {{ (page - 1) * pageSize + 1 }} to {{ Math.min(page * pageSize, totalRecords) }} of {{ totalRecords }} entries</span>
+      <span style="margin: 0 1rem;">Items per page:</span>
+      <mat-form-field appearance="outline" class="mat-page-size-select">
         <mat-select [(ngModel)]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
           <mat-option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</mat-option>
         </mat-select>
       </mat-form-field>
     </div>
     <div class="custom-paginator">
-      <button mat-button [disabled]="page === 1" (click)="goToPage(1)">First</button>
-      <button mat-button [disabled]="page === 1" (click)="goToPage(page - 1)">Previous</button>
+      <button 
+        mat-button 
+        [disabled]="page === 1 || loading" 
+        (click)="goToPage(1)"
+        matTooltip="First page">
+        <mat-icon>first_page</mat-icon>
+      </button>
+      <button 
+        mat-button 
+        [disabled]="page === 1 || loading" 
+        (click)="goToPage(page - 1)"
+        matTooltip="Previous page">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
       <ng-container *ngFor="let pg of pageNumbers">
-        <button mat-button [color]="pg === page ? 'primary' : ''" [disabled]="pg === page" (click)="goToPage(pg)">
+        <button 
+          mat-button 
+          [color]="pg === page ? 'primary' : ''" 
+          [disabled]="pg === page || loading" 
+          (click)="goToPage(pg)">
           {{ pg }}
         </button>
       </ng-container>
-      <button mat-button [disabled]="page === totalPages" (click)="goToPage(page + 1)">Next</button>
-      <button mat-button [disabled]="page === totalPages" (click)="goToPage(totalPages)">Last</button>
+      <button 
+        mat-button 
+        [disabled]="page === totalPages || loading" 
+        (click)="goToPage(page + 1)"
+        matTooltip="Next page">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button 
+        mat-button 
+        [disabled]="page === totalPages || loading" 
+        (click)="goToPage(totalPages)"
+        matTooltip="Last page">
+        <mat-icon>last_page</mat-icon>
+      </button>
     </div>
   </div>
 </mat-card>

@@ -1,0 +1,145 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">Settings</h2>
+      <p class="sidebar-subtitle">Manage your Settings on portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div 
+        *ngFor="let item of sidebarItems; let i = index"
+        class="sidebar-item"
+        [class.active]="item.active"
+        (click)="onSidebarItemClick(i)"
+      >
+        <span class="sidebar-icon">{{ item.icon }}</span>
+        <span class="sidebar-label">{{ item.label }}</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Header -->
+    <div class="content-header">
+      <div class="header-info">
+        <h1 class="page-title">Users List</h1>
+        <p class="page-subtitle">Manage your Users</p>
+      </div>
+      <button class="add-user-btn" (click)="onAddNewUser()">
+        <span class="btn-icon">⊕</span>
+        Add New User
+      </button>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+      <div class="search-group">
+        <label class="search-label">User Name, Email or Mobile</label>
+        <div class="search-controls">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search by User Name, Email or Mobile"
+            [(ngModel)]="searchTerm"
+          />
+          <button class="search-btn" (click)="onSearch()">🔍</button>
+          <button class="clear-btn" (click)="onClearSearch()">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      <div class="table-container">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Mobile</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users" class="table-row">
+              <td class="user-name">{{ user.name }}</td>
+              <td class="user-email">{{ user.email }}</td>
+              <td class="user-mobile">{{ user.mobile }}</td>
+              <td class="user-role">{{ user.roleLabel }}</td>
+              <td class="user-status">
+                <span class="status-badge"
+                  [ngClass]="{ 'active': user.status === 'Active', 'inactive': user.status === 'Inactive' }">
+                  {{ user.status }}
+                </span>
+              </td>
+              <td class="user-actions">
+                <button class="action-btn edit" (click)="onEditUser(user)" title="Edit">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button class="action-btn view" (click)="onViewUser(user)" title="View">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+                <button class="action-btn delete" (click)="onDeleteUser(user)" title="Delete">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3,6 5,6 21,6"></polyline>
+                    <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                  </svg>
+                </button>
+                <button class="action-btn copy" (click)="onCopyUser(user)" title="Copy">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="m5,15H4a2,2 0 0,1 -2,-2V4A2,2 0 0,1 4,2H13a2,2 0 0,1 2,2v1"></path>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-section">
+        <div class="entries-info">
+          <span>Showing</span>
+          <select [(ngModel)]="entriesPerPage" class="entries-select" (change)="onEntriesChange()">
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <span>entries</span>
+        </div>
+
+        <div class="pagination-controls">
+          <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(1)">First</button>
+          <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Previous</button>
+          <ng-container *ngFor="let page of [].constructor(totalPages); let idx = index">
+            <button class="page-btn" [class.active]="currentPage === (idx+1)" (click)="goToPage(idx+1)">
+              {{ idx+1 }}
+            </button>
+          </ng-container>
+          <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next</button>
+          <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)">Last</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Form Off-canvas -->
+  <app-userform 
+    [isOpen]="isUserFormOpen"
+    [mode]="formMode"
+    [userData]="selectedUser"
+    (closeForm)="onCloseUserForm()"
+    (saveUser)="onSaveUser($event)"
+    (userUpdated)="onUserUpdated()">
+  </app-userform>
+</div>

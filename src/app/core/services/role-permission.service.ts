@@ -27,16 +27,31 @@ setRole(role: string, auth_items?: any): void {
     users: 'user'
   };
 
-  getPermission(module: string, permission: string): boolean {
+  getPermission(module: string, permission?: string): boolean {
     const permissions = this.generatePermissions(this.roleAuth);
     const backendModule = this.moduleMap[module] || module;
 
     if (!permissions[backendModule]) {
+      // Check if any child (sub-permission) exists and is true
+      if (this.roleAuth[backendModule]) {
+        const rawPermissions = Object.keys(this.roleAuth[backendModule]);
+        // If any child permission is true, return true
+        for (const perm of rawPermissions) {
+          if (this.roleAuth[backendModule][perm] === true) {
+            return true;
+          }
+        }
+      }
       console.error(
         `[RolePermissionService] Module "${backendModule}" not found in permissions for role "${this.currentRole}".`
       );
       return false;
     }
+
+    if (!permission) {
+      return permissions[backendModule].length > 0;
+    }
+
     if (!permissions[backendModule].includes(permission)) {
       const rawPermissions = this.roleAuth[backendModule] ? Object.keys(this.roleAuth[backendModule]) : [];
       if (!rawPermissions.includes(permission)) {
@@ -47,8 +62,7 @@ setRole(role: string, auth_items?: any): void {
       return false;
     }
     return true;
-  }
-
+}
   getRoles(): Observable<any[]> {
     return this.api.get<any[]>(this.baseUrl);
   }
@@ -85,6 +99,23 @@ setRole(role: string, auth_items?: any): void {
     }
     return permissions;
   }
-
- 
+  getpermissionallforpermissionpage(orgid:string):Observable<any>
+  {
+    return this.api.get(`${orgid}/org-roles`);
+  }
+  saverole(orgid:string,paylod:any):Observable<any>
+  {
+    return this.api.post(`${orgid}/org-roles`,paylod);
+  }
+  editroles(orgid:string,paylod:any,id:string):Observable<any>
+  {
+    return this.api.put(`${orgid}/org-roles/${id}`,paylod);
+  }
+  deleteroleandsave(orgid:string,id:string):Observable<any>{
+    return this.api.delete(`${orgid}/org-roles/${id}`);
+  }
+  saveAllRoles(orgid:string,payload:any,id:string):Observable<any>
+  {
+    return this.api.put(`${orgid}/org-roles/${id}`,payload);
+  }
 }
