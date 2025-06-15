@@ -12,29 +12,29 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip'; // Added for tooltips
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface TableColumn {
   key: string;
   label: string;
   sortable?: boolean;
-  type?: 'text' | 'status' | 'date' | 'currency'; // Added type support
-  width?: string; // Added for column width control
+  type?: 'text' | 'status' | 'date' | 'currency';
+  width?: string;
 }
 
 export interface SearchField {
   title?: string;
   placeholder: string;
   key: string;
-  icon?: string; // Added icon support for search fields
-  type?: 'text' | 'email' | 'number' | 'date'; // Added input type support
+  icon?: string;
+  type?: 'text' | 'email' | 'number' | 'date';
 }
 
 export interface TableTab {
   label: string;
   value: string;
-  icon?: string; // Added icon support for tabs
-  count?: number; // Added count support for tabs
+  icon?: string;
+  count?: number;
 }
 
 @Component({
@@ -56,34 +56,32 @@ export interface TableTab {
     FormsModule,
     CommonModule,
     MatCardModule,
-    MatTooltipModule // Added for tooltips
+    MatTooltipModule
   ],
 })
 export class CommonTableCardComponent implements OnInit {
   @Input() tabs: TableTab[] = [];
   @Input() activeTab: string = '';
-  @Input() tableTitle: string = 'Data Management'; // Added table title
-
-  @Input() searchFields: SearchField[] = []; // Updated type
+  @Input() tableTitle: string = 'Data Management'; 
+  @Input() searchFields: SearchField[] = [];
   searchValues: { [key: string]: string } = {};
-
   @Input() columns: TableColumn[] = [];
-
   @Input() data: any[] = [];
   @Input() total: number = 0;
-  @Input() totalRecords: number = 0; // Added for better pagination info
+  @Input() totalRecords: number = 0;
   @Input() page: number = 1;
   @Input() pageSize: number = 20;
   @Input() pageSizeOptions: number[] = [10, 20, 50, 100];
   @Input() loading: boolean = false;
   @Input() callbtn: boolean = false;
-
   @Input() showToggle: boolean = true;
-  @Input() showSearch: boolean = true; // Added to control search visibility
-  @Input() showPagination: boolean = true; // Added to control pagination visibility
-  @Input() enableSorting: boolean = false; // Added sorting support
+  @Input() showSearch: boolean = true;
+  @Input() showPagination: boolean = true;
+  @Input() enableSorting: boolean = true;
+  @Input() canEdit: boolean = true;
+  @Input() canView: boolean = true;
+  @Input() canDelete: boolean = true;
 
-  // Event Emitters
   @Output() tabChange = new EventEmitter<string>();
   @Output() search = new EventEmitter<{ [key: string]: string }>();
   @Output() clear = new EventEmitter<void>();
@@ -93,20 +91,16 @@ export class CommonTableCardComponent implements OnInit {
   @Output() toggle = new EventEmitter<{ row: any, value: boolean }>();
   @Output() pageChange = new EventEmitter<{ page: number, pageSize: number }>();
   @Output() call = new EventEmitter<any>();
-  @Output() sort = new EventEmitter<{ column: string, direction: 'asc' | 'desc' }>(); // Added sorting
+  @Output() sort = new EventEmitter<{ column: string, direction: 'asc' | 'desc' }>();
 
-  // Internal properties
   statusKey = 'status';
-  currentSortColumn: string = '';
+  currentSortColumn: string = 'name';
   currentSortDirection: 'asc' | 'desc' = 'asc';
 
   ngOnInit() {
-    // Initialize search values
     for (let field of this.searchFields) {
       this.searchValues[field.key] = '';
     }
-
-    // Set totalRecords if not provided
     if (!this.totalRecords && this.total) {
       this.totalRecords = this.total;
     }
@@ -133,7 +127,6 @@ export class CommonTableCardComponent implements OnInit {
     this.tabChange.emit(tab.value);
   }
 
-  // Search Management
   onSearch() {
     this.search.emit(this.searchValues);
   }
@@ -145,23 +138,18 @@ export class CommonTableCardComponent implements OnInit {
     this.clear.emit();
   }
 
-  // Action Handlers
   onEdit(row: any) { 
     this.edit.emit(row); 
   }
-
   onView(row: any) { 
     this.view.emit(row); 
   }
-
   onDelete(row: any) { 
     this.delete.emit(row); 
   }
-
   onCall(row: any) { 
     this.call.emit(row); 
   }
-
   onToggle(row: any, event: any) {
     const payload = { 
       row: row, 
@@ -171,31 +159,18 @@ export class CommonTableCardComponent implements OnInit {
     this.toggle.emit(payload);
   }
 
-  // Sorting Management
-  onSort(column: TableColumn) {
+  // Sorting
+  onSort(column: TableColumn, direction: 'asc' | 'desc') {
     if (!this.enableSorting || !column.sortable) return;
-
-    if (this.currentSortColumn === column.key) {
-      this.currentSortDirection = this.currentSortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.currentSortColumn = column.key;
-      this.currentSortDirection = 'asc';
-    }
-
+    this.currentSortColumn = column.key;
+    this.currentSortDirection = direction;
     this.sort.emit({
       column: column.key,
-      direction: this.currentSortDirection
+      direction: direction
     });
   }
 
-  getSortIcon(column: TableColumn): string {
-    if (!column.sortable || this.currentSortColumn !== column.key) {
-      return 'sort';
-    }
-    return this.currentSortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward';
-  }
-
-  // Pagination Management
+  // Pagination
   onMaterialPage(event: PageEvent) {
     this.page = event.pageIndex + 1;
     this.pageSize = event.pageSize;
@@ -233,18 +208,13 @@ export class CommonTableCardComponent implements OnInit {
     this.pageChange.emit({ page: this.page, pageSize: this.pageSize });
   }
 
-  // Utility Methods
   getNestedValue(obj: any, path: string): any {
     if (!obj || !path) return '';
     return path.split('.').reduce((acc, part) => acc && acc[part], obj) ?? '';
   }
-
-  // Track by function for performance
   trackByFn(index: number, item: any): any {
     return item.id || index;
   }
-
-  // Status badge helper
   getStatusClass(status: string): string {
     switch (status?.toLowerCase()) {
       case 'active': return 'status-active';
@@ -254,11 +224,8 @@ export class CommonTableCardComponent implements OnInit {
       default: return 'status-default';
     }
   }
-
-  // Format value based on column type
   formatValue(value: any, column: TableColumn): any {
     if (!value && value !== 0) return '-';
-
     switch (column.type) {
       case 'status':
         return value;
@@ -270,20 +237,14 @@ export class CommonTableCardComponent implements OnInit {
         return value;
     }
   }
-
-  // Check if search has active filters
   get hasActiveFilters(): boolean {
     return Object.values(this.searchValues).some(value => value && value.trim() !== '');
   }
-
-  // Get current page info
   get currentPageInfo(): string {
     const total = this.totalRecords || this.total;
     const start = (this.page - 1) * this.pageSize + 1;
     const end = Math.min(this.page * this.pageSize, total);
     return `${start}-${end} of ${total}`;
   }
-
-  // Math reference for template
   Math = Math;
 }

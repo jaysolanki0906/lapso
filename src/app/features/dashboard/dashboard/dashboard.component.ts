@@ -4,9 +4,9 @@ import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [SidebarComponent,HeaderComponent],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrl: './dashboard.component.scss',
+  standalone:false,
 })
 export class DashboardComponent {
 

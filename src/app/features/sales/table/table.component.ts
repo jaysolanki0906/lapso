@@ -13,15 +13,7 @@ import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-table',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    ReactiveFormsModule,
-    CommonTableCardComponent,
-    SidebarComponent,
-    HeaderComponent
-  ],
+  standalone: false,
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss'
 })
@@ -30,6 +22,8 @@ export class TableComponent implements OnInit {
   orgSub: any;
   orgId: string = '';
   showForm = false;
+  sortColumn: string = '';
+sortDirection: 'asc' | 'desc' = 'asc';
 
  searchFields = [
   { title: 'Voucher Number', placeholder: 'Voucher Number', key: 'invoice_number' },
@@ -41,9 +35,9 @@ export class TableComponent implements OnInit {
   columns: TableColumn[] = [
     { key: 'cust_name', label: 'Customer Name' },
     { key: 'cust_mobile', label: 'Customer Mobile' },
-    { key: 'voucher_number', label: 'Voucher Number' },
-    { key: 'voucher_date', label: 'Voucher Date' },
-    { key: 'created_at', label: 'Created Date' }
+    { key: 'voucher_number', label: 'Voucher Number', sortable: true},
+    { key: 'voucher_date', label: 'Voucher Date', sortable: true},
+    { key: 'created_at', label: 'Created Date', sortable: true}
   ];
 
   filteredData: any[] = [];
@@ -73,25 +67,34 @@ export class TableComponent implements OnInit {
   }
 
   fetchItems(searchObj?: { [key: string]: string }) {
-    // Compose the filter params dynamically
-    const params: any = {
-      page: this.page,
-      pageSize: this.pageSize
-    };
-    if (searchObj) {
-      Object.assign(params, searchObj);
-    }
-    // Pass filter params to the service
-    this.invoice.getdata(this.orgId, params.page, params.pageSize, params).subscribe({
-      next: (data: any) => {
-        this.filteredData = data.rows;
-        this.total = data.total;
-      },
-      error: (error: any) => {
-        this.err.showToast('Error fetching data:', error);
-      }
-    });
+  const params: any = {
+    page: this.page,
+    pageSize: this.pageSize
+  };
+  if (searchObj) {
+    Object.assign(params, searchObj);
   }
+  // Add sorting params if set
+  if (this.sortColumn) {
+    params.order_by = this.sortColumn;
+    params.order_type = this.sortDirection;
+  }
+  this.invoice.getdata(this.orgId, params.page, params.pageSize, params).subscribe({
+    next: (data: any) => {
+      this.filteredData = data.rows;
+      this.total = data.total;
+    },
+    error: (error: any) => {
+      this.err.showToast('Error fetching data:', error);
+    }
+  });
+}
+  onSort(event: { column: string, direction: 'asc' | 'desc' }) {
+  this.sortColumn = event.column;
+  this.sortDirection = event.direction;
+  this.page = 1;
+  this.fetchItems(this.searchValues);
+}
 
   onSearch(event: { [key: string]: string }) {
   const hasAnyValue = Object.values(event).some(val => val && val.trim() !== '');

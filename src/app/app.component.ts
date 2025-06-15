@@ -7,23 +7,28 @@ import { LoaderService } from './core/services/loader.service';
 import { CommonModule } from '@angular/common';
 import { AsyncPipe } from '@angular/common';
 import { OrganizationService } from './core/services/organization.service';
-import { HeaderComponent } from './shared/header/header.component';
-import { SidebarComponent } from './shared/sidebar/sidebar.component';
+import { RolePermissionService } from './core/services/role-permission.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet,HttpClientModule,CommonModule,AsyncPipe],
+  imports: [RouterOutlet,HttpClientModule,CommonModule,AsyncPipe,],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  constructor(private userService: UserService,private organizationService:OrganizationService, private token: TokenService,public loaderService: LoaderService) {}
+  constructor(private userService: UserService,
+    private organizationService:OrganizationService, 
+    private token: TokenService,
+    public loaderService: LoaderService,
+  public rolePermissionService:RolePermissionService) {}
 
-  ngOnInit() {
-    if (this.token.getAccessToken()) {
-      this.userService.fetchAndStoreProfile().subscribe();
-      this.organizationService.fetchAndStoreOrganization().subscribe();
-    }
+ ngOnInit() {
+  if (this.token.getAccessToken()) {
+    this.userService.fetchAndStoreProfile().subscribe(profile => {
+      this.rolePermissionService.setRole(profile.role, profile.auth_items);
+    });
+    this.organizationService.fetchAndStoreOrganization().subscribe();
   }
+}
 }

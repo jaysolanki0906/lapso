@@ -1,25 +1,20 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ServicecallService } from '../../../core/services/servicecall.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { Subscription } from 'rxjs';
-import { CommonTableCardComponent, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
-import { MatIconModule } from '@angular/material/icon';
-import { ServicecallformComponent } from '../servicecallform/servicecallform.component';
-import { CommonModule } from '@angular/common';
+import { TableColumn } from '../../../shared/common-table-card/common-table-card.component';
 import Swal from 'sweetalert2';
-import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
-import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-servicecalllist',
   templateUrl: './servicecalllist.component.html',
-  imports: [CommonTableCardComponent,HeaderComponent, MatIconModule, ServicecallformComponent, CommonModule,SidebarComponent],
+  standalone: false,
   styleUrls: ['./servicecalllist.component.scss']
 })
 export class ServicecalllistComponent implements OnInit, OnDestroy {
   columns: TableColumn[] = [
-    { key: 'service_date', label: 'Service Date' },
-    { key: 'created_at', label: 'Created At' },
+    { key: 'service_date', label: 'Service Date', sortable: true },
+    { key: 'created_at', label: 'Created At', sortable: true },
     { key: 'customer_name', label: 'Customer Name' },
     { key: 'customer_number', label: 'Customer Number' },
     { key: 'complaints_source', label: 'Raised By' },
@@ -43,15 +38,19 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   orgSub: Subscription | null = null;
   loading = false;
   searchQuery = '';
-  submitting = false; // For delete
+  submitting = false;
 
-  // For delete operation
   selectedVoucherId: string = '';
   serviceCall: any = {};
 
+  // Sorting state
+  sortColumn: string = 'service_date'; // default sorted by service_date
+  sortDirection: 'asc' | 'desc' = 'desc';
+
   constructor(
     private servicecallService: ServicecallService,
-    private organizationService: OrganizationService
+    private organizationService: OrganizationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -61,6 +60,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
         this.fetchItems();
       }
     });
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {
@@ -72,10 +72,12 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
     this.loading = true;
     const offset = (this.page - 1) * this.pageSize;
     this.servicecallService.getItems(this.orgId, {
-      search: this.searchQuery,
-      offset,
-      limit: this.pageSize
-    }).subscribe(res => {
+  search: this.searchQuery,            // <-- searching by text
+  offset,
+  limit: this.pageSize,
+  order_by: this.sortColumn,           // <-- sorting by field name
+  order_type: this.sortDirection,      // <-- sorting direction
+}).subscribe(res => {
       this.filteredData = res.data || [];
       this.total = res.count || this.filteredData.length;
       this.loading = false;
@@ -99,6 +101,14 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   onPageChange(event: any) {
     this.page = event.page;
     this.pageSize = event.pageSize;
+    this.fetchItems();
+  }
+
+  // Sorting handler for table
+  onSort(event: { column: string, direction: 'asc' | 'desc' }) {
+    this.sortColumn = event.column;
+    this.sortDirection = event.direction;
+    this.page = 1;
     this.fetchItems();
   }
 

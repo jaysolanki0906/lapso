@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrgusersService } from '../../../../core/services/orgusers.service';
@@ -7,6 +7,8 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
 import { UserformComponent } from '../userform/userform.component';
 import Swal from 'sweetalert2';
 import { Router } from '@angular/router';
+import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
+import { HeaderComponent } from '../../../../shared/header/header.component';
 
 interface User {
   user_id: number;
@@ -31,7 +33,7 @@ type FormMode = 'add' | 'edit' | 'view';
 @Component({
   selector: 'app-usermanagement',
   standalone: true,
-  imports: [CommonModule, FormsModule, UserformComponent],
+  imports: [CommonModule, FormsModule, UserformComponent,SidebarComponent,HeaderComponent],
   templateUrl: './usermanagement.component.html',
   styleUrl: './usermanagement.component.scss'
 })
@@ -59,6 +61,7 @@ export class UsermanagementComponent implements OnInit {
     private org: OrganizationService,
     private err: ErrorHandlerService,
     private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -66,12 +69,15 @@ export class UsermanagementComponent implements OnInit {
   }
 
   orgidfetch() {
-    this.org.fetchorginizationid().subscribe(arg => {
-      if (!arg) return;
+  this.org.fetchorginizationid().subscribe(arg => {
+    if (!arg) return;
+    // Defer updates to the next microtask
+    Promise.resolve().then(() => {
       this.orgid = arg;
       this.loadAllUsers();
     });
-  }
+  });
+}
 
   loadAllUsers() {
     const params: any = {
@@ -97,14 +103,16 @@ export class UsermanagementComponent implements OnInit {
   }
 
   onSidebarItemClick(index: number): void {
-    this.sidebarItems.forEach((item, i) => {
-      item.active = i === index;
-    });
+  this.sidebarItems.forEach((item, i) => {
+    item.active = i === index;
+  });
+  Promise.resolve().then(() => {
     const selectedItem = this.sidebarItems[index];
     if (selectedItem.route) {
       this.router.navigate([selectedItem.route]);
     }
-  }
+  });
+}
 
   onSearch(): void {
     if (this.searchTerm.trim()) {
@@ -162,22 +170,30 @@ export class UsermanagementComponent implements OnInit {
   }
 
   onAddNewUser(): void {
-    this.formMode = 'add';
-    this.selectedUser = null;
-    this.isUserFormOpen = true;
-    this.loadAllUsers();
-  }
+  this.formMode = 'add';
+  this.selectedUser = null;
+  Promise.resolve().then(() => {
+    setTimeout(() => {
+  this.isUserFormOpen = true;
+  this.loadAllUsers();
+});
+  });
+}
 
   onEditUser(user: User): void {
     this.formMode = 'edit';
     this.selectedUser = user;
+    setTimeout(() => {
     this.isUserFormOpen = true;
+  });
   }
 
   onViewUser(user: User): void {
     this.formMode = 'view';
     this.selectedUser = user;
+    setTimeout(() => {
     this.isUserFormOpen = true;
+  });
   }
 
   onCopyUser(user: User): void {
@@ -189,8 +205,10 @@ export class UsermanagementComponent implements OnInit {
   }
 
   onCloseUserForm(): void {
-    this.isUserFormOpen = false;
+    setTimeout(() => {
+    this.isUserFormOpen = true;
     this.selectedUser = null;
+  });
   }
 
   onSaveUser(userData: any): void {

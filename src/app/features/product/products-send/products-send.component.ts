@@ -1,28 +1,16 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommonTableCardComponent, TableTab, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
-import { HeaderComponent } from '../../../shared/header/header.component';
-import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { FormComponent } from '../form/form.component';
 import { ProductService } from '../../../core/services/product.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { finalize } from 'rxjs/operators';
+import { RolePermissionService } from '../../../core/services/role-permission.service';
 
 @Component({
   selector: 'app-products-send',
-  standalone: true,
-  imports: [
-    CommonTableCardComponent,
-    MatButtonModule,
-    MatIconModule,
-    FormComponent,
-    SidebarComponent,
-    HeaderComponent
-  ],
   templateUrl: './products-send.component.html',
-  styleUrl: './products-send.component.scss'
+  styleUrl: './products-send.component.scss',
+  standalone:false,
 })
 export class ProductsSendComponent implements OnInit, OnDestroy {
   tabs: TableTab[] = [
@@ -36,7 +24,7 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
   ];
 
   columns: TableColumn[] = [
-    { key: 'name', label: 'Product Name' },
+    { key: 'name', label: 'Product Name', sortable: true },
     { key: 'code', label: 'Product Code' },
     { key: 'brandTitle', label: 'Brand' },
     { key: 'categoryTitle', label: 'Category' },
@@ -60,9 +48,21 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
   deleting = false;
   togglingId: number | null = null;
 
+  // Sorting
+  sortColumn: string = 'name';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  // Permission flags
+  canEdit = false;
+  canDelete = false;
+  canView = false;
+  canCreate = false;
+
   constructor(
     private productService: ProductService,
-    private organizationService: OrganizationService
+    private organizationService: OrganizationService,
+    private role:RolePermissionService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -72,6 +72,13 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
         this.fetchItems();
       }
     });
+
+    // Set permissions
+    this.canCreate = this.role.getPermission("product","product_create");
+    this.canEdit = this.role.getPermission("product","product_edit");
+    this.canView = this.role.getPermission("product","product_view");
+    this.canDelete = this.role.getPermission("product","product_delete");
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {
@@ -87,9 +94,10 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
       offset,
       limit: this.pageSize,
       status: this.activeTab,
+      order_by: this.sortColumn,
+      order_type: this.sortDirection,
     }).subscribe(
       (res: any) => {
-        // Store the FULL object for edit/view, but decorate for display
         this.allData = (res.items || res.data || []).map((item: any) => ({
           ...item,
           brandTitle: item.brand_details?.title ?? '',
@@ -155,7 +163,6 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
     this.productService.deleteProduct(this.orgId, row.id).subscribe({
       next: () => {
         this.deleting = false;
-        // Remove deleted item from the list
         this.filteredData = this.filteredData.filter(item => item.id !== row.id);
         this.allData = this.allData.filter(item => item.id !== row.id);
         this.total = this.total - 1;
@@ -166,20 +173,25 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
     });
   }
 
-onToggle(product: any) {
-  if (!this.orgId || !product?.id) return;
-  product.toggling = true;
-  this.productService.updateProduct(this.orgId, product.id, product)
-    .pipe(finalize(() => { product.toggling = false; }))
-    .subscribe({
-      next: () => {
-         this.fetchItems();
-      },
-      error: () => {
-      }
-    });
-}
-  
+  onToggle(product: any) {
+    if (!this.orgId || !product?.id) return;
+    product.toggling = true;
+    this.productService.updateProduct(this.orgId, product.id, product)
+      .pipe(finalize(() => { product.toggling = false; }))
+      .subscribe({
+        next: () => {
+          this.fetchItems();
+        },
+        error: () => {}
+      });
+  }
+
+  onSort(event: { column: string, direction: 'asc' | 'desc' }) {
+    this.sortColumn = event.column;
+    this.sortDirection = event.direction;
+    this.page = 1;
+    this.fetchItems();
+  }
 
   openOffcanvas() {
     setTimeout(() => {

@@ -2,8 +2,6 @@
 <div class="main-layout">
   <app-sidebar></app-sidebar>
   <div class="main-content">
-  
-<div class="main-content">
     <div class="products-list-header">
       <div>
         <div class="products-list-title">Products List</div>
@@ -37,11 +35,11 @@
       </div>
       <div class="offcanvas-body">
         <app-form
-  [orgId]="orgId"
-  [mode]="formMode"
-  [productData]="selectedProduct"
-  (updateNeeded)="fetchItems()"
-></app-form>
+          [orgId]="orgId"
+          [mode]="formMode"
+          [productData]="selectedProduct"
+          (updateNeeded)="fetchItems()"
+        ></app-form>
       </div>
     </div>
 
@@ -51,11 +49,13 @@
       [searchFields]="searchFields"
       [columns]="columns"
       [data]="filteredData"
-      [total]="filteredData.length"
+      [total]="total"
+      [totalRecords]="total"
       [page]="page"
       [callbtn]="false"
       [pageSize]="pageSize"
       [pageSizeOptions]="[10, 20, 50]"
+      [loading]="loading"
       (tabChange)="onTabChange($event)"
       (search)="onSearch($event)"
       (clear)="onClear()"
@@ -64,7 +64,8 @@
       (delete)="onDelete($event)"
       (toggle)="onToggle($event)"
       (pageChange)="onPageChange($event)"
+      (sort)="onSort($event)"
+      [enableSorting]="true"
     ></app-common-table-card>
-  </div>
   </div>
 </div>

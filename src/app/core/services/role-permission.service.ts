@@ -17,7 +17,7 @@ setRole(role: string, auth_items?: any): void {
   this.currentRole = (role || 'USER').toUpperCase();
   this.roleSubject.next(this.currentRole);
   if (auth_items) {
-    this.roleAuth = auth_items.auth_items || {};
+    this.roleAuth = auth_items || {};
   }
 }
 
@@ -32,10 +32,8 @@ setRole(role: string, auth_items?: any): void {
     const backendModule = this.moduleMap[module] || module;
 
     if (!permissions[backendModule]) {
-      // Check if any child (sub-permission) exists and is true
       if (this.roleAuth[backendModule]) {
         const rawPermissions = Object.keys(this.roleAuth[backendModule]);
-        // If any child permission is true, return true
         for (const perm of rawPermissions) {
           if (this.roleAuth[backendModule][perm] === true) {
             return true;

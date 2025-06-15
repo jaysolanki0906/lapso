@@ -2,62 +2,62 @@
 <div class="main-layout">
   <app-sidebar></app-sidebar>
   <div class="main-content">
-  
+    <div class="main-content">
+      <div class="products-list-header">
+        <div>
+          <div class="products-list-title">Service Voucher List</div>
+          <div class="products-list-sub">Manage your Service</div>
+        </div>
+        <button
+          class="add-product-btn"
+          type="button"
+          (click)="onAddServiceCall()"
+        >
+          <span class="add-product-icon-circle">
+            <mat-icon class="add-product-plus">add</mat-icon>
+          </span>
+          Add New
+        </button>
+      </div>
 
-<div class="main-content">
-  <div class="products-list-header">
-    <div>
-      <div class="products-list-title">Service Voucher List</div>
-      <div class="products-list-sub">Manage your Service</div>
+      <div class="offcanvas offcanvas-end add-product-offcanvas"
+        tabindex="-1"
+        id="serviceCallOffcanvas"
+        aria-labelledby="serviceCallOffcanvasLabel">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="serviceCallOffcanvasLabel">{{ formHeading }}</h5>
+          <button type="button" class="btn-close text-reset"
+                  data-bs-dismiss="offcanvas"
+                  aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <app-servicecallform
+            [mode]="formMode"
+            [data]="selectedServiceCall"
+            (updateNeeded)="onFormUpdate()"
+          ></app-servicecallform>
+        </div>
+      </div>
+
+      <app-common-table-card
+        [searchFields]="searchFields"
+        [columns]="columns"
+        [showToggle]="false"
+        [data]="filteredData"
+        [total]="total"
+        [page]="page"
+        [callbtn]="false"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[10, 20, 50]"
+        (search)="onSearch($event)"
+        (clear)="onClear()"
+        (edit)="onEdit($event)"
+        (view)="onView($event)"
+        (delete)="onDelete($event)"
+        (pageChange)="onPageChange($event)"
+        (sort)="onSort($event)"
+        [enableSorting]="true"
+      ></app-common-table-card>
     </div>
-    <button
-      class="add-product-btn"
-      type="button"
-      (click)="onAddServiceCall()"
-    >
-      <span class="add-product-icon-circle">
-        <mat-icon class="add-product-plus">add</mat-icon>
-      </span>
-      Add New
-    </button>
   </div>
-
-  <div class="offcanvas offcanvas-end add-product-offcanvas"
-    tabindex="-1"
-    id="serviceCallOffcanvas"
-    aria-labelledby="serviceCallOffcanvasLabel">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="serviceCallOffcanvasLabel">{{ formHeading }}</h5>
-      <button type="button" class="btn-close text-reset"
-              data-bs-dismiss="offcanvas"
-              aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body">
-      <app-servicecallform
-        [mode]="formMode"
-        [data]="selectedServiceCall"
-        (updateNeeded)="onFormUpdate()"
-      ></app-servicecallform>
-    </div>
-  </div>
-
-  <app-common-table-card
-    [searchFields]="searchFields"
-    [columns]="columns"
-    [showToggle]="false"
-    [data]="filteredData"
-    [total]="total"
-    [page]="page"
-    [callbtn]="false"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[10, 20, 50]"
-    (search)="onSearch($event)"
-    (clear)="onClear()"
-    (edit)="onEdit($event)"
-    (view)="onView($event)"
-    (delete)="onDelete($event)"
-    (pageChange)="onPageChange($event)"
-  ></app-common-table-card>
-</div>
-</div>
 </div>

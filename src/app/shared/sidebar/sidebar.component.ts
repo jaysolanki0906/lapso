@@ -51,16 +51,16 @@ export class SidebarComponent implements OnInit {
     this.router.navigate(['dashboard']);
   }
   productredirection() {
-    this.router.navigate(['products']);
+    this.router.navigate(['items']);
   }
   saleredirection() {
-    this.router.navigate(['sales']);
+    this.router.navigate(['voucher/invoice']);
   }
   redirectservice() {
     this.router.navigate(['service']);
   }
   redirectservicevoucher() {
-    this.router.navigate(['servicevoucher']);
+    this.router.navigate(['vouchers']);
   }
   redirectservicecalls() {
     this.router.navigate(['servicecall']);

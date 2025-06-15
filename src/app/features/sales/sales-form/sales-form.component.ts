@@ -15,9 +15,8 @@ import { HeaderComponent } from '../../../shared/header/header.component';
 @Component({
   selector: 'app-invoice-form',
   templateUrl: './sales-form.component.html',
-  imports: [ReactiveFormsModule, CommonModule, ProductFormComponent,SidebarComponent,HeaderComponent],
   styleUrls: ['./sales-form.component.scss'],
-  standalone: true,
+  standalone: false,
 })
 export class SalesFormComponent implements OnInit {
   @Input() mode: 'add' | 'edit' = 'add';

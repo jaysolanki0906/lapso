@@ -7,6 +7,9 @@ import Swal from 'sweetalert2';
 import { OrganizationService } from '../../../../core/services/organization.service';
 import { RolePermissionService } from '../../../../core/services/role-permission.service';
 import { RoleandpermissionformComponent } from '../roleandpermissionform/roleandpermissionform.component';
+import { SalesFormComponent } from '../../../sales/sales-form/sales-form.component';
+import { HeaderComponent } from '../../../../shared/header/header.component';
+import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
 
 interface Permission {
   id: string;
@@ -35,7 +38,7 @@ type FormMode = 'add' | 'edit';
 @Component({
   selector: 'app-role-permission-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RoleandpermissionformComponent],
+  imports: [CommonModule, FormsModule, RoleandpermissionformComponent,SidebarComponent,HeaderComponent],
   templateUrl: './rolesandpermission.component.html',
   styleUrl: './rolesandpermission.component.scss'
 })

@@ -10,51 +10,68 @@
   </div>
 
   <!-- Enhanced Search Section -->
-<div class="search-row-mat search-row-red">
-  <ng-container *ngFor="let field of searchFields">
-    <div class="search-field-group">
-      <div class="search-field-title">{{ field.title }}</div>
-      <mat-form-field appearance="outline" class="search-mat search-mat-extended">
-        <input 
-          matInput 
-          [(ngModel)]="searchValues[field.key]"
-          (keyup.enter)="onSearch()"
-          placeholder="{{field.placeholder}}"/>
-        <mat-icon matSuffix *ngIf="field.icon">{{field.icon}}</mat-icon>
-      </mat-form-field>
+  <div class="search-row-mat search-row-red">
+    <ng-container *ngFor="let field of searchFields">
+      <div class="search-field-group">
+        <div class="search-field-title">{{ field.title }}</div>
+        <mat-form-field appearance="outline" class="search-mat search-mat-extended">
+          <input 
+            matInput 
+            [(ngModel)]="searchValues[field.key]"
+            (keyup.enter)="onSearch()"
+            placeholder="{{field.placeholder}}"/>
+          <mat-icon matSuffix *ngIf="field.icon">{{field.icon}}</mat-icon>
+        </mat-form-field>
+      </div>
+    </ng-container>
+    
+    <!-- Enhanced Action Buttons -->
+    <div class="search-actions">
+      <button 
+        mat-icon-button 
+        class="search-btn-red" 
+        (click)="onSearch()"
+        matTooltip="Search records"
+        [disabled]="loading">
+        <mat-icon>search</mat-icon>
+      </button>
+      <button 
+        mat-icon-button 
+        class="clear-btn-red" 
+        (click)="onClear()"
+        matTooltip="Clear filters"
+        [disabled]="loading">
+        <mat-icon>clear</mat-icon>
+      </button>
     </div>
-  </ng-container>
-  
-  <!-- Enhanced Action Buttons -->
-  <div class="search-actions">
-    <button 
-      mat-icon-button 
-      class="search-btn-red" 
-      (click)="onSearch()"
-      matTooltip="Search records"
-      [disabled]="loading">
-      <mat-icon>search</mat-icon>
-    </button>
-    <button 
-      mat-icon-button 
-      class="clear-btn-red" 
-      (click)="onClear()"
-      matTooltip="Clear filters"
-      [disabled]="loading">
-      <mat-icon>clear</mat-icon>
-    </button>
   </div>
-</div>
 
   <!-- Table Section - Redesigned to match the reference UI -->
   <div class="table-responsive-mat">
     <table class="mat-custom-table" *ngIf="!loading && data.length; else emptyOrLoading">
       <thead>
-        <tr>
-          <th *ngFor="let col of columns">{{ col.label }}</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
+  <tr>
+    <th *ngFor="let col of columns">
+      <span>{{ col.label }}</span>
+      <!-- Show sort arrows for any sortable column -->
+      <ng-container *ngIf="col.sortable">
+        <button mat-icon-button 
+          (click)="onSort(col, 'asc')" 
+          [disabled]="currentSortColumn === col.key && currentSortDirection === 'asc'" 
+          matTooltip="Sort ascending">
+          <mat-icon>arrow_upward</mat-icon>
+        </button>
+        <button mat-icon-button 
+          (click)="onSort(col, 'desc')" 
+          [disabled]="currentSortColumn === col.key && currentSortDirection === 'desc'" 
+          matTooltip="Sort descending">
+          <mat-icon>arrow_downward</mat-icon>
+        </button>
+      </ng-container>
+    </th>
+    <th>Actions</th>
+  </tr>
+</thead>
       <tbody>
         <tr *ngFor="let row of data; let i = index; trackBy: trackByFn"
             [ngClass]="{'row-inactive': getNestedValue(row, statusKey) === 'INACTIVE'}">
@@ -79,38 +96,38 @@
             </ng-container>
           </td>
           <td class="user-actions">
-            <button class="action-btn edit" (click)="onEdit(row)" title="Edit">
+            <button class="action-btn edit" (click)="onEdit(row)" title="Edit" *ngIf="canEdit">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
             </button>
-            <button class="action-btn view" (click)="onView(row)" title="View">
+            <button class="action-btn view" (click)="onView(row)" title="View"  *ngIf="canView">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
             </button>
-            <button class="action-btn delete" (click)="onDelete(row)" title="Delete">
+            <button class="action-btn delete" (click)="onDelete(row)" title="Delete" *ngIf="canDelete">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3,6 5,6 21,6"></polyline>
                 <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
               </svg>
             </button>
             <button class="action-btn copy" *ngIf="callbtn" (click)="onCall(row)" title="Copy">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="m5,15H4a2,2 0 0,1 -2,-2V4A2,2 0 0,1 4,2H13a2,2 0 0,1 2,2v1"></path>
-          </svg>
-        </button>
-        <div class="form-check form-switch">
-  <input 
-    class="form-check-input toggle-warn" 
-    type="checkbox" 
-    role="switch" 
-    id="flexSwitchCheckChecked" 
-    checked>
-</div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="m5,15H4a2,2 0 0,1 -2,-2V4A2,2 0 0,1 4,2H13a2,2 0 0,1 2,2v1"></path>
+              </svg>
+            </button>
+            <div class="form-check form-switch">
+              <input 
+                class="form-check-input toggle-warn" 
+                type="checkbox" 
+                role="switch" 
+                id="flexSwitchCheckChecked" 
+                checked>
+            </div>
           </td>
         </tr>
       </tbody>

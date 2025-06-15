@@ -14,14 +14,7 @@ import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-servicevoucherlist',
-  standalone: true,
-  imports: [
-    CommonTableCardComponent,
-    MatButtonModule,
-    MatIconModule,
-    SidebarComponent,
-    HeaderComponent
-  ],
+  standalone: false,
   templateUrl: './servicevoucherlist.component.html',
   styleUrl: './servicevoucherlist.component.scss'
 })
@@ -37,9 +30,9 @@ export class ServicevoucherlistComponent implements OnInit, OnDestroy {
   ];
 
   columns: TableColumn[] = [
-    { key: 'voucher_date', label: 'Voucher Date' },
+    { key: 'voucher_date', label: 'Voucher Date',sortable: true  },
     { key: 'voucher_number', label: 'Voucher Number' },
-    { key: 'created_at', label: 'Created Date' },
+    { key: 'created_at', label: 'Created Date',sortable: true  },
     { key: 'service_name', label: 'Service Name' },
     { key: 'cust_name', label: 'Customer Name' },
     { key: 'cust_mobile', label: 'Customer Mobile' },
@@ -61,6 +54,8 @@ export class ServicevoucherlistComponent implements OnInit, OnDestroy {
   formHeading = 'Add Service';
   selectedService: any = null;
   deleting = false;
+  sortColumn: string = 'voucher_date'; // or your preferred default
+sortDirection: 'asc' | 'desc' = 'desc';
 
   constructor(
     private servicesService: ServicevoucherService,
@@ -81,7 +76,12 @@ export class ServicevoucherlistComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.orgSub?.unsubscribe();
   }
-
+  onSort(event: { column: string, direction: 'asc' | 'desc' }) {
+  this.sortColumn = event.column;
+  this.sortDirection = event.direction;
+  this.page = 1;
+  this.fetchItems();
+}
   fetchItems() {
     if (!this.orgId) return;
     this.loading = true;

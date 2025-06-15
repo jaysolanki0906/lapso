@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommonTableCardComponent, TableTab, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,14 +13,7 @@ import { HeaderComponent } from '../../../shared/header/header.component';
 
 @Component({
   selector: 'app-servicelist',
-  standalone: true,
-  imports: [
-    CommonTableCardComponent,
-    MatButtonModule,
-    MatIconModule,
-    SidebarComponent,
-    HeaderComponent
-  ],
+  standalone: false,
   templateUrl: './servicelist.component.html',
   styleUrl: './servicelist.component.scss'
 })
@@ -30,13 +23,15 @@ export class ServicelistComponent implements OnInit, OnDestroy {
     { label: 'Inactive', value: 'INACTIVE' }
   ];
   activeTab = 'ACTIVE';
+  sortColumn: string = 'service_name'; // default sort on load
+sortDirection: 'asc' | 'desc' = 'asc';
 
   searchFields = [
     { placeholder: 'Search by Service or Code', key: 'query' }
   ];
 
   columns: TableColumn[] = [
-    { key: 'service_name', label: 'Service Name' },
+    { key: 'service_name', label: 'Service Name',sortable: true },
     { key: 'description', label: 'Description' },
   ];
 
@@ -60,7 +55,8 @@ export class ServicelistComponent implements OnInit, OnDestroy {
   constructor(
     private servicesService: ServicesService,
     private organizationService: OrganizationService,
-    private router: Router // inject Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -70,6 +66,7 @@ export class ServicelistComponent implements OnInit, OnDestroy {
         this.fetchItems();
       }
     });
+    this.cdr.detectChanges();
   }
   
   ngOnDestroy() {
@@ -77,29 +74,36 @@ export class ServicelistComponent implements OnInit, OnDestroy {
   }
 
   fetchItems() {
-    if (!this.orgId) return;
-    this.loading = true;
-    const offset = (this.page - 1) * this.pageSize;
-    this.servicesService.getItems(this.orgId, {
-      search: this.searchQuery,
-      offset,
-      limit: this.pageSize,
-      status: this.activeTab,
-    }).subscribe(
-      (res: any) => {
-        this.allData = (res.items || res.data || []).map((item: any) => ({
-          ...item,
-          brandTitle: item.brand_details?.title ?? '',
-          categoryTitle: item.service_details?.title ?? '',
-        }));
-        this.filteredData = this.allData;
-        this.total = res.total || this.allData.length;
-        this.loading = false;
-      },
-      _ => { this.loading = false; }
-    );
-  }
-
+  if (!this.orgId) return;
+  this.loading = true;
+  const offset = (this.page - 1) * this.pageSize;
+  this.servicesService.getItems(this.orgId, {
+    search: this.searchQuery,
+    offset,
+    limit: this.pageSize,
+    status: this.activeTab,
+    order_by: this.sortColumn,
+    order_type: this.sortDirection,
+  }).subscribe(
+    (res: any) => {
+      this.allData = (res.items || res.data || []).map((item: any) => ({
+        ...item,
+        brandTitle: item.brand_details?.title ?? '',
+        categoryTitle: item.service_details?.title ?? '',
+      }));
+      this.filteredData = this.allData;
+      this.total = res.total || this.allData.length;
+      this.loading = false;
+    },
+    _ => { this.loading = false; }
+  );
+}
+  onSort(event: { column: string, direction: 'asc' | 'desc' }) {
+  this.sortColumn = event.column;
+  this.sortDirection = event.direction;
+  this.page = 1;
+  this.fetchItems();
+}
   onTabChange(tabValue: string) {
     this.activeTab = tabValue;
     this.page = 1;
