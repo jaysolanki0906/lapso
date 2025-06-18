@@ -16,7 +16,16 @@ export class ServicecallService {
           limit?: number,
           status?: string,
           order_by?: string,
-          order_type?: string
+          order_type?: string,
+          servicetype?:string,
+          Assigned?:string,
+          Service_date_start?:string,
+          service_date_end?:string
+  //         Service_type:string='';
+  // Status:string="";
+  // Assigned:string='';
+  // Service_date_start='';
+  // Service_date_end='';
         } = {}
       ): Observable<any> {
         const query: string[] = [];
@@ -26,6 +35,13 @@ export class ServicecallService {
         if (params.status) query.push(`status=${params.status}`);
         if (params.order_by) query.push(`order_by=${params.order_by}`);
         if (params.order_type) query.push(`order_type=${params.order_type}`);
+        if(params.servicetype) query.push(`service_type=${params.servicetype}`);
+        if(params.Service_date_start) query.push(`start_date=${params.Service_date_start}`);
+        if(params.service_date_end) query.push(`end_date=${params.service_date_end}`);
+        if(params.servicetype||params.status||params.service_date_end||params.Service_date_start||params.Assigned)
+        query.push('type=ALL');
+
+        query.push('count_required=true');
     
         const queryString = query.length ? `?${query.join('&')}` : '';
         return this.api.get(`${org_id}/service_voucher/service_calls${queryString}`);

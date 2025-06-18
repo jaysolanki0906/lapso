@@ -36,8 +36,8 @@ nav {
     li {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 18px 32px;
+      gap: 5px;
+      padding: 10px 20px;
       font-size: 17px;
       color: #525866;
       cursor: pointer;
@@ -73,7 +73,7 @@ nav {
         .sub-item {
           font-size: 15px;
           color: #525866;
-          padding: 8px 0;
+          padding: 5px 0;
           &:hover {
             background: none;
           }
@@ -104,7 +104,7 @@ nav {
 .sidebar-content nav ul li > div {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   cursor: pointer;
   padding: 8px 16px;
   transition: background 0.2s;
@@ -123,7 +123,7 @@ nav {
 .service-contract-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   cursor: pointer;
   padding: 8px 16px;
 }

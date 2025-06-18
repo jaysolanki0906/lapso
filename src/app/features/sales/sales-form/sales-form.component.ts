@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, AbstractControl, FormControl } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, filter, map } from 'rxjs/operators';
@@ -18,12 +18,15 @@ import { HeaderComponent } from '../../../shared/header/header.component';
   styleUrls: ['./sales-form.component.scss'],
   standalone: false,
 })
-export class SalesFormComponent implements OnInit {
+export class SalesFormComponent implements OnInit, OnDestroy {
   @Input() mode: 'add' | 'edit' = 'add';
   @Input() orgId: string = '';
   lastAddedProductId: string | null = null;
+  productAddRowIndex: number | null = null;
 
   invoiceForm: FormGroup;
+  showDropdown = false;
+dropdownHideTimeout: any;
   products: any[] = [];
   customerSuggestions: any[] = [];
   customerSearchLoading = false;
@@ -34,6 +37,8 @@ export class SalesFormComponent implements OnInit {
   netAmount: number = 0;
   taxAmount: number = 0;
   grandTotal: number = 0;
+  warrantyTouched = false;
+  guaranteeTouched = false;
 
   voucherId: string | null = null;
   orgSub?: Subscription;
@@ -98,6 +103,18 @@ export class SalesFormComponent implements OnInit {
       }
     });
   }
+  onCustomerInput(event: any) {
+  this.showDropdown = true;
+  // Optionally trigger your filtering/fetch here as well
+  // Example: this.fetchSuggestions(event.target.value);
+}
+
+// Call this on (blur)
+hideDropdownWithDelay() {
+  // Delay to allow (mousedown) click to register before hiding
+  this.dropdownHideTimeout = setTimeout(() => this.showDropdown = false, 150);
+}
+
 
   ngOnDestroy(): void {
     this.orgSub?.unsubscribe();
@@ -122,6 +139,7 @@ export class SalesFormComponent implements OnInit {
 
   createItemGroup(): FormGroup {
     return this.fb.group({
+       item_id: [''],
       product: ['', Validators.required], // always string for dropdown selection
       description: [''],
       warrantyChecked: [false],
@@ -165,58 +183,67 @@ export class SalesFormComponent implements OnInit {
   }
 
   routeback() {
-    this.router.navigate(['sales']);
+    this.router.navigate(['voucher/invoice']);
   }
 
   onProductSelected(item: AbstractControl, productId: string) {
-    const group = item as FormGroup;
-    const product = this.products.find((p: any) => String(p.id) === String(productId));
-    if (product) {
-      group.patchValue({
-        description: product.description || '',
-        price: product.price || '',
-        tax: product.tax || '',
-        warrantyChecked: product.has_warranty,
-        warrantyType:
-          product.warranty_unit === 'DAYS'
-            ? 'Days'
-            : product.warranty_unit === 'MONTHS'
-              ? 'Months'
-              : 'Years',
-        warrantyPeriod: product.has_warranty ? product.warranty_value : '',
-        guaranteeChecked: product.has_guarantee,
-        guaranteeType:
-          product.guarantee_unit === 'DAYS'
-            ? 'Days'
-            : product.guarantee_unit === 'MONTHS'
-              ? 'Months'
-              : 'Years',
-        guaranteePeriod: product.has_guarantee ? product.guarantee_value : '',
-        unit: 'Unit',
-        total: product.price || '',
-      });
-    } else {
-      group.patchValue({
-        description: '',
-        price: '',
-        tax: '',
-        warrantyChecked: false,
-        warrantyType: 'Days',
-        warrantyPeriod: '',
-        guaranteeChecked: false,
-        guaranteeType: 'Days',
-        guaranteePeriod: '',
-        unit: 'Unit',
-        total: '',
-      });
-    }
-    this.calculateTotals();
+  const group = item as FormGroup;
+  const product = this.products.find((p: any) => String(p.id) === String(productId));
+  if (product) {
+    group.patchValue({
+      item_id: product.id, // <-- Set item_id
+      product: product.id, // <-- Set product
+      description: product.description || '',
+      price: product.price || '',
+      tax: product.tax || '',
+      warrantyChecked: product.has_warranty,
+      warrantyType:
+        product.warranty_unit === 'DAYS'
+          ? 'Days'
+          : product.warranty_unit === 'MONTHS'
+            ? 'Months'
+            : 'Years',
+      warrantyPeriod: product.has_warranty ? product.warranty_value : '',
+      guaranteeChecked: product.has_guarantee,
+      guaranteeType:
+        product.guarantee_unit === 'DAYS'
+          ? 'Days'
+          : product.guarantee_unit === 'MONTHS'
+            ? 'Months'
+            : 'Years',
+      guaranteePeriod: product.has_guarantee ? product.guarantee_value : '',
+      unit: 'Unit',
+      total: product.price || '',
+    });
+  } else {
+    group.patchValue({
+      item_id: '',
+      product: '',
+      description: '',
+      price: '',
+      tax: '',
+      warrantyChecked: false,
+      warrantyType: 'Days',
+      warrantyPeriod: '',
+      guaranteeChecked: false,
+      guaranteeType: 'Days',
+      guaranteePeriod: '',
+      unit: 'Unit',
+      total: '',
+    });
   }
+  this.calculateTotals();
+}
 
   getTotalControl(item: AbstractControl): FormControl {
     return item.get('total') as FormControl;
   }
-
+   markWarrantyTouched() {
+    this.warrantyTouched = true;
+  }
+  markGuaranteeTouched() {
+    this.guaranteeTouched = true;
+  }
   initItems() {
     while (this.items.length) this.items.removeAt(0);
     this.addItem();
@@ -239,6 +266,7 @@ export class SalesFormComponent implements OnInit {
         const vi = asset.voucher_items || asset;
         const group = this.createItemGroup();
         group.patchValue({
+          item_id: vi.item_id || '',
           product: vi.item_id,
           description: vi.desc || asset.desc || '',
           quantity: vi.qty || 1,
@@ -253,7 +281,6 @@ export class SalesFormComponent implements OnInit {
           guaranteeType: this.reverseWarrantyUnit(vi.guarantee_unit),
           guaranteePeriod: vi.guarantee_value || '',
         });
-        console.log("this is group ",group,"this is vi ",vi);
         this.items.push(group);
       });
     } else {
@@ -275,14 +302,15 @@ export class SalesFormComponent implements OnInit {
     );
   }
 
-  onCustomerSuggestionSelect(cust: any) {
-    this.invoiceForm.patchValue({
-      customerName: cust.name,
-      customerMobile: cust.mobile
-    });
-    this.invoiceForm.get('customerName')!.disable();
-    this.customerSuggestions = [];
-  }
+  onCustomerSuggestionSelect(suggestion: any) {
+  this.invoiceForm.patchValue({
+    customerName: suggestion.name,
+    customerMobile: suggestion.mobile
+  });
+  this.showDropdown = false;
+  this.customerSuggestions = [];
+  if (this.dropdownHideTimeout) clearTimeout(this.dropdownHideTimeout);
+}
 
   showSuggestions(): boolean {
     return this.customerSuggestions.length > 0 && !this.invoiceForm.get('customerName')?.disabled;
@@ -314,16 +342,71 @@ export class SalesFormComponent implements OnInit {
   }
 
   onSubmitInvoice() {
-    if (this.invoiceForm.invalid) {
-      this.invoiceForm.markAllAsTouched();
-      return;
+  let valid = true;
+  const itemsArray = this.items; 
+  itemsArray.controls.forEach((item: AbstractControl, i: number) => {
+  const group = item as FormGroup;
+    // Warranty validation
+    if (item.get('warrantyChecked')?.value) {
+      if (
+        !item.get('warrantyType')?.value ||
+        !item.get('warrantyPeriod')?.value ||
+        +item.get('warrantyPeriod')?.value < 1
+      ) {
+        item.get('warrantyType')?.markAsTouched();
+        item.get('warrantyPeriod')?.markAsTouched();
+        valid = false;
+      }
     }
+    // Guarantee validation
+    if (item.get('guaranteeChecked')?.value) {
+      if (
+        !item.get('guaranteeType')?.value ||
+        !item.get('guaranteePeriod')?.value ||
+        +item.get('guaranteePeriod')?.value < 1
+      ) {
+        item.get('guaranteeType')?.markAsTouched();
+        item.get('guaranteePeriod')?.markAsTouched();
+        valid = false;
+      }
+    }
+    // Add checks for other fields you want to validate
+    // Example: Product required
+    if (!item.get('product')?.value) {
+      item.get('product')?.markAsTouched();
+      valid = false;
+    }
+    // Example: Quantity required
+    if (!item.get('quantity')?.value || +item.get('quantity')?.value < 1) {
+      item.get('quantity')?.markAsTouched();
+      valid = false;
+    }
+    // etc.
+  });
+
+  // Validate parent-level controls (example: customerName, customerMobile)
+  if (!this.invoiceForm.get('customerName')?.value) {
+    this.invoiceForm.get('customerName')?.markAsTouched();
+    valid = false;
+  }
+  if (!this.invoiceForm.get('customerMobile')?.value) {
+    this.invoiceForm.get('customerMobile')?.markAsTouched();
+    valid = false;
+  }
+  // etc.
+
+  if (!valid) {
+    // Optionally, show a message to user
+    this.err.showToast?.('Please fill all required fields!', 'warning');
+    return;
+  }
 
     const today = formatDate(new Date(), 'yyyy-MM-dd', 'en-IN');
     const formVal = this.invoiceForm.getRawValue();
+    console.log('values ',formVal.items);
 
     const items = formVal.items.map((item: any) => ({
-      item_id: item.product,
+      item_id: item.item_id,
       item_desc: this.getProductNameById(item.product),
       qty: Number(item.quantity) || 1,
       unit: item.unit || '',
@@ -363,7 +446,7 @@ export class SalesFormComponent implements OnInit {
       // Call update API in edit mode
       this.invoiceservice.saveinvoice(this.orgId, this.voucherId, payload).subscribe({
         next: (res) => {
-          alert('Invoice updated successfully!');
+          this.err.showToast('Updated sucessfully','info');
           this.routeback();
         },
         error: (err) => {
@@ -447,17 +530,35 @@ export class SalesFormComponent implements OnInit {
     }
     return formatDate(date, 'yyyy-MM-dd', 'en-IN');
   }
+  openProductAddCanvas(rowIndex: number) {
+  this.productAddRowIndex = rowIndex;
+  this.selectedProduct = null;
+  this.formMode = 'add';
+}
+
   onProductAdded() {
   this.fetchproduct(this.orgId).subscribe((products) => {
     const newest = products[products.length - 1];
     this.lastAddedProductId = newest?.id || null;
-    this.addItem();
-    if (this.lastAddedProductId) {
-      const lastIndex = this.items.length - 1;
-      const itemGroup = this.items.at(lastIndex);
-      itemGroup.get('product')?.setValue(this.lastAddedProductId);
-      this.onProductSelected(itemGroup, this.lastAddedProductId);
+    if (this.productAddRowIndex !== null) {
+      // Update only the targeted row
+      const itemGroup = this.items.at(this.productAddRowIndex);
+      if (this.lastAddedProductId !== null) {
+  itemGroup.get('product')?.setValue(this.lastAddedProductId);
+  itemGroup.get('item_id')?.setValue(this.lastAddedProductId);
+  this.onProductSelected(itemGroup, this.lastAddedProductId);
+}
+    } else {
+      // fallback: add new row if for some reason index is not set
+      this.addItem();
+      if (this.lastAddedProductId) {
+        const lastIndex = this.items.length - 1;
+        const itemGroup = this.items.at(lastIndex);
+        itemGroup.get('product')?.setValue(this.lastAddedProductId);
+        this.onProductSelected(itemGroup, this.lastAddedProductId);
+      }
     }
+    this.productAddRowIndex = null;
   });
 }
 }

@@ -33,7 +33,7 @@ type FormMode = 'add' | 'edit' | 'view';
 @Component({
   selector: 'app-usermanagement',
   standalone: true,
-  imports: [CommonModule, FormsModule, UserformComponent,SidebarComponent,HeaderComponent],
+  imports: [CommonModule, FormsModule, UserformComponent,HeaderComponent,SidebarComponent],
   templateUrl: './usermanagement.component.html',
   styleUrl: './usermanagement.component.scss'
 })
@@ -60,8 +60,7 @@ export class UsermanagementComponent implements OnInit {
     private user: OrgusersService,
     private org: OrganizationService,
     private err: ErrorHandlerService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -69,15 +68,14 @@ export class UsermanagementComponent implements OnInit {
   }
 
   orgidfetch() {
-  this.org.fetchorginizationid().subscribe(arg => {
-    if (!arg) return;
-    // Defer updates to the next microtask
-    Promise.resolve().then(() => {
-      this.orgid = arg;
-      this.loadAllUsers();
+    this.org.fetchorginizationid().subscribe(arg => {
+      if (!arg) return;
+      setTimeout(() => {
+        this.orgid = arg;
+        this.loadAllUsers();
+      });
     });
-  });
-}
+  }
 
   loadAllUsers() {
     const params: any = {
@@ -86,7 +84,7 @@ export class UsermanagementComponent implements OnInit {
     };
     this.user.fetchusers(this.orgid, params).subscribe({
       next: (response) => {
-        this.users = response.rows.map((item: any, i: number) => ({
+        this.users = (response?.rows || []).map((item: any, i: number) => ({
           user_id: item.user_id,
           id: item.id || i + 1,
           name: item.user_details.fullname,
@@ -96,23 +94,21 @@ export class UsermanagementComponent implements OnInit {
           roleLabel: item.role_details.title,
           status: item.user_details.status === 'ACTIVE' ? 'Active' : 'Inactive'
         }));
-        this.totalUsers = response.count ?? response.rows.length;
+        this.totalUsers = response?.count ?? this.users.length;
       },
       error: (err) => { this.err.showToast(err, 'error'); }
     });
   }
 
   onSidebarItemClick(index: number): void {
-  this.sidebarItems.forEach((item, i) => {
-    item.active = i === index;
-  });
-  Promise.resolve().then(() => {
+    this.sidebarItems.forEach((item, i) => {
+      item.active = i === index;
+    });
     const selectedItem = this.sidebarItems[index];
     if (selectedItem.route) {
       this.router.navigate([selectedItem.route]);
     }
-  });
-}
+  }
 
   onSearch(): void {
     if (this.searchTerm.trim()) {
@@ -123,7 +119,7 @@ export class UsermanagementComponent implements OnInit {
       };
       this.user.fetchusers(this.orgid, params).subscribe({
         next: (response) => {
-          this.users = response.rows.map((item: any, i: number) => ({
+          this.users = (response?.rows || []).map((item: any, i: number) => ({
             user_id: item.user_id,
             id: item.id || i + 1,
             name: item.user_details.fullname,
@@ -133,7 +129,7 @@ export class UsermanagementComponent implements OnInit {
             roleLabel: item.role_details.title,
             status: item.user_details.status === 'ACTIVE' ? 'Active' : 'Inactive'
           }));
-          this.totalUsers = response.count ?? response.rows.length;
+          this.totalUsers = response?.count ?? this.users.length;
         },
         error: (err) => { this.err.showToast(err, 'error'); }
       });
@@ -170,45 +166,43 @@ export class UsermanagementComponent implements OnInit {
   }
 
   onAddNewUser(): void {
-  this.formMode = 'add';
-  this.selectedUser = null;
-  Promise.resolve().then(() => {
+    this.formMode = 'add';
+    this.selectedUser = null;
     setTimeout(() => {
-  this.isUserFormOpen = true;
-  this.loadAllUsers();
-});
-  });
-}
+      this.isUserFormOpen = true;
+      this.loadAllUsers();
+    });
+  }
 
   onEditUser(user: User): void {
     this.formMode = 'edit';
     this.selectedUser = user;
     setTimeout(() => {
-    this.isUserFormOpen = true;
-  });
+      this.isUserFormOpen = true;
+    });
   }
 
   onViewUser(user: User): void {
     this.formMode = 'view';
     this.selectedUser = user;
     setTimeout(() => {
-    this.isUserFormOpen = true;
-  });
+      this.isUserFormOpen = true;
+    });
   }
 
   onCopyUser(user: User): void {
     const paylod = { request_id: user.user_id.toString() };
     this.user.resendemail(paylod).subscribe({
-      next:()=>{this.err.showToast('Email is sent to your account','success')},
-      error:(error)=>{this.err.showToast(error,'error');}
-    })
+      next: () => { this.err.showToast('Email is sent to your account','success'); },
+      error: (error) => { this.err.showToast(error,'error'); }
+    });
   }
 
   onCloseUserForm(): void {
     setTimeout(() => {
-    this.isUserFormOpen = true;
-    this.selectedUser = null;
-  });
+      this.isUserFormOpen = false;
+      this.selectedUser = null;
+    });
   }
 
   onSaveUser(userData: any): void {
@@ -276,7 +270,7 @@ export class UsermanagementComponent implements OnInit {
     this.user.deleteuser(this.orgid, user.id.toString()).subscribe({
       next: () => {
         this.err.showToast('User deleted successfully', 'success');
-        this.loadAllUsers(); 
+        this.loadAllUsers();
       },
       error: (err) => { this.err.showToast(err, 'error'); }
     });

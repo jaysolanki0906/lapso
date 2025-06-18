@@ -24,11 +24,11 @@ export class AppComponent {
   public rolePermissionService:RolePermissionService) {}
 
  ngOnInit() {
-  if (this.token.getAccessToken()) {
-    this.userService.fetchAndStoreProfile().subscribe(profile => {
-      this.rolePermissionService.setRole(profile.role, profile.auth_items);
-    });
-    this.organizationService.fetchAndStoreOrganization().subscribe();
-  }
+//   if (this.token.getAccessToken()) {
+//     this.userService.fetchAndStoreProfile().subscribe(profile => {
+//       this.rolePermissionService.setRole(profile.role, profile.auth_items);
+//     });
+//     this.organizationService.fetchAndStoreOrganization().subscribe();
+//   }
 }
 }

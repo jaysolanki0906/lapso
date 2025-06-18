@@ -29,6 +29,7 @@ export class ProductService {
     if (params.status) query.push(`status=${params.status}`);
     if (params.order_by) query.push(`order_by=${params.order_by}`);
     if (params.order_type) query.push(`order_type=${params.order_type}`);
+    query.push(`&count_required=true`);
 
     const queryString = query.length ? `?${query.join('&')}` : '';
     return this.api.get(`${org_id}/items${queryString}`);

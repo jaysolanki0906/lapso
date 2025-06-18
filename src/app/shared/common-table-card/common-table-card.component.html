@@ -1,5 +1,5 @@
 <mat-card class="table-card-mat-custom">
-  <!-- Enhanced Header Section -->
+  <!-- Tabs -->
   <div class="header-row" *ngIf="activeTab">
     <mat-tab-group
       class="custom-tabs"
@@ -9,100 +9,132 @@
     </mat-tab-group>
   </div>
 
-  <!-- Enhanced Search Section -->
+  <!-- Search Fields -->
+  <!-- Top 3 fields row -->
   <div class="search-row-mat search-row-red">
-    <ng-container *ngFor="let field of searchFields">
+    <ng-container *ngFor="let field of searchFields.slice(0, 3)">
       <div class="search-field-group">
         <div class="search-field-title">{{ field.title }}</div>
-        <mat-form-field appearance="outline" class="search-mat search-mat-extended">
-          <input 
-            matInput 
+        <ng-container [ngSwitch]="field.type">
+          <!-- Dropdown -->
+          <mat-form-field appearance="outline" class="search-mat search-mat-extended" *ngSwitchCase="'dropdown'">
+            <mat-select [(ngModel)]="searchValues[field.key]" [placeholder]="field.placeholder">
+              <mat-option *ngFor="let opt of field.options"
+                [value]="typeof opt === 'object' && opt !== null ? opt.value : opt">
+                {{ typeof opt === 'object' && opt !== null ? opt.label : opt }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+          </mat-form-field>
+          <!-- Native date input (NO mat-form-field) -->
+          <input
+            *ngSwitchCase="'date'"
+            type="date"
+            class="form-control"
             [(ngModel)]="searchValues[field.key]"
-            (keyup.enter)="onSearch()"
-            placeholder="{{field.placeholder}}"/>
-          <mat-icon matSuffix *ngIf="field.icon">{{field.icon}}</mat-icon>
-        </mat-form-field>
+            [placeholder]="field.placeholder"
+            [id]="'search_' + field.key"
+            style="background: #fff;"
+          />
+          <!-- Text -->
+          <mat-form-field appearance="outline" class="search-mat search-mat-extended" *ngSwitchDefault>
+            <input matInput [(ngModel)]="searchValues[field.key]" (keyup.enter)="onSearch()" [placeholder]="field.placeholder"/>
+            <mat-icon matSuffix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+          </mat-form-field>
+        </ng-container>
       </div>
     </ng-container>
-    
-    <!-- Enhanced Action Buttons -->
+
+    <!-- Show more / less button -->
+    <button mat-button (click)="showAllSearchFields = !showAllSearchFields"
+            style="height:38px;margin-top:18px"
+            *ngIf="searchFields.length > 3">
+      {{ showAllSearchFields ? '- Less filters' : '+ More filters' }}
+    </button>
+
+    <!-- Search Actions -->
     <div class="search-actions">
-      <button 
-        mat-icon-button 
-        class="search-btn-red" 
-        (click)="onSearch()"
-        matTooltip="Search records"
-        [disabled]="loading">
+      <button mat-icon-button class="search-btn-red" (click)="onSearch()" matTooltip="Search records" [disabled]="loading">
         <mat-icon>search</mat-icon>
       </button>
-      <button 
-        mat-icon-button 
-        class="clear-btn-red" 
-        (click)="onClear()"
-        matTooltip="Clear filters"
-        [disabled]="loading">
+      <button mat-icon-button class="clear-btn-red" (click)="onClear()" matTooltip="Clear filters" [disabled]="loading">
         <mat-icon>clear</mat-icon>
       </button>
     </div>
   </div>
 
-  <!-- Table Section - Redesigned to match the reference UI -->
+  <!-- Bottom row: fields from index 3 onwards shown only if toggled -->
+  <div class="search-row-mat search-row-red" *ngIf="showAllSearchFields && searchFields.length > 3">
+    <ng-container *ngFor="let field of searchFields.slice(3)">
+      <div class="search-field-group">
+        <div class="search-field-title">{{ field.title }}</div>
+        <ng-container [ngSwitch]="field.type">
+          <!-- Dropdown -->
+          <mat-form-field appearance="outline" class="search-mat search-mat-extended" *ngSwitchCase="'dropdown'">
+            <mat-select [(ngModel)]="searchValues[field.key]" [placeholder]="field.placeholder">
+              <mat-option *ngFor="let opt of field.options"
+                [value]="typeof opt === 'object' && opt !== null ? opt.value : opt">
+                {{ typeof opt === 'object' && opt !== null ? opt.label : opt }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+          </mat-form-field>
+          <!-- Native date input (NO mat-form-field) -->
+          <igx-date-range-picker *ngSwitchCase="'date'"  [(ngModel)]="searchValues[field.key]"></igx-date-range-picker>
+          <!-- Text -->
+          <mat-form-field appearance="outline" class="search-mat search-mat-extended" *ngSwitchDefault>
+            <input matInput [(ngModel)]="searchValues[field.key]" (keyup.enter)="onSearch()" [placeholder]="field.placeholder"/>
+            <mat-icon matSuffix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+          </mat-form-field>
+        </ng-container>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Table -->
   <div class="table-responsive-mat">
     <table class="mat-custom-table" *ngIf="!loading && data.length; else emptyOrLoading">
       <thead>
-  <tr>
-    <th *ngFor="let col of columns">
-      <span>{{ col.label }}</span>
-      <!-- Show sort arrows for any sortable column -->
-      <ng-container *ngIf="col.sortable">
-        <button mat-icon-button 
-          (click)="onSort(col, 'asc')" 
-          [disabled]="currentSortColumn === col.key && currentSortDirection === 'asc'" 
-          matTooltip="Sort ascending">
-          <mat-icon>arrow_upward</mat-icon>
-        </button>
-        <button mat-icon-button 
-          (click)="onSort(col, 'desc')" 
-          [disabled]="currentSortColumn === col.key && currentSortDirection === 'desc'" 
-          matTooltip="Sort descending">
-          <mat-icon>arrow_downward</mat-icon>
-        </button>
-      </ng-container>
-    </th>
-    <th>Actions</th>
-  </tr>
-</thead>
+        <tr>
+          <th *ngFor="let col of columns">
+            <span>{{ col.label }}</span>
+            <ng-container *ngIf="col.sortable">
+              <button mat-icon-button (click)="onSort(col, 'asc')" [disabled]="currentSortColumn === col.key && currentSortDirection === 'asc'" matTooltip="Sort ascending">
+                <mat-icon>arrow_upward</mat-icon>
+              </button>
+              <button mat-icon-button (click)="onSort(col, 'desc')" [disabled]="currentSortColumn === col.key && currentSortDirection === 'desc'" matTooltip="Sort descending">
+                <mat-icon>arrow_downward</mat-icon>
+              </button>
+            </ng-container>
+          </th>
+          <th>Actions</th>
+        </tr>
+      </thead>
       <tbody>
-        <tr *ngFor="let row of data; let i = index; trackBy: trackByFn"
-            [ngClass]="{'row-inactive': getNestedValue(row, statusKey) === 'INACTIVE'}">
+        <tr *ngFor="let row of data; let i = index; trackBy: trackByFn" [ngClass]="{'row-inactive': getNestedValue(row, statusKey) === 'INACTIVE'}">
           <td *ngFor="let col of columns">
             <ng-container [ngSwitch]="col.type">
               <span *ngSwitchCase="'status'" class="status-badge"
                 [ngClass]="{
                   'active': getNestedValue(row, col.key) === 'ACTIVE',
-                  'inactive': getNestedValue(row, col.key) === 'INACTIVE'
+                  'inactive': getNestedValue(row, col.key) === 'INACTIVE',
+                  'status-expired': getNestedValue(row, col.key) === 'EXPIRED'
                 }">
                 {{ getNestedValue(row, col.key) | titlecase }}
               </span>
-              <span *ngSwitchCase="'date'">
-                {{ getNestedValue(row, col.key) | date:'MMM dd, yyyy' }}
-              </span>
-              <span *ngSwitchCase="'currency'">
-                {{ getNestedValue(row, col.key) | currency:'USD':'symbol':'1.2-2' }}
-              </span>
-              <span *ngSwitchDefault>
-                {{ getNestedValue(row, col.key) || '-' }}
-              </span>
+              <span *ngSwitchCase="'date'">{{ getNestedValue(row, col.key) | date:'MMM dd, yyyy' }}</span>
+              <span *ngSwitchCase="'currency'">{{ getNestedValue(row, col.key) | currency:'USD':'symbol':'1.2-2' }}</span>
+              <span *ngSwitchDefault>{{ getNestedValue(row, col.key) || '-' }}</span>
             </ng-container>
           </td>
           <td class="user-actions">
             <button class="action-btn edit" (click)="onEdit(row)" title="Edit" *ngIf="canEdit">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
             </button>
-            <button class="action-btn view" (click)="onView(row)" title="View"  *ngIf="canView">
+            <button class="action-btn view" (click)="onView(row)" title="View" *ngIf="canView">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
@@ -116,37 +148,35 @@
             </button>
             <button class="action-btn copy" *ngIf="callbtn" (click)="onCall(row)" title="Copy">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="m5,15H4a2,2 0 0,1 -2,-2V4A2,2 0 0,1 4,2H13a2,2 0 0,1 2,2v1"></path>
-              </svg>
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="m5,15H4a2,2 0 0,1 -2,-2V4A2,2 0 0,1 4,2H13a2,2 0 0,1 2,2v1"></path>
+          </svg>
             </button>
-            <div class="form-check form-switch">
-              <input 
-                class="form-check-input toggle-warn" 
-                type="checkbox" 
-                role="switch" 
-                id="flexSwitchCheckChecked" 
-                checked>
+            <div class="form-check form-switch" *ngIf="showToggle">
+              <input class="form-check-input toggle-warn" type="checkbox" role="switch"
+                [id]="'flexSwitchCheckChecked-' + row.id"
+                [checked]="getNestedValue(row, statusKey) === 'ACTIVE'"
+                (change)="onToggle(row, $event)" [disabled]="loading">
             </div>
           </td>
         </tr>
       </tbody>
     </table>
-    <!-- Empty/Loading States -->
+
     <ng-template #emptyOrLoading>
       <div class="mat-table-empty" *ngIf="loading">
         <mat-progress-spinner diameter="40" mode="indeterminate" color="primary"></mat-progress-spinner>
         <p>Loading data...</p>
       </div>
       <div class="mat-table-empty" *ngIf="!loading && !data.length">
-        <mat-icon style="font-size: 48px; width: 48px; height: 48px; color: #9ca3af; margin-bottom: 1rem;">inbox</mat-icon>
+        <mat-icon style="font-size: 48px;">inbox</mat-icon>
         <p>No records found.</p>
-        <p style="font-size: 14px; color: #9ca3af;">Try adjusting your search criteria.</p>
+        <p style="font-size: 14px;">Try adjusting your search criteria.</p>
       </div>
     </ng-template>
   </div>
 
-  <!-- Pagination Section -->
+  <!-- Pagination -->
   <div class="mat-pagination-row">
     <div class="d-flex align-items-center">
       <span>Showing {{ (page - 1) * pageSize + 1 }} to {{ Math.min(page * pageSize, totalRecords) }} of {{ totalRecords }} entries</span>
@@ -158,41 +188,21 @@
       </mat-form-field>
     </div>
     <div class="custom-paginator">
-      <button 
-        mat-button 
-        [disabled]="page === 1 || loading" 
-        (click)="goToPage(1)"
-        matTooltip="First page">
+      <button mat-button [disabled]="page === 1 || loading" (click)="goToPage(1)" matTooltip="First page">
         <mat-icon>first_page</mat-icon>
       </button>
-      <button 
-        mat-button 
-        [disabled]="page === 1 || loading" 
-        (click)="goToPage(page - 1)"
-        matTooltip="Previous page">
+      <button mat-button [disabled]="page === 1 || loading" (click)="goToPage(page - 1)" matTooltip="Previous page">
         <mat-icon>chevron_left</mat-icon>
       </button>
       <ng-container *ngFor="let pg of pageNumbers">
-        <button 
-          mat-button 
-          [color]="pg === page ? 'primary' : ''" 
-          [disabled]="pg === page || loading" 
-          (click)="goToPage(pg)">
+        <button mat-button [color]="pg === page ? 'primary' : ''" [disabled]="pg === page || loading" (click)="goToPage(pg)">
           {{ pg }}
         </button>
       </ng-container>
-      <button 
-        mat-button 
-        [disabled]="page === totalPages || loading" 
-        (click)="goToPage(page + 1)"
-        matTooltip="Next page">
+      <button mat-button [disabled]="page === totalPages || loading" (click)="goToPage(page + 1)" matTooltip="Next page">
         <mat-icon>chevron_right</mat-icon>
       </button>
-      <button 
-        mat-button 
-        [disabled]="page === totalPages || loading" 
-        (click)="goToPage(totalPages)"
-        matTooltip="Last page">
+      <button mat-button [disabled]="page === totalPages || loading" (click)="goToPage(totalPages)" matTooltip="Last page">
         <mat-icon>last_page</mat-icon>
       </button>
     </div>

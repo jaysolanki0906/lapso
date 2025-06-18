@@ -44,6 +44,6 @@ export class NotAuthorizedComponent {
   constructor(private router: Router) {}
 
   goHome() {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['dashboard']);
   }
 }

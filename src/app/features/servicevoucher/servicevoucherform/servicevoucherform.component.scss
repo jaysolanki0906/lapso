@@ -1,6 +1,76 @@
 /* Container */
-.service-voucher-container {
+/* --- LAYOUT FIX: HEADER AT TOP, SIDEBAR LEFT, CONTENT RIGHT --- */
+
+/* Header stays at top */
+app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 1001;
+  height: 64px;
+}
+
+// .editor-textarea[contenteditable="true"] {
+//   direction: ltr !important;
+//   unicode-bidi: plaintext !important;
+//   text-align: left !important;
+//   font-family: inherit !important;
+// }
+.main-layout {
+  display: flex;
+  flex-direction: row;
   min-height: 100vh;
+  background: #f8f9fa;
+  padding-top: 64px; /* reserve space for header */
+}
+
+/* Sidebar on the left */
+app-sidebar {
+  width: 310px;
+  min-width: 310px;
+  max-width: 310px;
+  border-right: 1px solid #ececec;
+  background: #fff;
+  height: calc(100vh - 64px);
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+/* Main content to the right of sidebar */
+.main-content {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 32px 0;
+  background: #f8f9fa;
+  min-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+
+
+/* ...[all your existing styles remain below here, unchanged]... */
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 12px 12px 0 0;
+}
+
+/* ...rest of your CSS unchanged... */
+.service-voucher-container {
+   width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
   background-color: #f8f9fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }

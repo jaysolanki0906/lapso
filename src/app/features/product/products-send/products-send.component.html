@@ -14,6 +14,7 @@
         data-bs-toggle="offcanvas"
         data-bs-target="#addProductOffcanvas"
         aria-controls="addProductOffcanvas"
+        *ngIf="canCreate"
       >
         <span class="add-product-icon-circle">
           <mat-icon class="add-product-plus">add</mat-icon>
@@ -31,7 +32,7 @@
         <h5 class="offcanvas-title" id="addProductOffcanvasLabel">{{ formHeading }}</h5>
         <button type="button" class="btn-close text-reset"
                 data-bs-dismiss="offcanvas"
-                aria-label="Close"></button>
+                aria-label="Close" (click)="closemodule()"></button>
       </div>
       <div class="offcanvas-body">
         <app-form
@@ -44,28 +45,30 @@
     </div>
 
     <app-common-table-card
-      [tabs]="tabs"
-      [activeTab]="activeTab"
-      [searchFields]="searchFields"
-      [columns]="columns"
-      [data]="filteredData"
-      [total]="total"
-      [totalRecords]="total"
-      [page]="page"
-      [callbtn]="false"
-      [pageSize]="pageSize"
-      [pageSizeOptions]="[10, 20, 50]"
-      [loading]="loading"
-      (tabChange)="onTabChange($event)"
-      (search)="onSearch($event)"
-      (clear)="onClear()"
-      (edit)="onEdit($event)"
-      (view)="onView($event)"
-      (delete)="onDelete($event)"
-      (toggle)="onToggle($event)"
-      (pageChange)="onPageChange($event)"
-      (sort)="onSort($event)"
-      [enableSorting]="true"
-    ></app-common-table-card>
+  [tabs]="tabs"
+  [activeTab]="activeTab"
+  [searchFields]="searchFields"
+  [columns]="columns"
+  [data]="filteredData"
+  [total]="total"
+  [totalRecords]="total"
+  [page]="page"
+  [callbtn]="false"
+  [pageSize]="pageSize"
+  [loading]="loading"
+  (tabChange)="onTabChange($event)"
+  (search)="onSearch($event)"
+  (clear)="onClear()"
+  (edit)="onEdit($event)"
+  (view)="onView($event)"
+  (delete)="onDelete($event)"
+  (toggle)="onToggle($event)"
+  (pageChange)="onPageChange($event)"
+  (sort)="onSort($event)"
+  [enableSorting]="true"
+  [canEdit]="canEdit"
+  [canView]="canView"
+  [canDelete]="canDelete"
+></app-common-table-card>
   </div>
 </div>

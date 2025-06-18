@@ -40,6 +40,7 @@
             required
             email
             #email="ngModel"
+            [disabled]="mode === 'edit'"
           >
           <div class="error" *ngIf="email.invalid && email.touched">
             <div *ngIf="email.errors?.['required']">Email is required.</div>

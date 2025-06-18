@@ -1,19 +1,44 @@
-.dashboard-container {
+/* App Layout */
+.main-layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Sidebar Styles */
-.sidebar {
+/* App Sidebar */
+app-sidebar {
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+/* Main Content with Settings Sidebar */
+.main-content {
+  flex: 1;
+  padding: 32px;
+  display: flex;
+  min-width: 0;
+  box-sizing: border-box;
+  background-color: #f8fafc;
+}
+
+/* Settings Section Layout */
+.settings-sidebar-and-content {
+  display: flex;
+  width: 100%;
+  min-height: 100%;
+}
+
+/* Settings Sidebar */
+.settings-sidebar {
   width: 240px;
   background: white;
   border-radius: 12px;
-  margin: 16px 0 16px 16px;
+  margin: 0 32px 0 0;
   padding: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   height: fit-content;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-header {
@@ -78,10 +103,13 @@
   color: inherit;
 }
 
-/* Main Content Styles */
-.main-content {
+/* Settings Main Content */
+.settings-content {
   flex: 1;
-  padding: 32px;
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .content-header {
@@ -239,6 +267,20 @@
   background-color: #dcfce7;
   color: #166534;
 }
+.status-badge.inactive {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Highlight inactive row background */
+.row-inactive {
+  background-color: #fee2e2 !important;
+}
+
+.row-inactive td {
+  color: #b91c1c !important;
+  font-weight: 600;
+}
 
 .user-actions {
   display: flex;
@@ -343,52 +385,35 @@
   border-color: #dc2626;
 }
 
-@media (max-width: 768px) {
-  .dashboard-container {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    margin: 16px;
-  }
-  
+@media (max-width: 1200px) {
   .main-content {
     padding: 16px;
   }
-  
-  .content-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-  
-  .pagination-section {
-    flex-direction: column;
-    gap: 16px;
+  .settings-sidebar {
+    margin-right: 16px;
   }
 }
-/* ...existing styles... */
 
-/* Highlight inactive row background */
-.row-inactive {
-  background-color: #fee2e2 !important;
+@media (max-width: 900px) {
+  .main-content {
+    padding: 8px;
+  }
+  .settings-sidebar-and-content {
+    flex-direction: column;
+  }
+  .settings-sidebar {
+    width: 100%;
+    margin: 0 0 24px 0;
+    flex-direction: row;
+    border-radius: 8px;
+  }
 }
 
-/* Optionally, make text deep red for inactive rows */
-.row-inactive td {
-  color: #b91c1c !important;
-  font-weight: 600;
+@media (max-width: 768px) {
+  .main-content {
+    padding: 6px;
+  }
+  .settings-content {
+    padding: 0;
+  }
 }
-
-/* Status badge colors */
-.status-badge.active {
-  background-color: #dcfce7;
-  color: #166534;
-}
-.status-badge.inactive {
-  background-color: #fee2e2;
-  color: #b91c1c;
-}
-
-/* ...rest of your CSS... */

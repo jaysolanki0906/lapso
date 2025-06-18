@@ -1,25 +1,70 @@
-.dashboard-container {
+/* Add these styles to fix the layout positioning */
+
+/* Main layout container */
+.main-layout {
   display: flex;
   min-height: 100vh;
+  width: 100%;
+}
+
+/* Main content area (excludes app-sidebar) */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: auto;
+  padding: 0; /* Remove any default padding */
+  margin: 0;  /* Remove any default margin */
+}
+
+/* Dashboard container - your existing styles with modifications */
+.dashboard-container {
+  display: flex;
+  width: 100%;
+  min-height: calc(100vh - 60px); /* Subtract header height if needed */
   background-color: #f8fafc;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   align-items: flex-start;
+  flex: 1; /* Take remaining space */
 }
 
-/* Sidebar Styles */
+/* Ensure the settings content takes full width */
+.settings-content {
+  flex: 1 1 0%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 24px; /* Add some padding around the content */
+}
+
+/* Update content header to account for padding */
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  margin-top: 0; /* Ensure no extra top margin */
+}
+
+/* Sidebar Styles - keep your existing styles but ensure proper positioning */
 .sidebar {
   width: 240px;
   background: white;
   border-radius: 12px;
   margin: 24px 0 24px 24px;
+  margin-right: 1rem;
   padding: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   height: fit-content;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
 }
 
+/* Rest of your existing CSS styles remain the same... */
 .sidebar-header {
   padding: 24px 20px 16px 20px;
   border-bottom: 1px solid #f1f5f9;
@@ -92,22 +137,6 @@
   text-align: left;
 }
 
-/* Main Content Styles */
-.main-content {
-  flex: 1;
-  padding: 32px 40px 40px 0;
-  min-width: 0;
-  margin-left: 24px; 
-}
-
-.content-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  background: none;
-}
-
 .header-info {
   display: flex;
   flex-direction: column;
@@ -151,63 +180,7 @@
   font-size: 16px;
 }
 
-/* Responsive adjustments for sidebar and header */
-@media (max-width: 1024px) {
-  .dashboard-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .sidebar {
-    width: 100%;
-    margin: 16px;
-    flex-direction: row;
-    border-radius: 12px;
-    justify-content: flex-start;
-  }
-  .sidebar-header {
-    display: none;
-  }
-  .sidebar-nav {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    padding: 0;
-  }
-  .sidebar-item {
-    flex: 1;
-    justify-content: center;
-    margin: 2px;
-    border-radius: 6px;
-    min-width: 0;
-    text-align: center;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    padding: 20px 4px;
-  }
-  .content-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 500px) {
-  .sidebar {
-    margin: 8px;
-    padding: 0;
-  }
-  .sidebar-item {
-    padding: 8px 10px;
-    font-size: 13px;
-  }
-  .main-content {
-    padding: 8px 2px;
-  }
-}
-
+/* Permission Management Layout */
 .permission-container {
   border: 1px solid #e5e7eb;
   border-radius: 4px;
@@ -217,17 +190,18 @@
   display: flex;
   min-width: 100%;
   min-height: 700px;
+  height: 100%;
 }
 
 .role-list-section {
   flex: 0 0 400px;
   background: #fff;
   border-right: 1px solid #f1f5f9;
-  padding: 0px 40px 0px 40px;
+  padding: 32px 40px 0px 40px;
   display: flex;
   flex-direction: column;
   min-width: 240px;
-  max-width:320px;
+  max-width: 320px;
 }
 
 .role-group-label {
@@ -275,6 +249,7 @@
   display: flex;
   gap: 4px;
 }
+
 .icon-btn {
   padding: 0;
   border: none;
@@ -286,6 +261,7 @@
   color: #dc2626;
   transition: color 0.2s;
 }
+
 .icon-btn:hover {
   color: #a41e1e;
 }
@@ -297,6 +273,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  min-width: 0;
 }
 
 .permission-list {
@@ -354,7 +331,7 @@
 
 .collapse-icon-inside {
   position: absolute;
-  left: 30px; /* Adjust according to checkbox size and spacing */
+  left: 30px;
   pointer-events: none;
   top: 50%;
   transform: translateY(-50%);
@@ -378,13 +355,32 @@
   user-select: none;
 }
 
-/* Footer */
+.permission-children {
+  padding-left: 36px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.permission-child-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.permission-child-row .permission-checkbox {
+  margin-right: 10px;
+  width: 16px;
+  height: 16px;
+}
+
 .permission-footer {
   display: flex;
   justify-content: flex-end;
   padding: 32px 0 24px 0;
   width: 100%;
 }
+
 .save-btn {
   background: #dc2626;
   color: #fff;
@@ -396,20 +392,66 @@
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .save-btn:hover {
   background: #a41e1e;
 }
 
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .sidebar {
+    width: 100%;
+    margin: 16px 0 1rem 0;
+    flex-direction: row;
+    border-radius: 12px;
+    justify-content: flex-start;
+    margin-right: 0;
+  }
+  .sidebar-header {
+    display: none;
+  }
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    padding: 0;
+  }
+  .sidebar-item {
+    flex: 1;
+    justify-content: center;
+    margin: 2px;
+    border-radius: 6px;
+    min-width: 0;
+    text-align: center;
+  }
+}
+
 @media (max-width: 900px) {
+  .dashboard-container {
+    flex-direction: column;
+    min-width: 0;
+  }
+  .sidebar {
+    width: 100%;
+    margin: 8px 0 1rem 0;
+    padding: 0;
+    margin-right: 0;
+  }
   .permission-container {
     flex-direction: column;
     min-width: 0;
+    height: auto;
   }
   .role-list-section {
     border-right: none;
     border-bottom: 1px solid #f1f5f9;
     padding: 24px 20px 12px 20px;
     min-width: unset;
+    max-width: unset;
     flex: 1 1 100%;
   }
   .permission-list-section {
@@ -417,5 +459,37 @@
   }
   .permission-footer {
     padding: 18px 0 14px 0;
+  }
+  .settings-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .permission-list-section {
+    padding: 14px 4px 0 4px;
+  }
+  .settings-content {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 500px) {
+  .sidebar {
+    margin: 8px 0 1rem 0;
+    padding: 0;
+    margin-right: 0;
+  }
+  .sidebar-item {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .settings-content {
+    padding: 8px;
   }
 }

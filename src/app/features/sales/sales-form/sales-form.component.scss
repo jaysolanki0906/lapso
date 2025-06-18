@@ -209,3 +209,25 @@ app-sidebar {
     }
   }
 }
+.suggestion-list {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border-radius: 0 0 4px 4px;
+  border: 1px solid #ddd;
+  background: #fff;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion-list .dropdown-item {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestion-list .dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-list .dropdown-item:hover {
+  background: #f8f9fa;
+}

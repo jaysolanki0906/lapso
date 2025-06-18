@@ -12,9 +12,15 @@ export class InvoiceService {
   page = Number(page) || 1;
   limit = Number(limit) || 20;
   const offset = (page - 1) * limit;
-  let query = `offset=${offset}&limit=${limit}`;
+  let query = `offset=${offset}&limit=${limit}&voucher_type=INVOICE&count_required=true`;
 
-  query += `&order_by=created_at&order_type=desc&voucher_type=INVOICE&count_required=true`;
+  // Add sorting if provided
+  if (filters?.order_by) {
+    query += `&order_by=${encodeURIComponent(filters.order_by)}`;
+    if (filters.order_type) {
+      query += `&order_type=${encodeURIComponent(filters.order_type)}`;
+    }
+  }
 
   if (filters) {
     if (filters.invoice_number) query += `&invoice_number=${encodeURIComponent(filters.invoice_number)}`;

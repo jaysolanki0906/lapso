@@ -1,11 +1,58 @@
-/* Container */
-.new-service-container {
+.main-layout {
+  display: flex;
+  flex-direction: row;
   min-height: 100vh;
-  background-color: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #f8f9fa;
+  padding-top: 64px; /* height of header */
 }
 
-/* Header */
+app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  z-index: 1001;
+  height: 64px;
+}
+
+app-sidebar {
+  width: 310px;
+  min-width: 310px;
+  max-width: 310px;
+  border-right: 1px solid #ececec;
+  background: #fff;
+  height: calc(100vh - 64px);
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  /* No float, no margin-left, no absolute! */
+}
+
+.main-content {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 24px;
+  background: #f7f7f7;
+  min-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  top:0%;
+}
+
+.new-service-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 32px auto 0 auto;
+  background-color: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-height: calc(100vh - 96px); /* header + margin */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* Header inside the card */
 .header {
   display: flex;
   justify-content: space-between;
@@ -13,6 +60,8 @@
   padding: 24px 32px;
   background-color: #ffffff;
   border-bottom: 1px solid #e9ecef;
+  border-radius: 12px 12px 0 0;
+  margin-bottom: 24px;
 }
 
 .header-content {
@@ -177,8 +226,6 @@
   border: 1px solid #ced4da;
   border-bottom: none;
   border-radius: 6px 6px 0 0;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
 }
 
 .toolbar-btn {
@@ -228,6 +275,14 @@
 .editor-textarea {
   border-radius: 0 0 6px 6px;
   border-top: none;
+  min-height: 140px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background: #fff;
+  padding: 10px;
+  margin-bottom: 8px;
+  outline: none;
+  font-size: 18px;
 }
 
 /* Button Container */
@@ -254,38 +309,60 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .main-content {
+    padding: 0;
+  }
+  .new-service-container {
+    max-width: 98vw;
+  }
+}
+
+@media (max-width: 900px) {
+  app-sidebar {
+    min-width: 56px;
+    max-width: 80px;
+  }
+  .new-service-container {
+    margin-top: 16px;
+    padding: 0 8px;
+  }
+}
+
 @media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+    padding-top: 56px;
+  }
+  app-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-width: unset;
+    order: 1;
+    height: auto;
+    position: static;
+  }
+  .main-content {
+    order: 2;
+    min-height: unset;
+  }
   .header {
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
-  }
-  
-  .content-wrapper {
     padding: 16px;
   }
-  
-  .service-card {
-    padding: 24px 16px;
+  .content-wrapper {
+    padding: 8px;
   }
-  
+  .service-card {
+    padding: 16px 4px;
+  }
   .form-row {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
-  
   .editor-toolbar {
     flex-wrap: wrap;
   }
-}
-/* styles.css or component .scss */
-.swal2-service-view-popup {
-  border-radius: 12px;
-}
-.swal2-popup textarea.form-textarea {
-  border: 1px solid #ccc;
-  background: #fafafa;
-  color: #888;
-  font-family: inherit;
-  pointer-events: none;
 }

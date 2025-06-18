@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { CommonTableCardComponent, TableTab, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
+import { TableTab, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { OrganizationService } from '../../../core/services/organization.service';
@@ -10,6 +10,8 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
+import { RolePermissionService } from '../../../core/services/role-permission.service';
+import { ErrorHandlerService } from '../../../core/services/error-handler.service';
 
 @Component({
   selector: 'app-servicelist',
@@ -23,15 +25,15 @@ export class ServicelistComponent implements OnInit, OnDestroy {
     { label: 'Inactive', value: 'INACTIVE' }
   ];
   activeTab = 'ACTIVE';
-  sortColumn: string = 'service_name'; // default sort on load
-sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: string = 'service_name';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   searchFields = [
-    { placeholder: 'Search by Service or Code', key: 'query' }
+    { title:'Search by Service Name',placeholder: 'Search by Service Name', key: 'query' }
   ];
 
   columns: TableColumn[] = [
-    { key: 'service_name', label: 'Service Name',sortable: true },
+    { key: 'service_name', label: 'Service Name', sortable: true },
     { key: 'description', label: 'Description' },
   ];
 
@@ -42,6 +44,10 @@ sortDirection: 'asc' | 'desc' = 'asc';
   total = 0;
   searchQuery = '';
   loading = false;
+  canEdit = false;
+  canDelete = false;
+  canView = false;
+  canCreate = false;
 
   orgId: string = '';
   orgSub: Subscription | null = null;
@@ -56,7 +62,9 @@ sortDirection: 'asc' | 'desc' = 'asc';
     private servicesService: ServicesService,
     private organizationService: OrganizationService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private role:RolePermissionService,
+    private err:ErrorHandlerService
   ) {}
 
   ngOnInit() {
@@ -67,43 +75,52 @@ sortDirection: 'asc' | 'desc' = 'asc';
       }
     });
     this.cdr.detectChanges();
+
+    this.canCreate = this.role.getPermission("services","services_create");
+    this.canView = this.role.getPermission("services","services_view");
+    this.canEdit = this.role.getPermission("services","services_edit");
+    this.canDelete = this.role.getPermission("services","services_delete");
   }
   
   ngOnDestroy() {
     this.orgSub?.unsubscribe();
   }
+  
 
   fetchItems() {
-  if (!this.orgId) return;
-  this.loading = true;
-  const offset = (this.page - 1) * this.pageSize;
-  this.servicesService.getItems(this.orgId, {
-    search: this.searchQuery,
-    offset,
-    limit: this.pageSize,
-    status: this.activeTab,
-    order_by: this.sortColumn,
-    order_type: this.sortDirection,
-  }).subscribe(
-    (res: any) => {
-      this.allData = (res.items || res.data || []).map((item: any) => ({
-        ...item,
-        brandTitle: item.brand_details?.title ?? '',
-        categoryTitle: item.service_details?.title ?? '',
-      }));
-      this.filteredData = this.allData;
-      this.total = res.total || this.allData.length;
-      this.loading = false;
-    },
-    _ => { this.loading = false; }
-  );
-}
+    if (!this.orgId) return;
+    this.loading = true;
+    const offset = (this.page - 1) * this.pageSize;
+    this.servicesService.getItems(this.orgId, {
+      search: this.searchQuery,
+      offset,
+      limit: this.pageSize,
+      status: this.activeTab,
+      order_by: this.sortColumn,
+      order_type: this.sortDirection,
+      
+    }).subscribe(
+      (res: any) => {
+        this.allData = (res.items || res.data || []).map((item: any) => ({
+          ...item,
+          brandTitle: item.brand_details?.title ?? '',
+          categoryTitle: item.service_details?.title ?? '',
+        }));
+        this.filteredData = this.allData;
+        this.total = res.count ?? res.total ?? 0;
+        this.loading = false;
+      },
+      _ => { this.loading = false; }
+    );
+  }
+
   onSort(event: { column: string, direction: 'asc' | 'desc' }) {
-  this.sortColumn = event.column;
-  this.sortDirection = event.direction;
-  this.page = 1;
-  this.fetchItems();
-}
+    this.sortColumn = event.column;
+    this.sortDirection = event.direction;
+    this.page = 1;
+    this.fetchItems();
+  }
+
   onTabChange(tabValue: string) {
     this.activeTab = tabValue;
     this.page = 1;
@@ -135,52 +152,52 @@ sortDirection: 'asc' | 'desc' = 'asc';
     this.router.navigate(['service', 'edit', row.id]); 
   }
 
-  // You may keep view logic similar if you use a view route
   onView(row: any) {
-  Swal.fire({
-    title: 'Services',
-    html: `
-      <div style="text-align: left;">
-        <div style="margin-bottom: 16px;">
-          <strong>Service Name</strong>
-          <span style="margin-left: 30px; color: #666;">${row.service_name || ''}</span>
+    Swal.fire({
+      title: 'Services',
+      html: `
+        <div style="text-align: left;">
+          <div style="margin-bottom: 16px;">
+            <strong>Service Name</strong>
+            <span style="margin-left: 30px; color: #666;">${row.service_name || ''}</span>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <strong>Contract Description</strong>
+            <span style="margin-left: 10px; color: #666;">${row.description || ''}</span>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <strong>Terms & Condition</strong>
+            <textarea 
+              class="form-textarea" 
+              style="width:100%;margin-top:5px;height:70px;resize:none;" 
+              placeholder="Insert text here ..." 
+              readonly>${row.terms_and_conditions || ''}</textarea>
+          </div>
+          <div style="margin-top: 32px;">
+            <strong>Status</strong>
+            <span style="margin-left: 60px; color: #228B22;">${row.status === 'ACTIVE' ? 'Active' : 'Inactive'}</span>
+          </div>
         </div>
-        <div style="margin-bottom: 16px;">
-          <strong>Contract Description</strong>
-          <span style="margin-left: 10px; color: #666;">${row.description || ''}</span>
-        </div>
-        <div style="margin-bottom: 16px;">
-          <strong>Terms & Condition</strong>
-          <textarea 
-            class="form-textarea" 
-            style="width:100%;margin-top:5px;height:70px;resize:none;" 
-            placeholder="Insert text here ..." 
-            readonly>${row.terms_and_conditions || ''}</textarea>
-        </div>
-        <div style="margin-top: 32px;">
-          <strong>Status</strong>
-          <span style="margin-left: 60px; color: #228B22;">${row.status === 'ACTIVE' ? 'Active' : 'Inactive'}</span>
-        </div>
-      </div>
-    `,
-    showConfirmButton: false,
-    showCloseButton: true,
-    width: 600,
-    customClass: {
-      popup: 'swal2-service-view-popup'
-    }
-  });
-}
+      `,
+      showConfirmButton: false,
+      showCloseButton: true,
+      width: 600,
+      customClass: {
+        popup: 'swal2-service-view-popup'
+      }
+    });
+  }
 
-  onDelete(payload: any) {
-     const row = this.filteredData.find(item => item.id === payload.id);
+  async onDelete(payload: any) {
+    const row = this.filteredData.find(item => item.id === payload.id);
     if (!row) return;
 
     // Save old status in case API fails
     const oldStatus = row.status;
     row.status = payload.status;
     row.toggling = true;
-
+    const confirm=await this.err.confirmSwal('Delete','Are you sure you want to delet',`${row.service_name}`)
+    if(confirm)
     this.servicesService.deleteService(this.orgId, row.id).pipe(
       finalize(() => row.toggling = false)
     ).subscribe({
@@ -189,21 +206,24 @@ sortDirection: 'asc' | 'desc' = 'asc';
       },
       error: err => {
         row.status = oldStatus;
-        Swal.fire('Error', 'Failed to update status', 'error');
+        this.err.showToast(err,'error');
       }
     });
   }
 
-  onToggle(payload: any) {
+  async onToggle(payload: any) {
+    console.log('[Parent] onToggle caught:', payload); // <-- LOGGING HERE
     // Find the toggled row in filteredData to optimistically update UI
-    const row = this.filteredData.find(item => item.id === payload.id);
+    const row = this.filteredData.find(item => item.id === payload.row.id);
     if (!row) return;
 
     // Save old status in case API fails
     const oldStatus = row.status;
     row.status = payload.status;
     row.toggling = true;
+    const confirm=await this.err.confirmSwal('Inactive','Are you sure you want to inactive',`${row.service_name}`)
 
+    if(confirm){
     this.servicesService.updateservice(this.orgId, row.id, {
       service_name: row.service_name,
       status: payload.status
@@ -217,6 +237,9 @@ sortDirection: 'asc' | 'desc' = 'asc';
         row.status = oldStatus;
         Swal.fire('Error', 'Failed to update status', 'error');
       }
-    });
+    });}
+    else{
+      this.fetchItems();
+    }
   }
 }

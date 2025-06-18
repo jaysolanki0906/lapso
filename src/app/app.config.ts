@@ -10,26 +10,31 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { routes } from './app.routes';
 import { HttpInspectorService } from './core/interceptors/http-inspector.interceptor';
 
+// ✅ Import the native date adapter provider
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { provideAnimations } from "@angular/platform-browser/animations";
+
 // ✅ Required factory function
 export function HttpLoaderFactory(http: HttpClient) {
-  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideRouter(routes),
-    provideHttpClient(withInterceptorsFromDi()),
-    { provide: HTTP_INTERCEPTORS, useClass: HttpInspectorService, multi: true },
-    importProvidersFrom(
-      NgxPermissionsModule.forRoot(),
-      TranslateModule.forRoot({
-        loader: {
-          provide: TranslateLoader,
-          useFactory: HttpLoaderFactory,
-          deps: [HttpClient]
-        },
-        defaultLanguage: 'en'
-      })
-    )
-  ]
+	providers: [
+		provideRouter(routes),
+		provideHttpClient(withInterceptorsFromDi()),
+		{ provide: HTTP_INTERCEPTORS, useClass: HttpInspectorService, multi: true },
+		// ✅ Add the date adapter provider here
+		provideNativeDateAdapter(),
+
+		importProvidersFrom(NgxPermissionsModule.forRoot(), TranslateModule.forRoot({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			},
+			defaultLanguage: 'en'
+		})),
+		provideAnimations()
+	]
 };

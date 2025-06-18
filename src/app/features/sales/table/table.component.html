@@ -13,6 +13,7 @@
       class="add-product-btn"
       type="button"
       (click)="onAddProduct()"
+      *ngIf="canCreate"
     >
       <span class="add-product-icon-circle">
         <mat-icon class="add-product-plus">add</mat-icon>
@@ -29,7 +30,6 @@
     [total]="total"
     [page]="page"
     [pageSize]="pageSize"
-    [pageSizeOptions]="[10, 20, 50, 100]"
     (pageChange)="onPageChange($event)"
     (search)="onSearch($event)"
     (clear)="onClear()"
@@ -37,7 +37,10 @@
     (edit)="onEdit($event)"
     (view)="onView($event)"
     (delete)="onDelete($event)"
-    (sort)="onSort($event)" 
+    (sort)="onSort($event)"
+     [canEdit]="canEdit"
+  [canView]="canView"
+  [canDelete]="canDelete" 
   [enableSorting]="true"
     
   ></app-common-table-card>

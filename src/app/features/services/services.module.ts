@@ -11,7 +11,8 @@ import { ServicelistComponent } from './servicelist/servicelist.component';
 import { ServiceformComponent } from './serviceform/serviceform.component';
 
 const routes: Routes = [
-  { path: '', component: ServicelistComponent },    
+  { path: '', component: ServicelistComponent }, 
+  
 ];
 
 @NgModule({

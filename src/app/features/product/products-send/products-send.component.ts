@@ -1,18 +1,21 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { CommonTableCardComponent, TableTab, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
+import { TableTab, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
 import { ProductService } from '../../../core/services/product.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { finalize } from 'rxjs/operators';
 import { RolePermissionService } from '../../../core/services/role-permission.service';
+import { ErrorHandlerService } from '../../../core/services/error-handler.service';
+import { ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-products-send',
   templateUrl: './products-send.component.html',
   styleUrl: './products-send.component.scss',
-  standalone:false,
+  standalone: false,
 })
 export class ProductsSendComponent implements OnInit, OnDestroy {
+
   tabs: TableTab[] = [
     { label: 'Active', value: 'ACTIVE' },
     { label: 'Inactive', value: 'INACTIVE' }
@@ -20,12 +23,12 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
   activeTab = 'ACTIVE';
 
   searchFields = [
-    {title:'Product or Code',placeholder: 'Search by Product or Code', key: 'query' }
+    { title: 'Product or Code', placeholder: 'Search by Product or Code', key: 'query' }
   ];
 
   columns: TableColumn[] = [
     { key: 'name', label: 'Product Name', sortable: true },
-    { key: 'code', label: 'Product Code' },
+    { key: 'code', label: 'Product Code',sortable:true },
     { key: 'brandTitle', label: 'Brand' },
     { key: 'categoryTitle', label: 'Category' },
   ];
@@ -50,9 +53,9 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
 
   // Sorting
   sortColumn: string = 'name';
+
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  // Permission flags
   canEdit = false;
   canDelete = false;
   canView = false;
@@ -61,8 +64,8 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
   constructor(
     private productService: ProductService,
     private organizationService: OrganizationService,
-    private role:RolePermissionService,
-    private cdr: ChangeDetectorRef
+    private role: RolePermissionService,
+    private err: ErrorHandlerService,
   ) {}
 
   ngOnInit() {
@@ -74,11 +77,10 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
     });
 
     // Set permissions
-    this.canCreate = this.role.getPermission("product","product_create");
-    this.canEdit = this.role.getPermission("product","product_edit");
-    this.canView = this.role.getPermission("product","product_view");
-    this.canDelete = this.role.getPermission("product","product_delete");
-    this.cdr.detectChanges();
+    this.canCreate = this.role.getPermission("product", "product_create");
+    this.canEdit = this.role.getPermission("product", "product_edit");
+    this.canView = this.role.getPermission("product", "product_view");
+    this.canDelete = this.role.getPermission("product", "product_delete");
   }
 
   ngOnDestroy() {
@@ -104,7 +106,7 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
           categoryTitle: item.product_details?.title ?? '',
         }));
         this.filteredData = this.allData;
-        this.total = res.total || this.allData.length;
+        this.total = res.count ?? res.total ?? 0;
         this.loading = false;
       },
       _ => { this.loading = false; }
@@ -155,35 +157,66 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
     this.selectedProduct = row;
     this.openOffcanvas();
   }
+  closemodule() {
+    this.selectedProduct = null;
+    this.formMode = 'add';
 
-  onDelete(row: any) {
+    // Hide the offcanvas
+    const offcanvas = (window as any).bootstrap?.Offcanvas.getInstance(
+      document.getElementById('addProductOffcanvas')
+    );
+    if (offcanvas) {
+      offcanvas.hide();
+    }
+   
+  }
+  async onDelete(row: any) {
     if (!this.orgId || !row?.id) return;
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    const bool: Boolean = await this.err.confirmSwal("Delete", 'Are tyou sure you want to delete ', `${row.name}`);
     this.deleting = true;
-    this.productService.deleteProduct(this.orgId, row.id).subscribe({
-      next: () => {
-        this.deleting = false;
-        this.filteredData = this.filteredData.filter(item => item.id !== row.id);
-        this.allData = this.allData.filter(item => item.id !== row.id);
-        this.total = this.total - 1;
-      },
-      error: () => {
-        this.deleting = false;
-      }
-    });
+    if (bool)
+      this.productService.deleteProduct(this.orgId, row.id).subscribe({
+        next: () => {
+          this.deleting = false;
+          this.filteredData = this.filteredData.filter(item => item.id !== row.id);
+          this.allData = this.allData.filter(item => item.id !== row.id);
+          this.total = this.total - 1;
+        },
+        error: () => {
+          this.deleting = false;
+        }
+      });
   }
 
-  onToggle(product: any) {
+  async onToggle(event: { row: any, value: boolean, status: string }) {
+    const product = { ...event.row, status: event.status };
     if (!this.orgId || !product?.id) return;
     product.toggling = true;
-    this.productService.updateProduct(this.orgId, product.id, product)
-      .pipe(finalize(() => { product.toggling = false; }))
-      .subscribe({
-        next: () => {
-          this.fetchItems();
-        },
-        error: () => {}
-      });
+    const confirm = await this.err.confirmSwal(
+      'Toggle',
+      'Are you sure you want to do this operation on',
+      `${event.row.name}`
+    );
+    if (confirm) {
+      product.toggling = true;
+      this.productService.updateProduct(this.orgId, product.id, product)
+        .pipe(finalize(() => { product.toggling = false; }))
+        .subscribe({
+          next: () => {
+            this.fetchItems();
+          },
+          error: (err) => { this.err.showToast(err, 'warning');
+            product.toggle=false;
+ event.row.status = event.value ? 'INACTIVE' : 'ACTIVE';
+      this.filteredData = [...this.filteredData];
+          }
+        });
+    } else {
+      // Revert the toggle
+       product.toggle=false;
+      event.row.status = event.value ? 'INACTIVE' : 'ACTIVE';
+      this.filteredData = [...this.filteredData];
+    }
   }
 
   onSort(event: { column: string, direction: 'asc' | 'desc' }) {

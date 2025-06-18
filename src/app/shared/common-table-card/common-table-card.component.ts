@@ -12,7 +12,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
+import { IgxDateRangePickerModule } from 'igniteui-angular';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
 export interface TableColumn {
   key: string;
@@ -27,7 +29,8 @@ export interface SearchField {
   placeholder: string;
   key: string;
   icon?: string;
-  type?: 'text' | 'email' | 'number' | 'date';
+  type?: 'text' | 'email' | 'number' | 'date' | 'dropdown';
+  options?: string[];
 }
 
 export interface TableTab {
@@ -56,7 +59,9 @@ export interface TableTab {
     FormsModule,
     CommonModule,
     MatCardModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatDatepickerModule,
+    IgxDateRangePickerModule
   ],
 })
 export class CommonTableCardComponent implements OnInit {
@@ -70,17 +75,18 @@ export class CommonTableCardComponent implements OnInit {
   @Input() total: number = 0;
   @Input() totalRecords: number = 0;
   @Input() page: number = 1;
-  @Input() pageSize: number = 20;
-  @Input() pageSizeOptions: number[] = [10, 20, 50, 100];
+  @Input() pageSize: number = 3;
+  @Input() pageSizeOptions: number[] = [3,10, 20, 50, 100];
   @Input() loading: boolean = false;
   @Input() callbtn: boolean = false;
   @Input() showToggle: boolean = true;
   @Input() showSearch: boolean = true;
   @Input() showPagination: boolean = true;
   @Input() enableSorting: boolean = true;
-  @Input() canEdit: boolean = true;
-  @Input() canView: boolean = true;
-  @Input() canDelete: boolean = true;
+  @Input() canEdit: boolean = false;
+  @Input() canView: boolean = false;
+  @Input() canDelete: boolean = false;
+  showAllSearchFields = false;
 
   @Output() tabChange = new EventEmitter<string>();
   @Output() search = new EventEmitter<{ [key: string]: string }>();
@@ -88,10 +94,13 @@ export class CommonTableCardComponent implements OnInit {
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
-  @Output() toggle = new EventEmitter<{ row: any, value: boolean }>();
+  @Output() toggle = new EventEmitter<{ row: any, value: boolean, status: string }>();
   @Output() pageChange = new EventEmitter<{ page: number, pageSize: number }>();
   @Output() call = new EventEmitter<any>();
   @Output() sort = new EventEmitter<{ column: string, direction: 'asc' | 'desc' }>();
+  dateRange: { start: Date | null; end: Date | null }={ start: null, end: null };
+
+  @Output() rangeSelected = new EventEmitter<{ start: Date; end: Date }>();
 
   statusKey = 'status';
   currentSortColumn: string = 'name';
@@ -105,6 +114,15 @@ export class CommonTableCardComponent implements OnInit {
       this.totalRecords = this.total;
     }
   }
+  get upperFields() {
+    return this.searchFields.slice(0, 3);  // First 3
+  }
+  onRangeChange(range: { start: Date; end: Date }) {
+    this.rangeSelected.emit(range);
+  }
+  get lowerFields() {
+    return this.searchFields.slice(3);     // Next 3
+  }
 
   get selectedTabIndex(): number {
     return this.tabs.findIndex(tab => tab.value === this.activeTab);
@@ -113,53 +131,43 @@ export class CommonTableCardComponent implements OnInit {
   get displayedColumns(): string[] {
     return [...this.columns.map(col => col.key), 'actions'];
   }
+  get visibleSearchFields() {
+    if (!this.showAllSearchFields && this.searchFields.length > 3) {
+      return this.searchFields.slice(0, 3);
+    }
+    return this.searchFields;
+  }
 
-  // Tab Management
   onTabChangeMaterial(index: number) {
     if (this.tabs[index]) {
       this.activeTab = this.tabs[index].value;
       this.tabChange.emit(this.activeTab);
     }
   }
-
   onTabChange(tab: TableTab) {
     this.activeTab = tab.value;
     this.tabChange.emit(tab.value);
   }
-
   onSearch() {
     this.search.emit(this.searchValues);
   }
-
   onClear() {
     for (let key in this.searchValues) {
       this.searchValues[key] = '';
     }
     this.clear.emit();
   }
-
-  onEdit(row: any) { 
-    this.edit.emit(row); 
+  onEdit(row: any) { this.edit.emit(row); }
+  onView(row: any) { this.view.emit(row); }
+  onDelete(row: any) { this.delete.emit(row); }
+  onCall(row: any) { this.call.emit(row); }
+  // In your table component
+  onToggle(row: any, event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    const status = checked ? 'ACTIVE' : 'INACTIVE';
+    this.toggle.emit({ row, value: checked, status });
+    (event.target as HTMLInputElement).checked = !checked;
   }
-  onView(row: any) { 
-    this.view.emit(row); 
-  }
-  onDelete(row: any) { 
-    this.delete.emit(row); 
-  }
-  onCall(row: any) { 
-    this.call.emit(row); 
-  }
-  onToggle(row: any, event: any) {
-    const payload = { 
-      row: row, 
-      value: event.checked,
-      status: event.checked ? 'ACTIVE' : 'INACTIVE' 
-    };
-    this.toggle.emit(payload);
-  }
-
-  // Sorting
   onSort(column: TableColumn, direction: 'asc' | 'desc') {
     if (!this.enableSorting || !column.sortable) return;
     this.currentSortColumn = column.key;
@@ -169,45 +177,32 @@ export class CommonTableCardComponent implements OnInit {
       direction: direction
     });
   }
-
-  // Pagination
   onMaterialPage(event: PageEvent) {
     this.page = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.pageChange.emit({ page: this.page, pageSize: this.pageSize });
   }
-
   onPageSizeChange(newPageSize: number) {
     this.pageSize = newPageSize;
-    this.page = 1;
+    this.page = 1; // Reset to first page on page size change!
     this.pageChange.emit({ page: this.page, pageSize: this.pageSize });
   }
-
   get totalPages(): number {
     const total = this.totalRecords || this.total;
     return Math.max(Math.ceil(total / this.pageSize), 1);
   }
-
   get pageNumbers(): number[] {
     const total = this.totalPages;
-    const current = this.page;
-    let start = Math.max(current - 2, 1);
-    let end = Math.min(start + 4, total);
-    start = Math.max(end - 4, 1);
-
-    const pages = [];
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-    return pages;
+    if (total <= 1) return [];
+    if (total <= 3) return Array.from({ length: total }, (_, i) => i + 1);
+    return [1,2,3,4,5,6,7,8];
   }
-
   goToPage(pg: number) {
+    if (typeof pg !== 'number') return;
     if (pg < 1 || pg > this.totalPages || pg === this.page || this.loading) return;
     this.page = pg;
     this.pageChange.emit({ page: this.page, pageSize: this.pageSize });
   }
-
   getNestedValue(obj: any, path: string): any {
     if (!obj || !path) return '';
     return path.split('.').reduce((acc, part) => acc && acc[part], obj) ?? '';
@@ -227,14 +222,10 @@ export class CommonTableCardComponent implements OnInit {
   formatValue(value: any, column: TableColumn): any {
     if (!value && value !== 0) return '-';
     switch (column.type) {
-      case 'status':
-        return value;
-      case 'date':
-        return new Date(value);
-      case 'currency':
-        return parseFloat(value) || 0;
-      default:
-        return value;
+      case 'status': return value;
+      case 'date': return new Date(value);
+      case 'currency': return parseFloat(value) || 0;
+      default: return value;
     }
   }
   get hasActiveFilters(): boolean {

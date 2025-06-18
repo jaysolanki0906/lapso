@@ -32,6 +32,8 @@ export class FormComponent implements OnInit, OnChanges {
   @Input() mode: 'add' | 'edit' | 'view' = 'add';
   @Input() productData: any = null;
   @Output() updateNeeded = new EventEmitter<void>();
+  warrantyTouched = false;
+  guaranteeTouched = false;
 
   product = {
     category: null as Category | null,
@@ -56,23 +58,36 @@ export class FormComponent implements OnInit, OnChanges {
   products: any[] = [];
   categories: Category[] = [];
   brands: Brand[] = [];
+  filteredBrands: Brand[] = []; // Used to store brands associated with selected category
   submitting = false;
   deleting = false;
-  private pendingPatch: any = null;
+  selectedBrandIds: number[] = [];
+  selectedProductIds: number[] = [];
+  pendingPatch: any = null;
 
   constructor(
     private productService: ProductService,
     private organisation: OrganizationService
   ) {}
+   markWarrantyTouched() {
+    this.warrantyTouched = true;
+  }
+  markGuaranteeTouched() {
+    this.guaranteeTouched = true;
+  }
 
   ngOnInit() {
     this.productService.fetchcategory().subscribe((data: any[]) => {
       this.products = data;
 
-      const catMap = new Map<number, Category>();
+      // Unique categories: only id and title
+      const catMap = new Map<number, { id: number, title: string }>();
       data.forEach(item => {
         if (item.category && !catMap.has(item.category.id)) {
-          catMap.set(item.category.id, item.category);
+          catMap.set(item.id, {
+            id: item.id,
+            title: item.title
+          });
         }
       });
       this.categories = Array.from(catMap.values());
@@ -88,6 +103,8 @@ export class FormComponent implements OnInit, OnChanges {
         }
       });
       this.brands = Array.from(brandMap.values());
+
+      // Patch form if needed after loading categories and brands
       if (this.pendingPatch) {
         this.patchFormWithProductData(this.pendingPatch);
         this.pendingPatch = null;
@@ -95,6 +112,22 @@ export class FormComponent implements OnInit, OnChanges {
         this.patchFormWithProductData(this.productData);
       }
     });
+  }
+
+  // When a category is selected, filter brands associated with products in that category
+  onCategorySelect(categoryId: number) {
+    const productsInCategory = this.products.filter(item => item.category && item.category.id == categoryId);
+    const brandMap = new Map<number, Brand>();
+    productsInCategory.forEach(item => {
+      if (item.brands && item.brands.length > 0) {
+        item.brands.forEach((brand: Brand) => {
+          if (!brandMap.has(brand.id)) {
+            brandMap.set(brand.id, brand);
+          }
+        });
+      }
+    });
+    this.filteredBrands = Array.from(brandMap.values());
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -168,6 +201,11 @@ export class FormComponent implements OnInit, OnChanges {
 
   onCategoryChange() {
     this.product.categoryId = this.product.category ? this.product.category.id : null;
+    if (this.product.categoryId) {
+      this.onCategorySelect(this.product.categoryId);
+    } else {
+      this.filteredBrands = [];
+    }
   }
 
   onBrandChange() {
@@ -193,8 +231,10 @@ export class FormComponent implements OnInit, OnChanges {
       warranty_value: obj.hasWarranty ? (obj.warranty === '' ? null : obj.warranty) : null,
     };
   }
+  
 
-  closeDialog() {
+  closeDialog(form:any) {
+    form.resetForm();
     const offcanvas = (window as any).bootstrap?.Offcanvas.getInstance(
       document.getElementById('addProductOffcanvas')
     );
@@ -207,13 +247,22 @@ export class FormComponent implements OnInit, OnChanges {
     if (form.invalid || !this.orgId || this.mode === 'view') return;
     this.submitting = true;
     const payload = this.normalizeProduct(this.product);
-
+    if (this.product.hasWarranty) this.warrantyTouched = true;
+    if (this.product.hasGuarantee) this.guaranteeTouched = true;
+    if (this.product.hasWarranty && (!this.product.warrantyUnit || !this.product.warranty || this.product.warranty < 1)) {
+      this.submitting = false;
+      return;
+    }
+    if (this.product.hasGuarantee && (!this.product.guaranteeUnit || !this.product.guarantee || this.product.guarantee < 1)) {
+      this.submitting = false;
+      return;
+    }
     if (this.mode === 'edit' && this.productData && this.productData.id) {
       this.productService.updateProduct(this.orgId, this.productData.id, payload).subscribe({
         next: (res) => {
           this.submitting = false;
           form.resetForm();
-          this.closeDialog();
+          this.closeDialog(form);
           this.updateNeeded.emit();
         },
         error: () => {
@@ -225,7 +274,7 @@ export class FormComponent implements OnInit, OnChanges {
         next: (res) => {
           this.submitting = false;
           form.resetForm();
-          this.closeDialog();
+          this.closeDialog(form);
           this.updateNeeded.emit();
         },
         error: () => {
@@ -243,7 +292,7 @@ export class FormComponent implements OnInit, OnChanges {
       next: (res) => {
         this.deleting = false;
         this.updateNeeded.emit();
-        this.closeDialog();
+        this.closeDialog('');
       },
       error: () => {
         this.deleting = false;

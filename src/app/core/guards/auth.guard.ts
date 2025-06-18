@@ -14,8 +14,11 @@ export const authGuard: CanActivateFn = async (
   const userService = inject(UserService);
   const rolePermissionService = inject(RolePermissionService);
 
-  // 1. Check token
   const token = localStorage.getItem('access_token');
+  if (token) {
+      return true;
+    }
+  
   if (!token) {
     router.navigate(['/login'], { replaceUrl: true });
     return false;
@@ -38,20 +41,9 @@ export const authGuard: CanActivateFn = async (
     return false;
   }
 
-  // 4. Set role and permissions in RolePermissionService
   rolePermissionService.setRole(user.role, user.auth_items);
 
-  // 5. Check for required roles (if any)
-  const allowedRoles = route.data['roles'] as string[] | undefined;
-  if (allowedRoles && allowedRoles.length > 0) {
-    // Case-insensitive role check
-    const userRole = (user.role || '').toUpperCase();
-    const roleAllowed = allowedRoles.map(r => r.toUpperCase()).includes(userRole);
-    if (!roleAllowed) {
-      router.navigate(['/not-authorized'], { skipLocationChange: true });
-      return false;
-    }
-  }
+  
 
   // 6. Check for required permissions (if any)
   const requiredPermissions = route.data['permissions'] as { module: string, permission?: string }[] | undefined;

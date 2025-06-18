@@ -38,6 +38,18 @@
     border-radius: 8px 8px 0 0;
     transition: all 0.3s ease;
   }
+
+.search-mat-small {
+  min-width: 140px !important;
+  max-width: 180px !important;
+  margin-bottom: 0 !important;
+}
+@media (max-width: 768px) {
+  .search-mat-small {
+    min-width: 100px !important;
+    max-width: 100% !important;
+  }
+}
   .mat-tab-label:hover {
     background-color: #f9fafb;
     color: #374151 !important;
@@ -53,6 +65,15 @@
     border-radius: 2px;
   }
 }
+.status-active {
+  color: #388e3c !important; /* Material green 700 */
+  font-weight: bold;
+}
+
+.status-expired {
+  color: #d32f2f !important; /* Material red 700 */
+  font-weight: bold;
+}
 
 .search-row-mat {
   display: flex;
@@ -60,14 +81,30 @@
   gap: 1rem;
   margin: 0 0rem 0rem 0rem;
   border-radius: 12px;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1rem;
+}
+.row-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.field-box {
+  flex: 1;
+}
+/* Remove blue outline and shadow on all form controls */
+.form-control:focus, .form-select:focus {
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: none !important; /* or your default border color */
 }
 
 
 /* Make search field compact (Angular Material v15+ MDC) */
 .search-mat-extended {
-  min-width: 500px;
-  max-width: 580px;
+  min-width: 200px;
+  max-width: 280px;
   margin-bottom: 0;
 
   ::ng-deep .mat-mdc-text-field-wrapper {

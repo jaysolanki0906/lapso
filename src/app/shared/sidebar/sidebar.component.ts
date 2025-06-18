@@ -39,7 +39,7 @@ export class SidebarComponent implements OnInit {
 
     // Pass only module name to check any permission is present for sub-tabs
     this.canViewServices = this.rolePermissionService.getPermission('services');
-    this.canViewServiceVouchers = this.rolePermissionService.getPermission('service_voucher');
+    this.canViewServiceVouchers = this.rolePermissionService.getPermission('service_voucher')||true;
     this.canViewServiceCalls = this.rolePermissionService.getPermission('service_call');
   }
 

@@ -31,7 +31,9 @@ export class HeaderComponent {
     }
   }
   redirescttosettings(){
+    setTimeout(() => {
     this.router.navigate(['/settings/user-management']);
+  });
   }
   openChangePassword() {
     this.dialog.open(ChangePasswordDialogComponent, {

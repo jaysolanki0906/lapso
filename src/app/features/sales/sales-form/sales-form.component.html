@@ -2,226 +2,289 @@
 <div class="main-layout">
   <app-sidebar></app-sidebar>
   <div class="main-content">
-<div class="main-content">
-  <div class="invoice-form-page">
-    <div class="header-row">
-      <div>
-        <div class="invoice-title">{{ mode === 'edit' ? 'Edit Invoice' : 'New Invoice' }}</div>
-        <div class="invoice-sub">{{ mode === 'edit' ? 'Edit Existing Invoice' : 'Create New Invoice' }}</div>
-      </div>
-      <button class="btn-back" (click)="routeback()"><i class="fa fa-arrow-left"></i> Back</button>
-    </div>
-
-    <form [formGroup]="invoiceForm" class="invoice-form">
-      <div class="invoice-section">
-        <div class="section-title">
-          <i class="fa fa-info-circle"></i> Invoice Voucher Information
+    <div class="invoice-form-page">
+      <div class="header-row">
+        <div>
+          <div class="invoice-title">{{ mode === 'edit' ? 'Edit Invoice' : 'New Invoice' }}</div>
+          <div class="invoice-sub">{{ mode === 'edit' ? 'Edit Existing Invoice' : 'Create New Invoice' }}</div>
         </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Invoice Date <span class="required">*</span></label>
-            <input type="date" formControlName="invoiceDate" />
-          </div>
-          <div class="form-group">
-            <label>Invoice Number <span class="required">*</span></label>
-            <input type="text" formControlName="invoiceNumber" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group" style="position:relative">
-            <label>Customer Name <span class="required">*</span></label>
-            <input
-              type="text"
-              formControlName="customerName"
-              placeholder="Enter Customer Name"
-              [attr.autocomplete]="'off'"
-              [disabled]="!!invoiceForm.get('customerName')?.disabled"
-            />
-            <ul *ngIf="showSuggestions()" class="suggestion-list">
-              <li *ngFor="let suggestion of customerSuggestions"
-                  (click)="onCustomerSuggestionSelect(suggestion)">
-                <span>{{suggestion.name}}</span> | <span>{{suggestion.mobile}}</span>
-              </li>
-            </ul>
-            <div *ngIf="customerSearchLoading" class="suggestion-loading">Loading...</div>
-          </div>
-          <div class="form-group">
-            <label>Customer Mobile Number <span class="required">*</span></label>
-            <input type="text" formControlName="customerMobile" placeholder="Enter Customer Mobile Number"/>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Note</label>
-            <input type="text" formControlName="note" placeholder="Enter Note" />
-          </div>
-        </div>
+        <button class="btn-back" (click)="routeback()"><i class="fa fa-arrow-left"></i> Back</button>
       </div>
 
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <span>Add Product</span>
-        <i
-          data-feather="plus-circle"
-          class="icon-plus-circle clickable ms-2"
-          style="cursor:pointer;"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#addProductOffcanvas"
-          aria-controls="addProductOffcanvas"
-          title="Add New Product"
-        ></i>
-      </div>
+      <form [formGroup]="invoiceForm" class="invoice-form">
+        <div class="invoice-section">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Invoice Date <span class="required">*</span></label>
+              <input type="date" formControlName="invoiceDate" />
+            </div>
+            <div class="form-group">
+              <label>Invoice Number <span class="required">*</span></label>
+              <input type="text" formControlName="invoiceNumber" />
+            </div>
+          </div>
 
-      <div class="invoice-items-section">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 30px;">#</th>
-              <th>Product</th>
-              <th>Warranty/Guarantee</th>
-              <th>Quantity</th>
-              <th>Unit</th>
-              <th>Price</th>
-              <th>Tax (in %)</th>
-              <th>Total Amt</th>
-            </tr>
-          </thead>
-          <tbody formArrayName="items">
-            <tr *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
-              <td>
-                <span>{{ i + 1 }}</span>
-                <button
-                  type="button"
-                  class="remove-row"
-                  title="Delete row"
-                  (click)="removeItem(i)"
-                  *ngIf="items.length > 1"
-                  style="margin-left: 8px; background: none; border: none; cursor: pointer;">
-                  <i class="fa fa-trash"></i>
-                </button>
-              </td>
-              <td>
-                <div class="flex align-center">
-                  <select
-                    class="form-select"
-                    formControlName="product"
-                    (change)="onProductSelected(item, item.get('product')?.value)">
-                    <option value="">Select Product</option>
-                    <option *ngFor="let prod of products" [value]="prod.id">{{ prod.name }}</option>
-                  </select>
+          <div class="form-row">
+            <div class="form-group" style="position:relative">
+              <label>Customer Name <span class="required">*</span></label>
+              <div style="position: relative; width: 300px;">
+  <input
+    type="text"
+    formControlName="customerName"
+    placeholder="Enter Customer Name"
+    [attr.autocomplete]="'off'"
+    [disabled]="!!invoiceForm.get('customerName')?.disabled"
+    class="form-control"
+    style="width: 205%;"
+    (focus)="showDropdown = true"
+    (input)="onCustomerInput($event)"
+    (blur)="hideDropdownWithDelay()"
+  />
+
+  <ul
+    *ngIf="showDropdown && customerSuggestions.length > 0"
+    class="dropdown-menu show suggestion-list"
+    style="width: 205%; max-height: 200px; overflow-y: auto; position: absolute; z-index: 1000; top: 100%; left: 0;"
+  >
+    <li
+      *ngFor="let suggestion of customerSuggestions"
+      (mousedown)="onCustomerSuggestionSelect(suggestion)"
+      class="dropdown-item"
+      style="cursor: pointer;"
+    >
+      <span>{{ suggestion.name }}</span> | <span>{{ suggestion.mobile }}</span>
+    </li>
+  </ul>
+</div>
+              <div *ngIf="customerSearchLoading" class="suggestion-loading">Loading...</div>
+              <div class="text-danger" *ngIf="invoiceForm.get('customerName')?.invalid && (invoiceForm.get('customerName')?.touched || invoiceForm.get('customerName')?.dirty)">
+                Customer Name is required
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Customer Mobile Number <span class="required">*</span></label>
+              <input type="text" formControlName="customerMobile" placeholder="Enter Customer Mobile Number"/>
+            </div>
+          </div>
+          <div class="text-danger" style="text-align: right; top: 0%;" *ngIf="invoiceForm.get('customerMobile')?.invalid && (invoiceForm.get('customerMobile')?.touched || invoiceForm.get('customerMobile')?.dirty)">
+            Customer Mobail number is required
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Note</label>
+              <input type="text" formControlName="note" placeholder="Enter Note" />
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span>Add Product</span>
+          <i
+            data-feather="plus-circle"
+            class="icon-plus-circle clickable ms-2"
+            style="cursor:pointer;"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#addProductOffcanvas"
+            aria-controls="addProductOffcanvas"
+            title="Add New Product"
+          ></i>
+        </div>
+
+        <div class="invoice-items-section">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 30px;">
+                  #
+                  <span *ngIf="items.length > 1" style="margin-left: 12px;">
+                    <i class="fa fa-trash" style="color: #999"></i>
+                  </span>
+                </th>
+                <th>Product</th>
+                <th>Warranty/Guarantee</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Price</th>
+                <th>Tax (in %)</th>
+                <th>Total Amt</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="items">
+              <tr *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <span>{{ i + 1 }}</span>
                   <button
                     type="button"
-                    class="btn btn-link p-0 ms-2"
-                    style="font-size: 1.05em; line-height:1; vertical-align: middle;"
-                    data-bs-toggle="offcanvas"
-                    data-bs-target="#addProductOffcanvas"
-                    aria-controls="addProductOffcanvas"
-                    title="Add Product"
+                    class="remove-row"
+                    title="Delete row"
+                    (click)="removeItem(i)"
+                    *ngIf="items.length > 1"
+                    style="margin-left: 8px; background: none; border: none; cursor: pointer;"
                   >
-                  +
+                    <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="10" height="10" viewBox="0,0,256,256">
+                      <g fill="#d32f2f" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(10.66667,10.66667)"><path d="M10,2l-1,1h-6v2h18v-2h-6l-1,-1zM4.36523,7l1.70313,15h11.86328l1.70313,-15z"></path></g></g>
+                    </svg>
                   </button>
-                </div>
-                <textarea formControlName="description" placeholder="Product Description"></textarea>
-              </td>
-              <td>
-                <div class="war-guar-row">
-                  <label>
-                    <input type="checkbox" formControlName="warrantyChecked" />
-                    <span>{{ item.get('warrantyType')?.value }}</span>
-                    <select formControlName="warrantyType">
-                      <option>Days</option>
-                      <option>Months</option>
-                      <option>Years</option>
+                </td>
+                <td>
+                  <div class="flex align-center">
+                    <select
+                      class="form-select"
+                      formControlName="product"
+                      (change)="onProductSelected(item, item.get('product')?.value)">
+                      <option value="">Select Product</option>
+                      <option *ngFor="let prod of products" [value]="prod.id">{{ prod.name }}</option>
                     </select>
-                    <input type="text" formControlName="warrantyPeriod" placeholder="Warranty" />
-                  </label>
-                </div>
-                <div class="war-guar-row">
-                  <label>
-                    <input type="checkbox" formControlName="guaranteeChecked" />
-                    <span>{{ item.get('guaranteeType')?.value }}</span>
-                    <select formControlName="guaranteeType">
-                      <option>Days</option>
-                      <option>Months</option>
-                      <option>Years</option>
-                    </select>
-                    <input type="text" formControlName="guaranteePeriod" placeholder="Guarantee" />
-                  </label>
-                </div>
-              </td>
-              <td>
-                <input type="number" formControlName="quantity" />
-              </td>
-              <td>
-                <input type="text" formControlName="unit" />
-              </td>
-              <td>
-                <input type="text" formControlName="price" placeholder="Price" />
-              </td>
-              <td>
-                <select class="form-select" formControlName="tax">
-  <option value="">Select Tax</option>
-  <option value="1.00">1%</option>
-  <option value="5.00">5%</option>
-  <option value="6.00">6%</option>
-</select>
-              </td>
-              <td>
-                <input type="text" [formControl]="getTotalControl(item)" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="add-new-row">
-          <a href="#" (click)="addItem(); $event.preventDefault();" class="add-new-link">
-            <i class="fa fa-plus"></i> Add New
-          </a>
-        </div>
-      </div>
 
-      <div class="invoice-totals-row">
-        <div class="totals">
-          <div>Net Amount: <span>₹{{ netAmount | number:'1.2-2' }}</span></div>
-          <div>Tax Amount: <span>₹{{ taxAmount | number:'1.2-2' }}</span></div>
-          <div>
-            Grand Total: <span>₹{{ grandTotal | number:'1.2-2' }}</span>
-            <div class="inc-tax">(Inc. Tax)</div>
+                    <button
+                      type="button"
+                      class="btn btn-link p-0 ms-2"
+                      style="font-size: 1.05em; line-height:1; vertical-align: middle;"
+                      data-bs-toggle="offcanvas"
+                      data-bs-target="#addProductOffcanvas"
+                      aria-controls="addProductOffcanvas"
+                      title="Add Product"
+                      (click)="openProductAddCanvas(i)"
+                    >
+                      +
+                    </button>
+                    <div class="text-danger"
+        *ngIf="
+          item.get('product')?.invalid &&
+          (item.get('product')?.touched || item.get('product')?.dirty)
+        ">
+        Please select a product.
+      </div>
+                  </div>
+                  <textarea formControlName="description" placeholder="Product Description"></textarea>
+                </td>
+                <td>
+                  <!-- Warranty Section -->
+                  <div class="war-guar-row">
+                    <label>
+                      <input type="checkbox" formControlName="warrantyChecked" />
+                      <span>{{ item.get('warrantyType')?.value }}</span>
+                      <select formControlName="warrantyType">
+                        <option value="">Select Unit</option>
+                        <option>Days</option>
+                        <option>Months</option>
+                        <option>Years</option>
+                      </select>
+                      <input type="text" formControlName="warrantyPeriod" placeholder="Warranty" />
+                    </label>
+                  </div>
+                  <!-- Warranty Error Display -->
+                  <div class="text-danger" *ngIf="
+                    item.get('warrantyChecked')?.value &&
+                    (
+                      !item.get('warrantyType')?.value ||
+                      !item.get('warrantyPeriod')?.value ||
+                      +item.get('warrantyPeriod')?.value < 1
+                    ) &&
+                    (item.get('warrantyType')?.touched || item.get('warrantyPeriod')?.touched)
+                  ">
+                    <ng-container *ngIf="!item.get('warrantyType')?.value">Please select Warranty Unit.<br></ng-container>
+                    <ng-container *ngIf="!item.get('warrantyPeriod')?.value || +item.get('warrantyPeriod')?.value < 1">Please enter Warranty value.</ng-container>
+                  </div>
+                  <!-- Guarantee Section -->
+                  <div class="war-guar-row">
+                    <label>
+                      <input type="checkbox" formControlName="guaranteeChecked" />
+                      <span>{{ item.get('guaranteeType')?.value }}</span>
+                      <select formControlName="guaranteeType">
+                        <option value="">Select Unit</option>
+                        <option>Days</option>
+                        <option>Months</option>
+                        <option>Years</option>
+                      </select>
+                      <input type="text" formControlName="guaranteePeriod" placeholder="Guarantee" />
+                    </label>
+                  </div>
+                  <!-- Guarantee Error Display -->
+                  <div class="text-danger" *ngIf="
+                    item.get('guaranteeChecked')?.value &&
+                    (
+                      !item.get('guaranteeType')?.value ||
+                      !item.get('guaranteePeriod')?.value ||
+                      +item.get('guaranteePeriod')?.value < 1
+                    ) &&
+                    (item.get('guaranteeType')?.touched || item.get('guaranteePeriod')?.touched)
+                  ">
+                    <ng-container *ngIf="!item.get('guaranteeType')?.value">Please select Guarantee Unit.<br></ng-container>
+                    <ng-container *ngIf="!item.get('guaranteePeriod')?.value || +item.get('guaranteePeriod')?.value < 1">Please enter Guarantee value.</ng-container>
+                  </div>
+                </td>
+                <td>
+                  <input type="number" formControlName="quantity" />
+                </td>
+                <td>
+                  <input type="text" formControlName="unit" />
+                </td>
+                <td>
+                  <input type="text" formControlName="price" placeholder="Price" />
+                </td>
+                <td>
+                  <select class="form-select" formControlName="tax">
+                    <option value="">Select Tax</option>
+                    <option value="1.00">1%</option>
+                    <option value="5.00">5%</option>
+                    <option value="6.00">6%</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="text" [formControl]="getTotalControl(item)" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="add-new-row">
+            <a href="#" (click)="addItem(); $event.preventDefault();" class="add-new-link">
+              <i class="fa fa-plus"></i> Add New
+            </a>
           </div>
         </div>
-        <div class="actions">
-          <button type="button" class="btn-save" (click)="onSubmitInvoice()">Save Invoice</button>
-        </div>
-      </div>
-    </form>
-  </div>
 
-  <div
-    class="offcanvas offcanvas-end add-product-offcanvas"
-    tabindex="-1"
-    id="addProductOffcanvas"
-    aria-labelledby="addProductOffcanvasLabel"
-  >
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="addProductOffcanvasLabel">{{ formHeading || 'Add Product' }}</h5>
-      <button
-        type="button"
-        class="btn-close text-reset"
-        data-bs-dismiss="offcanvas"
-        aria-label="Close"
-      ></button>
+        <div class="invoice-totals-row">
+          <div class="totals">
+            <div>Net Amount: <span>₹{{ netAmount | number:'1.2-2' }}</span></div>
+            <div>Tax Amount: <span>₹{{ taxAmount | number:'1.2-2' }}</span></div>
+            <div>
+              Grand Total: <span>₹{{ grandTotal | number:'1.2-2' }}</span>
+              <div class="inc-tax">(Inc. Tax)</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn-save" (click)="onSubmitInvoice()">Save Invoice</button>
+          </div>
+        </div>
+      </form>
     </div>
-    <div class="offcanvas-body">
-      <app-form
-        [orgId]="orgId"
-        [mode]="formMode"
-        (updateNeeded)="onProductAdded()"
-        [productData]="selectedProduct"
-        (updateNeeded)="fetchItems()"
-      ></app-form>
+
+    <div
+      class="offcanvas offcanvas-end add-product-offcanvas"
+      tabindex="-1"
+      id="addProductOffcanvas"
+      aria-labelledby="addProductOffcanvasLabel"
+    >
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="addProductOffcanvasLabel">{{ formHeading || 'Add Product' }}</h5>
+        <button
+          type="button"
+          class="btn-close text-reset"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="offcanvas-body">
+        <app-form
+          [orgId]="orgId"
+          [mode]="formMode"
+          (updateNeeded)="onProductAdded()"
+          [productData]="selectedProduct"
+          (updateNeeded)="fetchItems()"
+        ></app-form>
+      </div>
     </div>
   </div>
-</div>
-</div>
 </div>

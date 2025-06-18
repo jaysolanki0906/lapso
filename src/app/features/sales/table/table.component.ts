@@ -10,6 +10,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import Swal from 'sweetalert2';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
+import { RolePermissionService } from '../../../core/services/role-permission.service';
 
 @Component({
   selector: 'app-table',
@@ -24,6 +25,10 @@ export class TableComponent implements OnInit {
   showForm = false;
   sortColumn: string = '';
 sortDirection: 'asc' | 'desc' = 'asc';
+canEdit = false;
+  canDelete = false;
+  canView = false;
+  canCreate = false;
 
  searchFields = [
   { title: 'Voucher Number', placeholder: 'Voucher Number', key: 'invoice_number' },
@@ -51,7 +56,7 @@ sortDirection: 'asc' | 'desc' = 'asc';
     private err: ErrorHandlerService,
     private router: Router,
     private route: ActivatedRoute,
-    private cdRef: ChangeDetectorRef
+    private role:RolePermissionService
   ) {}
 
   ngOnInit(): void {
@@ -59,11 +64,19 @@ sortDirection: 'asc' | 'desc' = 'asc';
       if (org && org.org_id) {
         this.orgId = org.org_id;
         this.fetchItems();
-        this.cdRef.detectChanges(); // Fixes ExpressionChangedAfterItHasBeenCheckedError
       }
     });
 
     this.searchFields.forEach(f => this.searchValues[f.key] = '');
+    this.canCreate = this.role.getPermission("sales_voucher","sales_voucher_create");
+    this.canEdit = this.role.getPermission("sales_voucher","sales_voucher_edit");
+    this.canView = this.role.getPermission("sales_voucher","sales_voucher_view");
+    this.canDelete = this.role.getPermission("sales_voucher","sales_voucher_delete");
+
+    // "sales_voucher_create": true,
+    //         "sales_voucher_view": true,
+    //         "sales_voucher_edit": true,
+    //         "sales_voucher_delete": true
   }
 
   fetchItems(searchObj?: { [key: string]: string }) {
@@ -82,7 +95,7 @@ sortDirection: 'asc' | 'desc' = 'asc';
   this.invoice.getdata(this.orgId, params.page, params.pageSize, params).subscribe({
     next: (data: any) => {
       this.filteredData = data.rows;
-      this.total = data.total;
+      this.total = data.count ?? data.total ?? 0;
     },
     error: (error: any) => {
       this.err.showToast('Error fetching data:', error);
@@ -164,9 +177,8 @@ sortDirection: 'asc' | 'desc' = 'asc';
     const mainAsset = assets[0] || {};
     const doc = mainAsset.attachment_details || {};
     const pdfUrl = doc.file_url
-      ? `/api/${doc.file_url}` // Adjust as needed for your real file serving
+      ? `/api/${doc.file_url}` 
       : null;
-    // Format main voucher details
     const mainTable = `
       <table style="width:100%;margin-bottom:12px;">
         <tr>
@@ -250,7 +262,7 @@ sortDirection: 'asc' | 'desc' = 'asc';
           ${amounts}
         </div>
       `,
-      width: 900,
+      width: 1000,
       showCloseButton: true,
       showConfirmButton: false,
       customClass: {
