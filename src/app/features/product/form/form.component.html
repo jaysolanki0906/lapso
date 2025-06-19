@@ -14,17 +14,16 @@
       <div class="form-text text-danger" *ngIf="!product.category && f.submitted">Please select Category.</div>
     </div>
     <div class="mb-3 col-md-6">
-      <label class="form-label fw-bold">Brand <span class="text-danger">*</span></label>
+      <label class="form-label fw-bold">Brands <span class="text-danger">*</span></label>
       <select class="form-select"
-              [(ngModel)]="product.brand"
+              [ngModel]="selectedBrandIds"
+              (ngModelChange)="selectedBrandIds = $event"
               name="brand"
               required
-              (ngModelChange)="onBrandChange()"
-              [disabled]="mode === 'view'">
-        <option [ngValue]="null">Select Brand</option>
-        <option *ngFor="let brand of brands" [ngValue]="brand">{{ brand.title }}</option>
+              [disabled]="mode === 'view' || !filteredBrands.length">
+        <option *ngFor="let brand of filteredBrands" [value]="brand.id">{{ brand.title }}</option>
       </select>
-      <div class="form-text text-danger" *ngIf="!product.brand && f.submitted">Please select Brand.</div>
+      <div class="form-text text-danger" *ngIf="!selectedBrandIds.length && f.submitted">Please select at least one Brand.</div>
     </div>
   </div>
   <div class="row">

@@ -25,8 +25,8 @@ export class ServicelistComponent implements OnInit, OnDestroy {
     { label: 'Inactive', value: 'INACTIVE' }
   ];
   activeTab = 'ACTIVE';
-  sortColumn: string = 'service_name';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: string = 'created_at';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   searchFields = [
     { title:'Search by Service Name',placeholder: 'Search by Service Name', key: 'query' }
@@ -120,6 +120,10 @@ export class ServicelistComponent implements OnInit, OnDestroy {
     this.page = 1;
     this.fetchItems();
   }
+  onCall(event:Event)
+  {
+
+  }
 
   onTabChange(tabValue: string) {
     this.activeTab = tabValue;
@@ -152,41 +156,42 @@ export class ServicelistComponent implements OnInit, OnDestroy {
     this.router.navigate(['service', 'edit', row.id]); 
   }
 
-  onView(row: any) {
-    Swal.fire({
-      title: 'Services',
-      html: `
-        <div style="text-align: left;">
-          <div style="margin-bottom: 16px;">
-            <strong>Service Name</strong>
-            <span style="margin-left: 30px; color: #666;">${row.service_name || ''}</span>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <strong>Contract Description</strong>
-            <span style="margin-left: 10px; color: #666;">${row.description || ''}</span>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <strong>Terms & Condition</strong>
-            <textarea 
+ onView(row: any) {
+  Swal.fire({
+    title: 'Services',
+    html: `
+      <div style="text-align: left;">
+        <div style="margin-bottom: 16px;">
+          <strong>Service Name</strong>
+          <span style="margin-left: 30px; color: #666;">${row.service_name || ''}</span>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <strong>Contract Description</strong>
+          <span style="margin-left: 10px; color: #666;">${row.description || ''}</span>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <strong>Terms & Condition</strong>
+          <div 
               class="form-textarea" 
-              style="width:100%;margin-top:5px;height:70px;resize:none;" 
-              placeholder="Insert text here ..." 
-              readonly>${row.terms_and_conditions || ''}</textarea>
-          </div>
-          <div style="margin-top: 32px;">
-            <strong>Status</strong>
-            <span style="margin-left: 60px; color: #228B22;">${row.status === 'ACTIVE' ? 'Active' : 'Inactive'}</span>
+              style="width: 100%; margin-top: 5px; height: 70px; resize: none; overflow-y: auto; border: 1px solid #ccc; padding: 8px; background-color: #f5f5f5;">
+              ${row.tnc || ''}
           </div>
         </div>
-      `,
-      showConfirmButton: false,
-      showCloseButton: true,
-      width: 600,
-      customClass: {
-        popup: 'swal2-service-view-popup'
-      }
-    });
-  }
+        <div style="margin-top: 32px;">
+          <strong>Status</strong>
+          <span style="margin-left: 60px; color: #228B22;">${row.status === 'ACTIVE' ? 'Active' : 'Inactive'}</span>
+        </div>
+      </div>
+    `,
+    showConfirmButton: false,
+    showCloseButton: true,
+    width: 600,
+    customClass: {
+      popup: 'swal2-service-view-popup'
+    }
+  });
+}
+
 
   async onDelete(payload: any) {
     const row = this.filteredData.find(item => item.id === payload.id);
@@ -216,17 +221,19 @@ export class ServicelistComponent implements OnInit, OnDestroy {
     // Find the toggled row in filteredData to optimistically update UI
     const row = this.filteredData.find(item => item.id === payload.row.id);
     if (!row) return;
+    const activeincativetabs=(this.activeTab=='ACTIVE'?'Inactive':'Active');
 
     // Save old status in case API fails
     const oldStatus = row.status;
     row.status = payload.status;
     row.toggling = true;
-    const confirm=await this.err.confirmSwal('Inactive','Are you sure you want to inactive',`${row.service_name}`)
+    const confirm=await this.err.confirmSwal('',`Are you sure you want to ${activeincativetabs}`,`${row.service_name}`,'Yes')
 
     if(confirm){
     this.servicesService.updateservice(this.orgId, row.id, {
       service_name: row.service_name,
-      status: payload.status
+      status: payload.status,
+
     }).pipe(
       finalize(() => row.toggling = false)
     ).subscribe({

@@ -13,7 +13,7 @@ import { RolePermissionService } from '../../core/services/role-permission.servi
   standalone: true
 })
 export class SidebarComponent implements OnInit {
-  serviceContractExpanded = false;
+  serviceContractExpanded = true;
 
   canViewDashboard = false;
   canViewProducts = false;

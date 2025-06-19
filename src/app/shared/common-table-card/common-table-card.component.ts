@@ -24,13 +24,19 @@ export interface TableColumn {
   width?: string;
 }
 
+export interface SearchFieldOption {
+  value: string;
+  label: string;
+}
+
 export interface SearchField {
   title?: string;
   placeholder: string;
   key: string;
   icon?: string;
+  multiple?: boolean,
   type?: 'text' | 'email' | 'number' | 'date' | 'dropdown';
-  options?: string[];
+  options?: (SearchFieldOption)[];
 }
 
 export interface TableTab {
@@ -86,6 +92,7 @@ export class CommonTableCardComponent implements OnInit {
   @Input() canEdit: boolean = false;
   @Input() canView: boolean = false;
   @Input() canDelete: boolean = false;
+  
   showAllSearchFields = false;
 
   @Output() tabChange = new EventEmitter<string>();
@@ -126,6 +133,9 @@ export class CommonTableCardComponent implements OnInit {
 
   get selectedTabIndex(): number {
     return this.tabs.findIndex(tab => tab.value === this.activeTab);
+  }
+  isOptionObject(opt: string | SearchFieldOption): opt is SearchFieldOption {
+    return !!opt && typeof opt === 'object' && 'value' in opt && 'label' in opt;
   }
 
   get displayedColumns(): string[] {

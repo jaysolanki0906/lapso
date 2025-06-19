@@ -18,7 +18,7 @@ export class ServicecallService {
           order_by?: string,
           order_type?: string,
           servicetype?:string,
-          Assigned?:string,
+          Assigned?:string[],
           Service_date_start?:string,
           service_date_end?:string
   //         Service_type:string='';
@@ -41,6 +41,17 @@ export class ServicecallService {
         if(params.servicetype||params.status||params.service_date_end||params.Service_date_start||params.Assigned)
         query.push('type=ALL');
 
+        if (params.Assigned && params.Assigned.length > 0) {
+    for (const userId of params.Assigned) {
+      if (userId) { 
+        query.push(`user_ids=${encodeURIComponent(userId)}`);
+      }
+    }
+  }
+  if(!params.order_by)
+      {
+        query.push("order_by=created_at&order_type=desc");
+      }
         query.push('count_required=true');
     
         const queryString = query.length ? `?${query.join('&')}` : '';

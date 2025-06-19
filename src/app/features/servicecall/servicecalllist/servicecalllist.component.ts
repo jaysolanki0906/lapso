@@ -29,10 +29,19 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   formHeading = 'Add Service Call';
   selectedServiceCall: any = null;
 
+  // The 'options' type for 'assigned
   searchFields: SearchField[] = [
-    { title: 'Status', type: 'dropdown', key: 'status', options: ['All', 'Pending', 'Completed'], placeholder: 'Select Status' },
-    { title: 'Service type', type: 'dropdown', key: 'servicetype', options: ['All', 'Scheduled', 'Complaints'], placeholder: 'Select Service Type' },
-    { title: 'Assigned', type: 'dropdown', key: 'assigned', options: [], placeholder: 'Select Assigned' },
+    { title: 'Status', type: 'dropdown', key: 'status', multiple: false, options: [
+  { value: '', label: 'All' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'COMPLETED', label: 'Completed' }
+], placeholder: 'Select Status' },
+    { title: 'Service type', type: 'dropdown',multiple: false, key: 'servicetype', options: [
+  { value: '', label: 'All' },
+  { value: 'SCHEDULED', label: 'Scheduled' },
+  { value: 'COMPLAINTS', label: 'Complaints' }
+], placeholder: 'Select Service Type' },
+    { title: 'Assigned', type: 'dropdown', key: 'assigned', multiple: true,options: [], placeholder: 'Select Assigned' },
     { title: 'Service date', type: 'date', key: 'servicedate', placeholder: 'Select Service Date' }
   ];
 
@@ -42,7 +51,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   total = 0;
   Service_type: string = '';
   Status: string = '';
-  Assigned: string = '';
+  Assigned: string[] = [];
   Service_date_start = '';
   Service_date_end = '';
   orgId = '';
@@ -55,7 +64,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   serviceCall: any = {};
 
   // Sorting state
-  sortColumn: string = 'service_date'; // default sorted by service_date
+  sortColumn: string = 'created_at'; 
   sortDirection: 'asc' | 'desc' = 'desc';
   canEdit = false;
   canDelete = false;
@@ -90,7 +99,6 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
       next: (res) => {
         const users = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
         const options = [
-          { value: '', label: 'All' },
           ...users.map((user: any) => ({
             value: user.id,
             label: user.fullname
@@ -125,6 +133,8 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
       status: this.Status.toUpperCase(),
       Service_date_start: this.Service_date_start,
       service_date_end: this.Service_date_end,
+      order_by:this.sortColumn,
+      order_type:this.sortDirection
     }).subscribe(res => {
       this.filteredData = res.data || [];
       this.total = res.count ?? res.total ?? 0;
@@ -144,6 +154,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   }
 
   onSearch(searchObj: any) {
+    console.log(searchObj);
     this.Status = searchObj['status'];
     this.Service_type = searchObj['servicetype'];
     if (
@@ -165,7 +176,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   onClear() {
     this.searchQuery = '';
     this.Status = '';
-    this.Assigned = '';
+    this.Assigned= [];
     this.Service_date_start = '';
     this.Service_date_end = '';
     this.page = 1;
@@ -281,9 +292,6 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
               </div>
               <hr style="margin:8px -16px 0 -16px;">
               <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
-                <button id="deleteCallBtn" style="background:#d33;color:white;padding:8px 20px;border-radius:5px;border:none;font-weight:600;cursor:pointer;">
-                  Delete
-                </button>
                 <button id="voucherDetailBtn" style="background:#ff4250;color:white;padding:8px 20px;border-radius:5px;border:none;font-weight:600;cursor:pointer;">
                   View Voucher Details
                 </button>
@@ -330,12 +338,12 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
       this.servicecallService.deletecall(orgid, vid, id).subscribe(
         res => {
           this.submitting = false;
-          Swal.fire('Deleted!', 'Service call has been deleted.', 'success');
+          this.err.showToast('Service call has been deleted.','success');
           this.fetchItems();
         },
         err => {
           this.submitting = false;
-          Swal.fire('Error', 'Failed to delete service call.', 'error');
+          this.err.showToast(err, 'error');
         }
       );
     }

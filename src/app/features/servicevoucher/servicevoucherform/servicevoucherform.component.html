@@ -32,14 +32,27 @@
             <div class="form-group">
               <label class="form-label required">Voucher Date</label>
               <div class="date-input-wrapper">
-                <input type="date" class="form-input date-input col-12" [(ngModel)]="voucherDate" [readonly]="isViewMode">
+                <input type="date" class="form-input date-input col-12"
+                  [(ngModel)]="voucherDate"
+                  [max]="voucherDate"
+                  [readonly]="isViewMode||isEditMode"
+                  (focus)="markFieldTouched('voucherDate')"
+                  required>
               </div>
-              <span *ngIf="errors['voucherDate']" class="text-danger">{{ errors['voucherDate'] }}</span>
+              <div class="text-danger" *ngIf="fieldTouched['voucherDate'] && !voucherDate">
+                Voucher Date is required
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label required">Voucher Number</label>
-              <input type="text" class="form-input" [(ngModel)]="voucherNumber" [readonly]="isViewMode">
-              <span *ngIf="errors['voucherNumber']" class="text-danger">{{ errors['voucherNumber'] }}</span>
+              <input type="text" class="form-input"
+                [(ngModel)]="voucherNumber"
+                [readonly]="isViewMode||isEditMode"
+                (focus)="markFieldTouched('voucherNumber')"
+                required>
+              <div class="text-danger" *ngIf="fieldTouched['voucherNumber'] && !voucherNumber">
+                Voucher Number is required
+              </div>
             </div>
           </div>
 
@@ -54,9 +67,10 @@
                 (input)="onCustomerNameInput($event)"
                 (blur)="onBlurDropdown()"
                 autocomplete="off"
-                [readonly]="isViewMode"
-              >
-              <ul *ngIf="showContactDropdown && !isViewMode" class="autocomplete-list">
+                [readonly]="isViewMode||isEditMode"
+                (focus)="markFieldTouched('customerName')"
+                required>
+              <ul *ngIf="showContactDropdown && (!isViewMode)" class="autocomplete-list">
                 <li 
                   *ngFor="let option of contactOptions"
                   (mousedown)="setCustomerFromDropdown(option)">
@@ -64,81 +78,152 @@
                 </li>
               </ul>
               <div *ngIf="customerSearchLoading" class="suggestion-loading">Loading...</div>
-              <span *ngIf="errors['customerName']" class="text-danger">{{ errors['customerName'] }}</span>
+              <div class="text-danger" *ngIf="fieldTouched['customerName'] && !customerName">
+                Customer Name is required
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label required">Customer Mobile Number</label>
-              <input type="tel" class="form-input" placeholder="Enter Customer Mobile Number" [(ngModel)]="customerMobile" [readonly]="true">
-              <span *ngIf="errors['customerMobile']" class="text-danger">{{ errors['customerMobile'] }}</span>
+              <input type="tel" class="form-input" maxlength="10"
+                [readonly]="isEditMode||isViewMode"
+                placeholder="Enter Customer Mobile Number"
+                [(ngModel)]="customerMobile"
+                (focus)="markFieldTouched('customerMobile')"
+                required>
+              <div class="text-danger" *ngIf="fieldTouched['customerMobile'] && !customerMobile">
+                Customer Mobile Number is required
+              </div>
+              <div class="text-danger" *ngIf="fieldTouched['customerMobile'] && isInvalidMobile(customerMobile)">
+                Enter a valid 10-digit mobile number
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label required">Alternate Contact Number</label>
-              <input type="tel" class="form-input" placeholder="Enter Customer Mobile Number" [(ngModel)]="alternateContact" [readonly]="isViewMode">
-              <span *ngIf="errors['alternateContact']" class="text-danger">{{ errors['alternateContact'] }}</span>
+              <input type="tel" class="form-input" maxlength="10"
+                placeholder="Enter Customer Mobile Number"
+                [(ngModel)]="alternateContact"
+                [readonly]="isViewMode"
+                (focus)="markFieldTouched('alternateContact')"
+                required>
+              <div class="text-danger" *ngIf="fieldTouched['alternateContact'] && !alternateContact">
+                Alternate Contact Number is required
+              </div>
+              <div class="text-danger" *ngIf="fieldTouched['alternateContact'] && isInvalidMobile(alternateContact)">
+                Enter a valid 10-digit number
+              </div>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group full-width">
               <label class="form-label required">Address</label>
-              <textarea class="form-textarea" placeholder="Enter Address" [(ngModel)]="address" rows="3" [readonly]="isViewMode"></textarea>
-              <span *ngIf="errors['address']" class="text-danger">{{ errors['address'] }}</span>
+              <textarea class="form-textarea"
+                placeholder="Enter Address"
+                [(ngModel)]="address"
+                rows="3"
+                [readonly]="isViewMode"
+                (focus)="markFieldTouched('address')"
+                required></textarea>
+              <div class="text-danger" *ngIf="fieldTouched['address'] && !address">
+                Address is required
+              </div>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label required">Service Name</label>
-              <select class="form-select" [(ngModel)]="serviceName" [disabled]="isViewMode">
+              <select class="form-select"
+                [(ngModel)]="serviceName"
+                [disabled]="isViewMode"
+                (focus)="markFieldTouched('serviceName')"
+                required>
                 <option value="">Choose Service Name</option>
                 <option *ngFor="let s of serviceOptions" [value]="s.id">{{ s.service_name }}</option>
               </select>
-              <div class="select-service-note">Select Service Name</div>
-              <span *ngIf="errors['serviceName']" class="text-danger">{{ errors['serviceName'] }}</span>
+              <div class="text-danger" *ngIf="fieldTouched['serviceName'] && !serviceName">
+                Service Name is required
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label required">Contract Start Date</label>
               <div class="date-input-wrapper">
-                <input type="date" class="form-input date-input" [(ngModel)]="contractStartDate" [readonly]="isViewMode">
-                <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
+                <input 
+                  type="date"
+                  class="form-input"
+                  style="width: 90%;"
+                  [(ngModel)]="contractStartDate"
+                  (change)="updateContractEndDate()"
+                  [readonly]="isViewMode"
+                  (focus)="markFieldTouched('contractStartDate')"
+                  required>
               </div>
-              <span *ngIf="errors['contractStartDate']" class="text-danger">{{ errors['contractStartDate'] }}</span>
+              <div class="text-danger" *ngIf="fieldTouched['contractStartDate'] && !contractStartDate">
+                Contract Start Date is required
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label required">Contract Duration (Months)</label>
-              <input type="text" class="form-input" placeholder="Contract Duration" [(ngModel)]="contractDuration" [readonly]="isViewMode">
-              <div class="contract-expired-note">Contract Expired on:</div>
-              <span *ngIf="errors['contractDuration']" class="text-danger">{{ errors['contractDuration'] }}</span>
+              <input 
+                type="number"
+                class="form-input"
+                placeholder="Contract Duration"
+                [(ngModel)]="contractDuration"
+                min="1"
+                (input)="updateContractEndDate()"
+                [readonly]="isViewMode"
+                (focus)="markFieldTouched('contractDuration')"
+                required>
+              <div class="contract-expired-note">Contract Expired on: <strong>{{ contractExpired }}</strong></div>
+              <div class="text-danger" *ngIf="fieldTouched['contractDuration'] && !contractDuration">
+                Contract Duration is required
+              </div>
+              <div class="text-danger" *ngIf="fieldTouched['contractDuration'] && isInvalidPositiveNumber(contractDuration)">
+                Contract Duration must be a positive number
+              </div>
             </div>
           </div>
 
           <!-- Terms & Conditions Rich Text Editor -->
-          <div class="form-row">
-            <div class="form-group full-width">
+          <div class="form-row three-column-row">
+            <!-- Terms & Conditions -->
+            <div class="form-group terms-conditions-group">
               <label class="form-label required">Terms & Conditions</label>
-              <ckeditor [editor]="Editor" [(ngModel)]="termsConditions"></ckeditor>
-              
-              <span *ngIf="errors['termsConditions']" class="text-danger">{{ errors['termsConditions'] }}</span>
-              <div *ngIf="isViewMode" class="p-2" style="min-height:120px; border:1px solid #eee; background:#fafbfc; border-radius:6px;">
+              <ckeditor [editor]="Editor" (ready)="onEditorReady($event)" [config]="editorConfig" [(ngModel)]="termsConditions" (focus)="markFieldTouched('termsConditions')"></ckeditor>
+              <div class="text-danger" *ngIf="fieldTouched['termsConditions'] && (!termsConditions || !termsConditions.trim() || termsConditions === '<br>')">
+                Terms & Conditions are required
+              </div>
+              <div *ngIf="isViewMode" class="p-2 view-mode-box">
                 <div [innerHTML]="termsConditions"></div>
               </div>
             </div>
-            <div class="form-group">
+
+            <!-- Contract Description -->
+            <div class="form-group" style="margin-right: 0px;">
               <label class="form-label">Contract Description</label>
-              <textarea class="form-textarea" placeholder="Enter Contract Description" [(ngModel)]="contractDescription" rows="6" [readonly]="isViewMode"></textarea>
+              <textarea 
+                class="form-textarea"
+                placeholder="Enter Contract Description"
+                [(ngModel)]="contractDescription"
+                rows="6"
+                [readonly]="isViewMode">
+              </textarea>
             </div>
+
+            <!-- Contract Amount -->
             <div class="form-group">
               <label class="form-label">Contract Amount (₹)</label>
-              <textarea class="form-textarea" placeholder="Enter Contract Amount" [(ngModel)]="contractAmount" rows="6" [readonly]="isViewMode"></textarea>
-              <span *ngIf="errors['contractAmount']" class="text-danger">{{ errors['contractAmount'] }}</span>
+              <input type="text" class="form-input"
+                placeholder="Enter Contract Amount"
+                [(ngModel)]="contractAmount"
+                [readonly]="isViewMode"
+                (focus)="markFieldTouched('contractAmount')"
+                required>
+              <div class="text-danger" *ngIf="fieldTouched['contractAmount'] && isInvalidNonNegativeNumber(contractAmount)">
+                Contract Amount must be a valid number
+              </div>
             </div>
           </div>
-
           <!-- Add Products Section -->
           <div class="add-section">
             <div class="add-section-header">
@@ -169,16 +254,26 @@
                   <select class="form-select"
                     [(ngModel)]="product.product"
                     (ngModelChange)="onProductChange(product, i)"
-                    [disabled]="isViewMode">
+                    [disabled]="isViewMode"
+                    required>
                     <option value="">Product Search</option>
                     <option *ngFor="let p of productOptions" [value]="p.id">{{ p.name }}</option>
                   </select>
                 </div>
                 <div class="product-col">
-                  <textarea class="form-textarea" placeholder="Enter Description" [(ngModel)]="product.description" rows="2" [readonly]="isViewMode"></textarea>
+                  <textarea class="form-textarea"
+                    placeholder="Enter Description"
+                    [(ngModel)]="product.description"
+                    rows="2"
+                    [readonly]="isViewMode"
+                    required></textarea>
                 </div>
                 <div class="product-col">
-                  <input type="number" class="form-input" [(ngModel)]="product.quantity" min="1" [readonly]="isViewMode">
+                  <input type="number" class="form-input"
+                    [(ngModel)]="product.quantity"
+                    min="1"
+                    [readonly]="isViewMode"
+                    required>
                 </div>
                 <span *ngIf="productErrors[i]" class="text-danger">{{ productErrors[i] }}</span>
               </div>
@@ -213,14 +308,26 @@
                 </div>
                 <div class="schedule-col" >
                   <div class="date-input-wrapper">
-                    <input type="date" class="form-input date-input" placeholder="Enter Service Date" [(ngModel)]="call.serviceDate" [readonly]="isViewMode">
+                    <input type="date" class="form-input date-input"
+                      placeholder="Enter Service Date"
+                      [(ngModel)]="call.serviceDate"
+                      [readonly]="isViewMode"
+                      
+                      (focus)="markFieldTouched('serviceCallDate' + i)"
+                      required>
                   </div>
                 </div>
                 <div class="schedule-col">
                   <input type="text" value="SCHEDULED" disabled/>
                 </div>
                 <div class="schedule-col">
-                  <textarea class="form-textarea" placeholder="Enter purpose" [(ngModel)]="call.purpose" rows="2" [readonly]="isViewMode"></textarea>
+                  <textarea class="form-textarea"
+                    placeholder="Enter purpose"
+                    [(ngModel)]="call.purpose"
+                    rows="2"
+                    [readonly]="isViewMode"
+                    (focus)="markFieldTouched('serviceCallPurpose' + i)"
+                    required></textarea>
                 </div>
                 <span *ngIf="serviceCallErrors[i]" class="text-danger">{{ serviceCallErrors[i] }}</span>
               </div>

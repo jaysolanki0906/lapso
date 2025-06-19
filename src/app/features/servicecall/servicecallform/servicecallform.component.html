@@ -1,7 +1,7 @@
 <div class="offcanvas-body">
   <form #f="ngForm" (ngSubmit)="onSubmit(f)">
     <!-- Search Section -->
-    <div class="mb-4 position-relative">
+    <div class="mb-4 position-relative" *ngIf="check">
       <label class="form-label fw-semibold text-primary">Search By Customer No, Name or Voucher No</label>
       <div class="input-group">
         <input
@@ -11,11 +11,15 @@
           [disabled]="mode === 'view'"
           [(ngModel)]="searchValue"
           name="searchValue"
+          required
           (input)="onSearchInputChange($event)"
           autocomplete="off">
         <button class="btn btn-outline-secondary" type="button" tabindex="-1">
           <i class="fas fa-chevron-down"></i>
         </button>
+      </div>
+      <div class="form-text text-danger" *ngIf="f.submitted && !searchValue">
+        Please enter Customer No, Name or Voucher No.
       </div>
       <ul class="dropdown-menu show w-100 mt-0"
           *ngIf="showDropdown && mode !== 'view'"
@@ -40,13 +44,10 @@
         <select class="form-select"
                 [(ngModel)]="serviceCall.service_type"
                 name="service_type"
-                required
                 [disabled]="mode === 'view'">
-          <option [ngValue]="null">Schedule Service</option>
           <option value="SCHEDULED">Scheduled</option>
           <option value="COMPLAINTS">Complaints</option>
         </select>
-        <div class="form-text text-danger" *ngIf="!serviceCall.service_type && f.submitted">Please select Service Type.</div>
       </div>
       <div class="col-md-6">
         <label class="form-label fw-semibold text-primary">Service Date</label>
@@ -54,9 +55,7 @@
                class="form-control"
                [(ngModel)]="serviceCall.service_date"
                name="service_date"
-               required
                [disabled]="mode === 'view'">
-        <div class="form-text text-danger" *ngIf="!serviceCall.service_date && f.submitted">Please select Service Date.</div>
       </div>
     </div>
 
@@ -68,9 +67,7 @@
                   name="purpose"
                   rows="3"
                   placeholder="Purpose"
-                  required
                   [disabled]="mode === 'view'"></textarea>
-        <div class="form-text text-danger" *ngIf="!serviceCall.purpose && f.submitted">Please enter Purpose.</div>
       </div>
       <div class="col-md-6">
         <label class="form-label fw-semibold text-primary">Assigned To</label>
@@ -92,12 +89,14 @@
     <input type="hidden" [(ngModel)]="serviceCall.status" name="status">
 
     <div class="d-flex justify-content-end">
-      <button *ngIf="mode !== 'view'" 
-              type="submit" 
-              class="btn btn-danger px-4 fw-semibold" 
-              [disabled]="submitting">
-        {{ submitting ? (mode === 'edit' ? 'Updating...' : 'Adding...') : (mode === 'edit' ? 'Update call' : 'Add call') }}
-      </button>
+      <button
+  *ngIf="mode !== 'view'"
+  type="submit"
+  class="btn btn-danger px-4 fw-semibold"
+  [attr.data-bs-dismiss]="f.form.valid ? 'offcanvas' : null"
+  [disabled]="submitting">
+  {{ submitting ? (mode === 'edit' ? 'Updating...' : 'Adding...') : (mode === 'edit' ? 'Update call' : 'Add call') }}
+</button>
       <button *ngIf="mode === 'view'" 
               type="button" 
               class="btn btn-secondary px-4 fw-semibold" 

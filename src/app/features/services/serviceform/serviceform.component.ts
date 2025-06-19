@@ -21,6 +21,7 @@ import { ErrorHandlerService } from '../../../core/services/error-handler.servic
 })
 export class ServiceformComponent implements OnInit {
   public Editor = ClassicEditor;
+  submitted = false;
   mode: 'add' | 'edit' = 'add';
   orgId: string = '';
   serviceId: string | null = null;
@@ -43,7 +44,12 @@ export class ServiceformComponent implements OnInit {
     private organizationService: OrganizationService
   ) {}
 
+  get isTermsInvalid(): boolean {
+  const plainText = this.termsAndConditions?.replace(/<(.|\n)*?>/g, '').trim();
+  return !plainText;
+}
   ngOnInit() {
+    
     combineLatest([
       this.route.paramMap,
       this.organizationService.organization$
@@ -53,6 +59,7 @@ export class ServiceformComponent implements OnInit {
       this.mode = this.serviceId ? 'edit' : 'add';
 
       if (this.mode === 'edit' && this.orgId && this.serviceId) {
+        this.submitted=true;
         this.servicesService.getService(this.orgId, this.serviceId).subscribe((data: any) => {
           this.id = data.id;
           this.status = data.status;
@@ -61,7 +68,6 @@ export class ServiceformComponent implements OnInit {
           this.termsAndConditions = data.tnc;
         });
       } else if (this.mode === 'add') {
-        // Reset fields for add mode
         this.serviceName = '';
         this.description = '';
         this.termsAndConditions = '';
@@ -74,18 +80,21 @@ export class ServiceformComponent implements OnInit {
 
   validate(): boolean {
     this.serviceNameError = !this.serviceName.trim();
-    // Check for empty or just HTML tags in CKEditor
     const plainTextTerms = this.termsAndConditions?.replace(/<(.|\n)*?>/g, '').trim();
     this.termsAndConditionsError = !plainTextTerms;
     return !(this.serviceNameError || this.termsAndConditionsError);
   }
 
   onSave() {
+    this.submitted = true;
     if (!this.validate()) {
       // Optionally, add a toast/message here
       return;
     }
-
+    const plainTextTerms = this.termsAndConditions?.replace(/<(.|\n)*?>/g, '').trim();
+    if (!this.serviceName?.trim() || !plainTextTerms) {
+    return; 
+  }
     const serviceData = {
       id: this.id,
       status: this.status,
@@ -93,9 +102,15 @@ export class ServiceformComponent implements OnInit {
       description: this.description,
       tnc: this.termsAndConditions
     };
+    const serviceadddata={
+      status:'ACTIVE',
+      service_name:this.serviceName,
+      description: this.description,
+      tnc: this.termsAndConditions
+    }
 
     if (this.mode === 'add') {
-      this.servicesService.addservice(this.orgId, serviceData).subscribe({
+      this.servicesService.addservice(this.orgId, serviceadddata).subscribe({
         next: () => {
           this.router.navigate(['/service']);
           this.err.showToast('Sucessfully update','success');

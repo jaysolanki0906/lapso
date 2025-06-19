@@ -14,7 +14,9 @@ import { OrganizationService } from '../../../core/services/organization.service
 export class ServicecallformComponent implements OnInit, OnChanges {
   @Input() orgId: string = '';
   @Input() mode: 'add' | 'edit' | 'view' = 'add';
+  @Input() check:boolean=true;
   @Input() data: any = null;
+  @Input() voucherid:string='';
   @Output() updateNeeded = new EventEmitter<void>();
   selectedVoucherId: string = '';
 
@@ -86,7 +88,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
       service_name: data.service_name || '',
       customer_name: data.customer_name || '',
       customer_number: data.customer_number || '',
-      service_type: data.service_type || null,
+      service_type: data.service_type || 'SCHEDULED',
       purpose: data.purpose || '',
       address: data.address || '',
       status: data.status || 'PENDING',
@@ -108,7 +110,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
       service_name: '',
       customer_name: '',
       customer_number: '',
-      service_type: null,
+      service_type: 'SCHEDULED',
       purpose: '',
       address: '',
       status: 'PENDING',
@@ -173,6 +175,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
   }
 
   onSubmit(form: any) {
+    
     if (form.invalid || this.mode === 'view') return;
     this.submitting = true;
 
@@ -187,7 +190,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     };
 
     const orgid = this.orgId;
-    const vid = this.selectedVoucherId;
+    const vid = this.selectedVoucherId||this.voucherid;
 
     if (!vid) {
       alert('Please select a service voucher.');

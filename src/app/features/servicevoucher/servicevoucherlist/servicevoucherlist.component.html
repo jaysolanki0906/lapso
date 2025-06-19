@@ -41,6 +41,7 @@
       [showToggle]="false"
       [callbtn]="true"
       [data]="filteredData"
+      (call)="onCall($event)"
       [total]="total"
       [page]="page"
       [pageSize]="pageSize"
@@ -59,5 +60,17 @@
   [canDelete]="canDelete" 
     ></app-common-table-card>
   </div>
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="serviceCallOffcanvas" aria-labelledby="serviceCallOffcanvasLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="serviceCallOffcanvasLabel">Service Call</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <app-servicecallform
+            [check]="false"
+            [mode]="'add'"
+            [voucherid]="idval"
+            (updateNeeded)="onServiceCallAdded()"
+          ></app-servicecallform>
+</div>
   </div>
 </div>

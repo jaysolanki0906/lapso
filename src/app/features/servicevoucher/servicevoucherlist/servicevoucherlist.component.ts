@@ -32,16 +32,22 @@ export class ServicevoucherlistComponent implements OnInit, OnDestroy {
   c_date = '';
   v_c_date = '';
   voucher_start_date = '';
+  idval='';
 voucher_end_date = '';
 contract_expiry_start_date = '';
 contract_expiry_end_date = '';
 created_at_start_date = '';
 created_at_end_date = '';
+selectedCallRow: any = null;
 
   searchFields: SearchField[] = [
     { title: 'Service Name', placeholder: 'Service Name', type: 'dropdown', key: 'quary2', options: [] },
     { title: 'Customer No, Name or Voucher No', type: 'text', placeholder: 'Customer No, Name or Voucher No', key: 'query' },
-    { title: 'Status', placeholder: 'Status', type: 'dropdown', key: 'status', options: ['All', 'Active', 'Expired'] },
+    { title: 'Status', placeholder: 'Status', type: 'dropdown', key: 'status',multiple: false,options: [
+  { value: '', label: 'All' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'EXPIRED', label: 'Expired' }
+] },
     { title: 'Voucher Date', placeholder: 'Voucher Date', type: 'date', key: 'Voucher_Date' },
     { title: 'Contract Expiry', placeholder: 'Contract Expiry', type: 'date', key: 'Contract_Expiry' },
     { title: 'Voucher Created Date', placeholder: 'Voucher Created Date', type: 'date', key: 'Voucher_Created_Date' }
@@ -72,7 +78,7 @@ created_at_end_date = '';
   formHeading = 'Add Service';
   selectedService: any = null;
   deleting = false;
-  sortColumn: string = 'voucher_date'; // or your preferred default
+  sortColumn: string = 'created_at'; 
   sortDirection: 'asc' | 'desc' = 'desc';
   canEdit = false;
   canDelete = false;
@@ -141,6 +147,8 @@ created_at_end_date = '';
       limit: this.pageSize,
       search: this.m_val,
       service_name: this.s_name,
+      order_by: this.sortColumn,     // <- pass the sort column
+      order_type: this.sortDirection,
       status: this.status.toUpperCase(),
       voucher_start_date: this.voucher_start_date,
     voucher_end_date: this.voucher_end_date,
@@ -187,12 +195,10 @@ created_at_end_date = '';
   }
 
   onSearch(searchValues: { [key: string]: any }) {
-    // Format date-range fields as string for API
     this.s_name = searchValues['quary2'];
     this.m_val = searchValues['query'];
     this.status = searchValues['status'];
     this.page = 1;
-
     if (
     searchValues['Voucher_Date'] &&
     typeof searchValues['Voucher_Date'] === 'object' &&
@@ -257,6 +263,22 @@ created_at_end_date = '';
     this.pageSize = event.pageSize;
     this.fetchItems();
   }
+  onServiceCallAdded(){
+    // this.closeOffcanvas();
+  }
+  onCall(row: any) {
+  this.selectedCallRow = row;
+  this.idval=row.id;
+  
+  // Open the offcanvas by id
+  const offcanvasElement = document.getElementById('serviceCallOffcanvas');
+  if (offcanvasElement && (window as any).bootstrap?.Offcanvas) {
+    const bsOffcanvas = new (window as any).bootstrap.Offcanvas(offcanvasElement);
+    bsOffcanvas.show();
+  } else {
+    console.error('Offcanvas element or Bootstrap Offcanvas not available');
+  }
+}
 
   onAddProduct() {
     this.router.navigate(['servicevoucher', 'add']);

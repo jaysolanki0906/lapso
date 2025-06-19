@@ -39,8 +39,9 @@
                 placeholder="Enter Service Name"
                 name="serviceName"
                 [(ngModel)]="serviceName"
+                #serviceNameRef="ngModel"
                 required>
-              <div class="text-danger" *ngIf="serviceNameError">
+              <div class="text-danger" *ngIf="(serviceNameRef.touched || submitted) && !serviceName?.trim()">
                 Service name is required
               </div>
             </div>
@@ -59,8 +60,8 @@
           <!-- Terms & Conditions -->
           <div class="form-group full-width">
             <label class="form-label required">Term & Condition</label>
-            <ckeditor [editor]="Editor" [(ngModel)]="termsAndConditions"></ckeditor>
-            <div class="text-danger" *ngIf="termsAndConditionsError">
+            <ckeditor [editor]="Editor"  #termsRef="ngModel" [(ngModel)]="termsAndConditions"></ckeditor>
+            <div class="text-danger" *ngIf="(termsRef.touched || submitted) && isTermsInvalid">
               Terms & Conditions are required
             </div>
           </div>

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
 import { CommonModule } from '@angular/common';
 import { OrganizationService } from '../../../core/services/organization.service';
+import { ErrorHandlerService } from '../../../core/services/error-handler.service';
 
 interface Category {
   id: number;
@@ -31,15 +32,13 @@ export class FormComponent implements OnInit, OnChanges {
   @Input() orgId: string | null = null;
   @Input() mode: 'add' | 'edit' | 'view' = 'add';
   @Input() productData: any = null;
-  @Output() updateNeeded = new EventEmitter<void>();
+  @Output() updateNeeded = new EventEmitter<any>();
   warrantyTouched = false;
   guaranteeTouched = false;
 
   product = {
     category: null as Category | null,
     categoryId: null as number | null,
-    brand: null as Brand | null,
-    brandId: null as number | null,
     productName: '',
     productCode: '',
     modelNumber: '',
@@ -58,18 +57,21 @@ export class FormComponent implements OnInit, OnChanges {
   products: any[] = [];
   categories: Category[] = [];
   brands: Brand[] = [];
-  filteredBrands: Brand[] = []; // Used to store brands associated with selected category
+  filteredBrands: Brand[] = []; // Used to store brands associated with selected product
   submitting = false;
   deleting = false;
   selectedBrandIds: number[] = [];
-  selectedProductIds: number[] = [];
   pendingPatch: any = null;
+
+  prodBrandMap: { id: number; title: string; brands: Brand[] }[] = [];
 
   constructor(
     private productService: ProductService,
-    private organisation: OrganizationService
+    private organisation: OrganizationService,
+    private err:ErrorHandlerService,
   ) {}
-   markWarrantyTouched() {
+  
+  markWarrantyTouched() {
     this.warrantyTouched = true;
   }
   markGuaranteeTouched() {
@@ -80,18 +82,22 @@ export class FormComponent implements OnInit, OnChanges {
     this.productService.fetchcategory().subscribe((data: any[]) => {
       this.products = data;
 
-      // Unique categories: only id and title
-      const catMap = new Map<number, { id: number, title: string }>();
-      data.forEach(item => {
-        if (item.category && !catMap.has(item.category.id)) {
-          catMap.set(item.id, {
-            id: item.id,
-            title: item.title
-          });
-        }
-      });
-      this.categories = Array.from(catMap.values());
+      // Build parent-child structure for display: prodBrandMap
+      this.prodBrandMap = data
+        .filter(item => item.id)
+        .map(item => ({
+          id: item.id,
+          title: item.title,
+          brands: item.brands || []
+        }));
 
+      // Categories will be the products themselves (parent)
+      this.categories = this.prodBrandMap.map(item => ({
+        id: item.id,
+        title: item.title
+      }));
+
+      // All brands (flat for other use-cases)
       const brandMap = new Map<number, Brand>();
       data.forEach(item => {
         if (item.brands && item.brands.length > 0) {
@@ -114,20 +120,11 @@ export class FormComponent implements OnInit, OnChanges {
     });
   }
 
-  // When a category is selected, filter brands associated with products in that category
+  // When a product is selected, filter brands associated with that product
   onCategorySelect(categoryId: number) {
-    const productsInCategory = this.products.filter(item => item.category && item.category.id == categoryId);
-    const brandMap = new Map<number, Brand>();
-    productsInCategory.forEach(item => {
-      if (item.brands && item.brands.length > 0) {
-        item.brands.forEach((brand: Brand) => {
-          if (!brandMap.has(brand.id)) {
-            brandMap.set(brand.id, brand);
-          }
-        });
-      }
-    });
-    this.filteredBrands = Array.from(brandMap.values());
+    const parent = this.prodBrandMap.find(item => item.id === categoryId);
+    this.filteredBrands = parent ? parent.brands : [];
+    this.selectedBrandIds = [];
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -149,18 +146,13 @@ export class FormComponent implements OnInit, OnChanges {
       return;
     }
     const catId = typeof data.product_id === 'string' ? parseInt(data.product_id, 10) : data.product_id;
-    const brandId = typeof data.brand_id === 'string' ? parseInt(data.brand_id, 10) : data.brand_id;
     const fallbackCatId = typeof data.categoryId === 'string' ? parseInt(data.categoryId, 10) : data.categoryId;
-    const fallbackBrandId = typeof data.brandId === 'string' ? parseInt(data.brandId, 10) : data.brandId;
-
     const category = this.categories.find(c => c.id === (catId ?? fallbackCatId)) ?? null;
-    const brand = this.brands.find(b => b.id === (brandId ?? fallbackBrandId)) ?? null;
 
     this.product = {
+      ...this.product,
       category,
       categoryId: catId ?? fallbackCatId ?? null,
-      brand,
-      brandId: brandId ?? fallbackBrandId ?? null,
       productName: data.name ?? data.productName ?? '',
       productCode: data.code ?? data.productCode ?? '',
       modelNumber: data.model_number ?? data.modelNumber ?? '',
@@ -175,14 +167,26 @@ export class FormComponent implements OnInit, OnChanges {
       guarantee: data.guarantee_value ?? data.guarantee ?? null,
       status: data.status ?? true
     };
+
+    // Set filtered brands based on selected product
+    if (this.product.categoryId) {
+      this.onCategorySelect(this.product.categoryId);
+    }
+
+    // Set selectedBrandIds if editing/viewing
+    if (Array.isArray(data.brand_ids)) {
+      this.selectedBrandIds = data.brand_ids;
+    } else if (data.brand_id) {
+      this.selectedBrandIds = [data.brand_id];
+    } else {
+      this.selectedBrandIds = [];
+    }
   }
 
   resetForm() {
     this.product = {
       category: null,
       categoryId: null,
-      brand: null,
-      brandId: null,
       productName: '',
       productCode: '',
       modelNumber: '',
@@ -197,6 +201,8 @@ export class FormComponent implements OnInit, OnChanges {
       guarantee: null,
       status: true
     };
+    this.selectedBrandIds = [];
+    this.filteredBrands = [];
   }
 
   onCategoryChange() {
@@ -205,16 +211,19 @@ export class FormComponent implements OnInit, OnChanges {
       this.onCategorySelect(this.product.categoryId);
     } else {
       this.filteredBrands = [];
+      this.selectedBrandIds = [];
     }
   }
 
-  onBrandChange() {
-    this.product.brandId = this.product.brand ? this.product.brand.id : null;
+  onBrandIdsChange(e: Event) {
+    // For <select multiple>
+    const selectElem = e.target as HTMLSelectElement;
+    this.selectedBrandIds = Array.from(selectElem.selectedOptions).map(opt => +opt.value);
   }
 
   private normalizeProduct(obj: any): any {
     return {
-      brand_id: obj.brandId ?? null,
+      brand_id: this.selectedBrandIds, // send all selected brand IDs
       code: obj.productCode === '' ? null : obj.productCode,
       description: obj.description === '' ? null : obj.description,
       guarantee_unit: obj.guaranteeUnit === '' ? null : obj.guaranteeUnit,
@@ -263,7 +272,10 @@ export class FormComponent implements OnInit, OnChanges {
           this.submitting = false;
           form.resetForm();
           this.closeDialog(form);
-          this.updateNeeded.emit();
+          this.updateNeeded.emit(res);
+          this.err.showToast("Edit is done sucessfully",'success');
+          window.location.reload();
+
         },
         error: () => {
           this.submitting = false;
@@ -275,7 +287,9 @@ export class FormComponent implements OnInit, OnChanges {
           this.submitting = false;
           form.resetForm();
           this.closeDialog(form);
-          this.updateNeeded.emit();
+          this.updateNeeded.emit(res);
+          this.err.showToast('added sucessfully','success');
+          //  window.location.reload();
         },
         error: () => {
           this.submitting = false;

@@ -12,14 +12,19 @@ import { authGuard } from './core/guards/auth.guard';
 import { ServiceformComponent } from './features/services/serviceform/serviceform.component';
 import { ServicevoucherformComponent } from './features/servicevoucher/servicevoucherform/servicevoucherform.component';
 import { HomeGuard } from './core/guards/home.guard';
+import { loginGuard } from './core/guards/login.guard';
+import { SalesFormComponent } from './features/sales/sales-form/sales-form.component';
 
 export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
-  { path: 'login', component: LoginComponent },
+  { path: 'login', component: LoginComponent,},
   { path: 'service/edit/:id', component: ServiceformComponent },
   { path: 'service/add', component: ServiceformComponent },
+  { path: 'voucher/invoice/add', component: SalesFormComponent }, 
+  { path: 'voucher/invoice/edit/:voucherId', component: SalesFormComponent }, 
   { path: 'servicevoucher/add', component: ServicevoucherformComponent },
   { path: 'servicevoucher/edit/:id', component: ServicevoucherformComponent },
+  { path: 'servicevoucher/view/:id', component: ServicevoucherformComponent },
   // { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   {
     path: 'dashboard',
@@ -32,7 +37,7 @@ export const routes: Routes = [
   {
     path: 'profile',
     component: ProfileComponent,
-    canActivate: [rolebaseGuard, authGuard, ], 
+    // canActivate: [rolebaseGuard, authGuard, ], 
   },
   {
     path: 'items',
@@ -40,27 +45,27 @@ export const routes: Routes = [
       import('./features/product/product.module').then(
         (m) => m.VoucherModule
       ),
-    canActivate: [rolebaseGuard, authGuard ],
+    // canActivate: [rolebaseGuard, authGuard ],
   },
   {
     path: 'voucher',
     loadChildren: () => import('./features/sales/sales.module').then(m => m.SalesModule),
-    canActivate: [rolebaseGuard, authGuard, ],
+    // canActivate: [rolebaseGuard, authGuard, ],
   },
   {
     path: 'servicecall',
     loadChildren: () => import('./features/servicecall/servicecall.module').then(m => m.ServicecallModule),
-    canActivate: [rolebaseGuard, authGuard, ],
+    // canActivate: [rolebaseGuard, authGuard, ],
   },
   {
     path: 'service',
     loadChildren: () => import('./features/services/services.module').then(m => m.ServicesModule),
-    canActivate: [rolebaseGuard, authGuard, ],
+    // canActivate: [rolebaseGuard, authGuard, ],
   },
   {
     path: 'vouchers',
     loadChildren: () => import('./features/servicevoucher/servicevoucher.module').then(m => m.ServicevoucherModule),
-    canActivate: [rolebaseGuard, authGuard],
+    // canActivate: [rolebaseGuard, authGuard],
   },
   {
     path: 'settings',
@@ -68,7 +73,7 @@ export const routes: Routes = [
       { path: 'user-management', component: UsermanagementComponent },
       { path: 'role-permission-management', component: RolesandpermissionComponent },
     ],
-    canActivate: [rolebaseGuard, authGuard, HomeGuard],
+    // canActivate: [rolebaseGuard, authGuard, HomeGuard],
   },
   { path: 'not-authorized', component: NotAuthorizedComponent },
   { path: '**', component: NotfoundcomponentComponent },

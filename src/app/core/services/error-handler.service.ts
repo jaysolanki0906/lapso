@@ -52,11 +52,10 @@ public confirmSwal(
   title: string,
   message: string,
   name: string,
-  confirmButtonText: string = 'Yes, delete user',
+  confirmButtonText: string = 'Yes, delete',
   confirmButtonColor: string = '#ef4444'
 ): Promise<boolean> {
   return Swal.fire({
-    title: title,
     html: `<div style="display: flex; flex-direction: column; gap: 8px;">
              <div>${message} <strong>${name}</strong>?</div>
              <center><small class="text-muted">⚠️ This action cannot be undone.</small></center>

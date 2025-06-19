@@ -10,7 +10,7 @@ import { ErrorHandlerService } from '../../../core/services/error-handler.servic
 import { HeaderComponent } from '../../../shared/header/header.component';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'; // CORRECT DEFAULT IMPORT
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 @Component({
   selector: 'app-servicevoucherform',
@@ -46,12 +46,17 @@ export class ServicevoucherformComponent implements OnInit {
   products: Array<any> = [];
   serviceCalls: Array<{ serviceDate: string; serviceType: string; purpose: string; description?: string; user_id?: string; status?: string }> = [];
   serviceVoucherId: string = '';
-  public Editor = ClassicEditor; // The only required CKEditor line
+  public Editor = ClassicEditor;
+  public editorInstance: any; // Add this line
+public editorConfig: any = {
+  toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo']
+};
 
-  // Validation errors
+
   errors: { [key: string]: string } = {};
   productErrors: string[] = [];
   serviceCallErrors: string[] = [];
+  fieldTouched: { [key: string]: boolean } = {};
 
   constructor(
     private servicesService: ServicevoucherService,
@@ -62,28 +67,61 @@ export class ServicevoucherformComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
-      if (this.router.url.includes('/edit/')) {
-        this.mode = 'edit';
-        this.serviceVoucherId = params.get('id') || '';
-      } else if (this.router.url.includes('/add')) {
-        this.mode = 'add';
-        this.serviceVoucherId = '';
-      } else if (this.router.url.includes('/view/')) {
-        this.mode = 'view';
-        this.serviceVoucherId = params.get('id') || '';
-      }
-      this.organisation();
-    });
+  this.route.paramMap.subscribe((params) => {
+    if (this.router.url.includes('/edit/')) {
+      this.mode = 'edit';
+      this.serviceVoucherId = params.get('id') || '';
+    } else if (this.router.url.includes('/add')) {
+      this.mode = 'add';
+      this.serviceVoucherId = '';
+    } else if (this.router.url.includes('/view/')) {
+      this.mode = 'view';
+      this.serviceVoucherId = params.get('id') || '';
+    }
+    this.organisation();
+    
+  });
+  
 
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${yyyy}-${mm}-${dd}`;
-    this.voucherDate = todayStr;
-    this.contractStartDate = todayStr;
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  this.voucherDate = todayStr;
+  this.contractStartDate = todayStr;
+}
+  // Validation helpers for template
+  isInvalidMobile(num: string): boolean {
+    return !!num && !/^\d{10}$/.test(num);
   }
+  isInvalidPositiveNumber(val: any): boolean {
+    const n = Number(val);
+    return val !== '' && (isNaN(n) || n <= 0);
+  }
+  isInvalidNonNegativeNumber(val: any): boolean {
+    const n = Number(val);
+    return val !== '' && (isNaN(n) || n < 0);
+  }
+
+  markFieldTouched(field: string) {
+    this.fieldTouched[field] = true;
+  }
+onEditorReady(editor: any) {
+  this.editorInstance = editor;
+
+  if (this.isViewMode) {
+    editor.enableReadOnlyMode('readonly-mode');
+    if (editor.ui?.view?.toolbar?.element) {
+      editor.ui.view.toolbar.element.style.display = 'none';
+    }
+  } else {
+    editor.disableReadOnlyMode('readonly-mode');
+    if (editor.ui?.view?.toolbar?.element) {
+      editor.ui.view.toolbar.element.style.display = 'flex';
+    }
+  }
+}
 
   organisation() {
     this.organizationService.fetchorginizationid().subscribe((orgid) => {
@@ -100,7 +138,29 @@ export class ServicevoucherformComponent implements OnInit {
     });
   }
 
+  updateContractEndDate() {
+    if (this.contractStartDate && this.contractDuration) {
+      const startDate = new Date(this.contractStartDate);
+      const months = parseInt(this.contractDuration, 10);
+
+      if (!isNaN(months) && months > 0) {
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + months);
+        this.contractExpired = endDate.toISOString().slice(0, 10);
+      } else {
+        this.contractExpired = '';
+      }
+    } else {
+      this.contractExpired = '';
+    }
+  }
+
   loadServiceVoucherForEdit() {
+    this.errors = {};
+    this.productErrors = [];
+    this.serviceCallErrors = [];
+    this.validate();
+
     this.servicesService.editservice(this.orgid, this.serviceVoucherId).subscribe((res: any) => {
       this.voucherDate = res.voucher_date || '';
       this.voucherNumber = res.voucher_number || '';
@@ -223,10 +283,9 @@ export class ServicevoucherformComponent implements OnInit {
   }
 
   onBack() {
-    this.router.navigate(['/servicevoucher']);
+    this.router.navigate(['/vouchers']);
   }
 
-  // --- VALIDATION LOGIC ---
   validate() {
     this.errors = {};
     this.productErrors = [];
@@ -234,59 +293,59 @@ export class ServicevoucherformComponent implements OnInit {
     let valid = true;
 
     if (!this.voucherDate) {
-      this.errors['voucherDate'] = 'Voucher Date is required';
+      if (this.fieldTouched['voucherDate']) this.errors['voucherDate'] = 'Voucher Date is required';
       valid = false;
     }
     if (!this.voucherNumber) {
-      this.errors['voucherNumber'] = 'Voucher Number is required';
+      if (this.fieldTouched['voucherNumber']) this.errors['voucherNumber'] = 'Voucher Number is required';
       valid = false;
     }
     if (!this.customerName) {
-      this.errors['customerName'] = 'Customer Name is required';
+      if (this.fieldTouched['customerName']) this.errors['customerName'] = 'Customer Name is required';
       valid = false;
     }
     if (!this.customerMobile) {
-      this.errors['customerMobile'] = 'Customer Mobile Number is required';
+      if (this.fieldTouched['customerMobile']) this.errors['customerMobile'] = 'Customer Mobile Number is required';
       valid = false;
-    } else if (!/^\d{10}$/.test(this.customerMobile)) {
-      this.errors['customerMobile'] = 'Enter a valid 10-digit mobile number';
+    } else if (this.isInvalidMobile(this.customerMobile)) {
+      if (this.fieldTouched['customerMobile']) this.errors['customerMobile'] = 'Enter a valid 10-digit mobile number';
       valid = false;
     }
     if (!this.alternateContact) {
-      this.errors['alternateContact'] = 'Alternate Contact Number is required';
+      if (this.fieldTouched['alternateContact']) this.errors['alternateContact'] = 'Alternate Contact Number is required';
       valid = false;
-    } else if (!/^\d{10}$/.test(this.alternateContact)) {
-      this.errors['alternateContact'] = 'Enter a valid 10-digit number';
+    } else if (this.isInvalidMobile(this.alternateContact)) {
+      if (this.fieldTouched['alternateContact']) this.errors['alternateContact'] = 'Enter a valid 10-digit number';
       valid = false;
     }
     if (!this.address) {
-      this.errors['address'] = 'Address is required';
+      if (this.fieldTouched['address']) this.errors['address'] = 'Address is required';
       valid = false;
     }
     if (!this.serviceName) {
-      this.errors['serviceName'] = 'Service Name is required';
+      if (this.fieldTouched['serviceName']) this.errors['serviceName'] = 'Service Name is required';
       valid = false;
     }
     if (!this.contractStartDate) {
-      this.errors['contractStartDate'] = 'Contract Start Date is required';
+      if (this.fieldTouched['contractStartDate']) this.errors['contractStartDate'] = 'Contract Start Date is required';
       valid = false;
     }
     if (!this.contractDuration) {
-      this.errors['contractDuration'] = 'Contract Duration is required';
+      if (this.fieldTouched['contractDuration']) this.errors['contractDuration'] = 'Contract Duration is required';
       valid = false;
-    } else if (isNaN(Number(this.contractDuration)) || Number(this.contractDuration) <= 0) {
-      this.errors['contractDuration'] = 'Contract Duration must be a positive number';
+    } else if (this.isInvalidPositiveNumber(this.contractDuration)) {
+      if (this.fieldTouched['contractDuration']) this.errors['contractDuration'] = 'Contract Duration must be a positive number';
       valid = false;
     }
     if (!this.termsConditions || !this.termsConditions.trim() || this.termsConditions === '<br>') {
-      this.errors['termsConditions'] = 'Terms & Conditions are required';
+      if (this.fieldTouched['termsConditions']) this.errors['termsConditions'] = 'Terms & Conditions are required';
       valid = false;
     }
     if (!this.contractAmount) {
-      this.errors['contractAmount'] = 'Contract Amount is required';
+      if (this.fieldTouched['contractAmount']) this.errors['contractAmount'] = 'Contract Amount is required';
       valid = false;
-    } else if (isNaN(Number(this.contractAmount)) || Number(this.contractAmount) < 0) {
-      this.errors['contractAmount'] = 'Contract Amount must be a valid number';
+    } else if (this.isInvalidNonNegativeNumber(this.contractAmount)) {
+      if (this.fieldTouched['contractAmount']) this.errors['contractAmount'] = 'Contract Amount must be a valid number';
       valid = false;
     }
 
@@ -298,7 +357,6 @@ export class ServicevoucherformComponent implements OnInit {
       this.products.forEach((p, idx) => {
         let perr = '';
         if (!p.product) perr += 'Select a product. ';
-        if (!p.description) perr += 'Description required. ';
         if (!p.quantity || isNaN(Number(p.quantity)) || Number(p.quantity) < 1) perr += 'Quantity should be >= 1. ';
         if (perr) {
           this.productErrors[idx] = perr.trim();
@@ -315,7 +373,6 @@ export class ServicevoucherformComponent implements OnInit {
       this.serviceCalls.forEach((c, idx) => {
         let cerr = '';
         if (!c.serviceDate) cerr += 'Service Date required. ';
-        if (!c.purpose) cerr += 'Purpose required. ';
         if (cerr) {
           this.serviceCallErrors[idx] = cerr.trim();
           valid = false;
@@ -380,7 +437,7 @@ export class ServicevoucherformComponent implements OnInit {
       this.servicesService.editrequest(this.orgid, this.serviceVoucherId, payload).subscribe({
         next: (res) => {
           this.err.showToast('Service Voucher Updated!', res);
-          this.router.navigate(['/servicevoucher']);
+          this.router.navigate(['/vouchers']);
         },
         error: (err) => {
           this.err.showToast('Failed to update Service Voucher', err);
@@ -390,7 +447,7 @@ export class ServicevoucherformComponent implements OnInit {
       this.servicesService.addservice(this.orgid, payload).subscribe({
         next: (res) => {
           this.err.showToast('Service Voucher Saved!', res);
-          this.router.navigate(['/servicevoucher']);
+          this.router.navigate(['/vouchers']);
         },
         error: (err) => {
           this.err.showToast('Failed to save Service Voucher', err);

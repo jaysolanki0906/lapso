@@ -27,7 +27,7 @@
           <div class="form-row">
             <div class="form-group" style="position:relative">
               <label>Customer Name <span class="required">*</span></label>
-              <div style="position: relative; width: 300px;">
+              <div style="position: relative; width: 265px;">
   <input
     type="text"
     formControlName="customerName"
@@ -63,7 +63,7 @@
             </div>
             <div class="form-group">
               <label>Customer Mobile Number <span class="required">*</span></label>
-              <input type="text" formControlName="customerMobile" placeholder="Enter Customer Mobile Number"/>
+              <input type="number" (input)="onMobileInput($event)" [min]="0" formControlName="customerMobile" placeholder="Enter Customer Mobile Number"/>
             </div>
           </div>
           <div class="text-danger" style="text-align: right; top: 0%;" *ngIf="invoiceForm.get('customerMobile')?.invalid && (invoiceForm.get('customerMobile')?.touched || invoiceForm.get('customerMobile')?.dirty)">
@@ -149,13 +149,10 @@
                     >
                       +
                     </button>
-                    <div class="text-danger"
-        *ngIf="
-          item.get('product')?.invalid &&
-          (item.get('product')?.touched || item.get('product')?.dirty)
-        ">
-        Please select a product.
-      </div>
+                    <div class="text-danger"*ngIf="item.get('product')?.invalid &&
+                      (item.get('product')?.touched || item.get('product')?.dirty)">
+                      Please select a product.
+                    </div>
                   </div>
                   <textarea formControlName="description" placeholder="Product Description"></textarea>
                 </td>
@@ -217,12 +214,30 @@
                 </td>
                 <td>
                   <input type="number" formControlName="quantity" />
+                   <ng-container *ngIf="item.get('quantity')?.errors?.['required']">
+      <div class="text-danger" *ngIf="item.get('price')?.invalid && (item.get('quantity')?.touched || item.get('quantity')?.dirty)">
+    <ng-container *ngIf="item.get('quantity')?.errors?.['required']">
+      Quantity is required.<br>
+    </ng-container>
+    <ng-container *ngIf="item.get('quantity')?.errors?.['min']">
+      Quantity must be greater than 0.<br>
+    </ng-container>
+  </div>
+    </ng-container>
                 </td>
                 <td>
                   <input type="text" formControlName="unit" />
                 </td>
                 <td>
-                  <input type="text" formControlName="price" placeholder="Price" />
+                  <input type="number" formControlName="price" placeholder="Price"  />
+                  <div class="text-danger" *ngIf="item.get('price')?.invalid && (item.get('price')?.touched || item.get('price')?.dirty)">
+    <ng-container *ngIf="item.get('price')?.errors?.['required']">
+      Price is required.<br>
+    </ng-container>
+    <ng-container *ngIf="item.get('price')?.errors?.['min']">
+      Price must be greater than 0.<br>
+    </ng-container>
+  </div>
                 </td>
                 <td>
                   <select class="form-select" formControlName="tax">
@@ -233,7 +248,7 @@
                   </select>
                 </td>
                 <td>
-                  <input type="text" [formControl]="getTotalControl(item)" />
+                  <input type="text" [formControlName]="'total'"/>
                 </td>
               </tr>
             </tbody>
@@ -280,9 +295,8 @@
         <app-form
           [orgId]="orgId"
           [mode]="formMode"
-          (updateNeeded)="onProductAdded()"
           [productData]="selectedProduct"
-          (updateNeeded)="fetchItems()"
+          (updateNeeded)="onProductAdded($event)"
         ></app-form>
       </div>
     </div>

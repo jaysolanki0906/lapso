@@ -23,8 +23,8 @@ export class TableComponent implements OnInit {
   orgSub: any;
   orgId: string = '';
   showForm = false;
-  sortColumn: string = '';
-sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: string = 'created_at';
+sortDirection: 'asc' | 'desc' = 'desc';
 canEdit = false;
   canDelete = false;
   canView = false;

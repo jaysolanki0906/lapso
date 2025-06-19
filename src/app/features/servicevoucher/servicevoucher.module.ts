@@ -8,9 +8,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../shared/header/header.component';
 import { ServicevoucherformComponent } from './servicevoucherform/servicevoucherform.component';
+import { ServicecallformComponent } from '../servicecall/servicecallform/servicecallform.component'; // Make sure this path is correct
 
 const routes: Routes = [
-  { path: '', component: ServicevoucherlistComponent },    
+  { path: '', component: ServicevoucherlistComponent },
 ];
 
 @NgModule({
@@ -21,10 +22,11 @@ const routes: Routes = [
     MatButtonModule,
     MatIconModule,
     SidebarComponent,
+    ServicecallformComponent, // <--- Standalone component
     HeaderComponent,
     ServicevoucherformComponent,
     RouterModule.forChild(routes),
   ],
-  exports:[ServicevoucherlistComponent,RouterModule]
+  exports: [ServicevoucherlistComponent, RouterModule]
 })
 export class ServicevoucherModule { }

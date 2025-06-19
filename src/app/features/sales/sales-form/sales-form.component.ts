@@ -26,7 +26,7 @@ export class SalesFormComponent implements OnInit, OnDestroy {
 
   invoiceForm: FormGroup;
   showDropdown = false;
-dropdownHideTimeout: any;
+  dropdownHideTimeout: any;
   products: any[] = [];
   customerSuggestions: any[] = [];
   customerSearchLoading = false;
@@ -62,7 +62,7 @@ dropdownHideTimeout: any;
     });
   }
 
-  ngOnInit(): void {
+ ngOnInit(): void {
     this.orgSub = this.organisationService.organization$.subscribe(org => {
       if (org && org.org_id) {
         this.orgId = org.org_id;
@@ -100,21 +100,32 @@ dropdownHideTimeout: any;
         });
 
         this.items.valueChanges.subscribe(() => this.calculateTotals());
+
+        // For existing rows, set up price change listeners
+        this.setupPriceChangeSubscriptions();
       }
     });
   }
+  setupPriceChangeSubscriptions() {
+    this.items.controls.forEach((group: AbstractControl, idx: number) => {
+      const fg = group as FormGroup;
+      // Remove previous subscription if needed (avoid duplicate logs)
+      if ((fg as any)._priceSub) {
+        (fg as any)._priceSub.unsubscribe();
+      }
+      (fg as any)._priceSub = fg.get('price')!.valueChanges.subscribe(val => {
+        console.log(`Row ${idx + 1} price changed:`, val);
+      });
+    });
+  }
+
   onCustomerInput(event: any) {
-  this.showDropdown = true;
-  // Optionally trigger your filtering/fetch here as well
-  // Example: this.fetchSuggestions(event.target.value);
-}
+    this.showDropdown = true;
+  }
 
-// Call this on (blur)
-hideDropdownWithDelay() {
-  // Delay to allow (mousedown) click to register before hiding
-  this.dropdownHideTimeout = setTimeout(() => this.showDropdown = false, 150);
-}
-
+  hideDropdownWithDelay() {
+    this.dropdownHideTimeout = setTimeout(() => this.showDropdown = false, 150);
+  }
 
   ngOnDestroy(): void {
     this.orgSub?.unsubscribe();
@@ -138,8 +149,8 @@ hideDropdownWithDelay() {
   }
 
   createItemGroup(): FormGroup {
-    return this.fb.group({
-       item_id: [''],
+    const item= this.fb.group({
+      item_id: [''],
       product: ['', Validators.required], // always string for dropdown selection
       description: [''],
       warrantyChecked: [false],
@@ -148,18 +159,50 @@ hideDropdownWithDelay() {
       guaranteeChecked: [false],
       guaranteeType: ['Days'],
       guaranteePeriod: [''],
-      quantity: [1, Validators.required],
-      unit: ['Unit'],
-      price: [''],
+      quantity: [Validators.required,Validators.min(1)],
+      unit: [],
+      price: ['', [Validators.required, Validators.min(1)]],
       tax: [''],
       total: [{ value: '', disabled: true }],
     });
+    item.get('price')?.valueChanges.subscribe(() => {
+    this.updateTotal(item);
+  });
+
+  item.get('tax')?.valueChanges.subscribe(() => {
+    this.updateTotal(item);
+  });
+  return item;
   }
+updateTotal(item: FormGroup) {
+  const price = +item.get('price')?.value || 0;
+  const tax = +item.get('tax')?.value || 0;
+
+  const total = price + (price * tax / 100);
+  item.get('total')?.setValue(total.toFixed(2), { emitEvent: false });
+}
 
   addItem() {
-    this.items.push(this.createItemGroup());
-    this.calculateTotals();
+    const itemGroup = this.createItemGroup();
+    this.items.push(itemGroup);
+    this.setupPriceChangeSubscriptions();
   }
+  updateRowTotal(itemGroup: FormGroup) {
+  const price = parseFloat(itemGroup.get('price')?.value) || 0;
+  const quantity = parseFloat(itemGroup.get('quantity')?.value) || 0;
+  const tax = parseFloat(itemGroup.get('tax')?.value) || 0;
+
+  const subtotal = price * quantity;
+  const taxAmount = (subtotal * tax) / 100;
+  const total = subtotal + taxAmount;
+
+  // Update the total field without triggering another value change
+  itemGroup.get('total')?.setValue(total.toFixed(2), { emitEvent: false });
+  console.log(itemGroup)
+
+  this.calculateTotals(); // If you also want grand totals updated
+}
+
 
   fetchAndSetInvoiceNumber(orgId: string) {
     if (this.mode === 'add') {
@@ -186,37 +229,43 @@ hideDropdownWithDelay() {
     this.router.navigate(['voucher/invoice']);
   }
 
-  onProductSelected(item: AbstractControl, productId: string) {
+ onProductSelected(item: AbstractControl, productId: string) {
   const group = item as FormGroup;
+  // Always find the product fresh by ID
   const product = this.products.find((p: any) => String(p.id) === String(productId));
   if (product) {
     group.patchValue({
-      item_id: product.id, // <-- Set item_id
-      product: product.id, // <-- Set product
+      item_id: product.id,
+      product: product.id, // Only the id!
       description: product.description || '',
       price: product.price || '',
       tax: product.tax || '',
-      warrantyChecked: product.has_warranty,
+      warrantyChecked: !!product.has_warranty,
       warrantyType:
         product.warranty_unit === 'DAYS'
           ? 'Days'
           : product.warranty_unit === 'MONTHS'
             ? 'Months'
-            : 'Years',
+            : product.warranty_unit === 'YEARS'
+              ? 'Years'
+              : 'Days',
       warrantyPeriod: product.has_warranty ? product.warranty_value : '',
-      guaranteeChecked: product.has_guarantee,
+      guaranteeChecked: !!product.has_guarantee,
       guaranteeType:
         product.guarantee_unit === 'DAYS'
           ? 'Days'
           : product.guarantee_unit === 'MONTHS'
             ? 'Months'
-            : 'Years',
+            : product.guarantee_unit === 'YEARS'
+              ? 'Years'
+              : 'Days',
       guaranteePeriod: product.has_guarantee ? product.guarantee_value : '',
-      unit: 'Unit',
+      unit: '',           // Set if your product has unit, else leave blank
+      quantity: 1,        // Default to 1, or use product.quantity if you want
       total: product.price || '',
-    });
+    }, { emitEvent: false }); // prevent valueChanges recursion
   } else {
-    group.patchValue({
+    group.reset({
       item_id: '',
       product: '',
       description: '',
@@ -228,9 +277,10 @@ hideDropdownWithDelay() {
       guaranteeChecked: false,
       guaranteeType: 'Days',
       guaranteePeriod: '',
-      unit: 'Unit',
+      unit: '',
+      quantity: 1,
       total: '',
-    });
+    }, { emitEvent: false });
   }
   this.calculateTotals();
 }
@@ -238,7 +288,8 @@ hideDropdownWithDelay() {
   getTotalControl(item: AbstractControl): FormControl {
     return item.get('total') as FormControl;
   }
-   markWarrantyTouched() {
+
+  markWarrantyTouched() {
     this.warrantyTouched = true;
   }
   markGuaranteeTouched() {
@@ -247,10 +298,23 @@ hideDropdownWithDelay() {
   initItems() {
     while (this.items.length) this.items.removeAt(0);
     this.addItem();
+    this.setupPriceChangeSubscriptions();
   }
+onMobileInput(event: any) {
+  let value = event.target.value;
+  
+  value = value.replace(/\D/g, '');
+  
+  if (value.length > 10) {
+    value = value.substring(0, 10);
+  }
+  
+  this.invoiceForm.get('customerMobile')?.setValue(value);
+  
+  event.target.value = value;
+}
 
-  patchFormForEdit(voucher: any) {
-    // Patch main fields
+ patchFormForEdit(voucher: any) {
     this.invoiceForm.patchValue({
       invoiceDate: voucher.voucher_date || formatDate(new Date(), 'yyyy-MM-dd', 'en-IN'),
       invoiceNumber: voucher.voucher_number || '',
@@ -270,7 +334,7 @@ hideDropdownWithDelay() {
           product: vi.item_id,
           description: vi.desc || asset.desc || '',
           quantity: vi.qty || 1,
-          unit: vi.unit || 'Unit',
+          unit: vi.unit || 'Pice',
           price: vi.price || '',
           tax: vi.tax || '',
           total: vi.total_price || '',
@@ -288,7 +352,9 @@ hideDropdownWithDelay() {
     }
 
     this.calculateTotals();
+    this.setupPriceChangeSubscriptions();
   }
+
 
   fetchproduct(orgid: string): Observable<any> {
     return this.invoiceservice.filtertostoreproduct(orgid).pipe(
@@ -303,14 +369,14 @@ hideDropdownWithDelay() {
   }
 
   onCustomerSuggestionSelect(suggestion: any) {
-  this.invoiceForm.patchValue({
-    customerName: suggestion.name,
-    customerMobile: suggestion.mobile
-  });
-  this.showDropdown = false;
-  this.customerSuggestions = [];
-  if (this.dropdownHideTimeout) clearTimeout(this.dropdownHideTimeout);
-}
+    this.invoiceForm.patchValue({
+      customerName: suggestion.name,
+      customerMobile: suggestion.mobile
+    });
+    this.showDropdown = false;
+    this.customerSuggestions = [];
+    if (this.dropdownHideTimeout) clearTimeout(this.dropdownHideTimeout);
+  }
 
   showSuggestions(): boolean {
     return this.customerSuggestions.length > 0 && !this.invoiceForm.get('customerName')?.disabled;
@@ -342,68 +408,61 @@ hideDropdownWithDelay() {
   }
 
   onSubmitInvoice() {
-  let valid = true;
-  const itemsArray = this.items; 
-  itemsArray.controls.forEach((item: AbstractControl, i: number) => {
-  const group = item as FormGroup;
-    // Warranty validation
-    if (item.get('warrantyChecked')?.value) {
-      if (
-        !item.get('warrantyType')?.value ||
-        !item.get('warrantyPeriod')?.value ||
-        +item.get('warrantyPeriod')?.value < 1
-      ) {
-        item.get('warrantyType')?.markAsTouched();
-        item.get('warrantyPeriod')?.markAsTouched();
-        valid = false;
-      }
-    }
-    // Guarantee validation
-    if (item.get('guaranteeChecked')?.value) {
-      if (
-        !item.get('guaranteeType')?.value ||
-        !item.get('guaranteePeriod')?.value ||
-        +item.get('guaranteePeriod')?.value < 1
-      ) {
-        item.get('guaranteeType')?.markAsTouched();
-        item.get('guaranteePeriod')?.markAsTouched();
-        valid = false;
-      }
-    }
-    // Add checks for other fields you want to validate
-    // Example: Product required
-    if (!item.get('product')?.value) {
-      item.get('product')?.markAsTouched();
-      valid = false;
-    }
-    // Example: Quantity required
-    if (!item.get('quantity')?.value || +item.get('quantity')?.value < 1) {
-      item.get('quantity')?.markAsTouched();
-      valid = false;
-    }
-    // etc.
-  });
-
-  // Validate parent-level controls (example: customerName, customerMobile)
-  if (!this.invoiceForm.get('customerName')?.value) {
-    this.invoiceForm.get('customerName')?.markAsTouched();
-    valid = false;
-  }
-  if (!this.invoiceForm.get('customerMobile')?.value) {
-    this.invoiceForm.get('customerMobile')?.markAsTouched();
-    valid = false;
-  }
-  // etc.
-
-  if (!valid) {
-    // Optionally, show a message to user
+    this.invoiceForm.markAllAsTouched(); 
+  if (this.invoiceForm.invalid) {
     this.err.showToast?.('Please fill all required fields!', 'warning');
     return;
   }
+    let valid = true;
+    const itemsArray = this.items; 
+    itemsArray.controls.forEach((item: AbstractControl, i: number) => {
+      const group = item as FormGroup;
+      if (item.get('warrantyChecked')?.value) {
+        if (
+          !item.get('warrantyType')?.value ||
+          !item.get('warrantyPeriod')?.value ||
+          +item.get('warrantyPeriod')?.value < 1
+        ) {
+          item.get('warrantyType')?.markAsTouched();
+          item.get('warrantyPeriod')?.markAsTouched();
+          valid = false;
+        }
+      }
+      if (item.get('guaranteeChecked')?.value) {
+        if (
+          !item.get('guaranteeType')?.value ||
+          !item.get('guaranteePeriod')?.value ||
+          +item.get('guaranteePeriod')?.value < 1
+        ) {
+          item.get('guaranteeType')?.markAsTouched();
+          item.get('guaranteePeriod')?.markAsTouched();
+          valid = false;
+        }
+      }
+      if (!item.get('product')?.value) {
+        item.get('product')?.markAsTouched();
+        valid = false;
+      }
+      if (!item.get('quantity')?.value || +item.get('quantity')?.value < 1) {
+        item.get('quantity')?.markAsTouched();
+        valid = false;
+      }
+    });
+    if (!this.invoiceForm.get('customerName')?.value) {
+      this.invoiceForm.get('customerName')?.markAsTouched();
+      valid = false;
+    }
+    if (!this.invoiceForm.get('customerMobile')?.value) {
+      this.invoiceForm.get('customerMobile')?.markAsTouched();
+      valid = false;
+    }
+    if (!valid) {
+      this.err.showToast?.('Please fill all required fields!', 'warning');
+      return;
+    }
 
     const today = formatDate(new Date(), 'yyyy-MM-dd', 'en-IN');
     const formVal = this.invoiceForm.getRawValue();
-    console.log('values ',formVal.items);
 
     const items = formVal.items.map((item: any) => ({
       item_id: item.item_id,
@@ -443,7 +502,6 @@ hideDropdownWithDelay() {
     };
 
     if (this.mode === 'edit' && this.voucherId) {
-      // Call update API in edit mode
       this.invoiceservice.saveinvoice(this.orgId, this.voucherId, payload).subscribe({
         next: (res) => {
           this.err.showToast('Updated sucessfully','info');
@@ -456,7 +514,7 @@ hideDropdownWithDelay() {
     } else {
       this.invoiceservice.savevincoice(this.orgId, payload).subscribe({
         next: (res) => {
-          alert('Invoice saved successfully!');
+          this.err.showToast('Invoice saved successfully!','success');
           this.routeback();
         },
         error: (err) => {
@@ -530,35 +588,47 @@ hideDropdownWithDelay() {
     }
     return formatDate(date, 'yyyy-MM-dd', 'en-IN');
   }
-  openProductAddCanvas(rowIndex: number) {
-  this.productAddRowIndex = rowIndex;
-  this.selectedProduct = null;
-  this.formMode = 'add';
-}
 
-  onProductAdded() {
-  this.fetchproduct(this.orgId).subscribe((products) => {
-    const newest = products[products.length - 1];
-    this.lastAddedProductId = newest?.id || null;
-    if (this.productAddRowIndex !== null) {
-      // Update only the targeted row
-      const itemGroup = this.items.at(this.productAddRowIndex);
-      if (this.lastAddedProductId !== null) {
-  itemGroup.get('product')?.setValue(this.lastAddedProductId);
-  itemGroup.get('item_id')?.setValue(this.lastAddedProductId);
-  this.onProductSelected(itemGroup, this.lastAddedProductId);
-}
-    } else {
-      // fallback: add new row if for some reason index is not set
-      this.addItem();
-      if (this.lastAddedProductId) {
-        const lastIndex = this.items.length - 1;
-        const itemGroup = this.items.at(lastIndex);
-        itemGroup.get('product')?.setValue(this.lastAddedProductId);
-        this.onProductSelected(itemGroup, this.lastAddedProductId);
-      }
-    }
+  openProductAddCanvas(rowIndex: number) {
+    this.productAddRowIndex = rowIndex;
+    this.selectedProduct = null;
+    this.formMode = 'add';
+  }
+
+ onProductAdded(newProduct: any) {
+  if (newProduct && newProduct.id && this.productAddRowIndex !== null) {
+    const itemGroup = this.items.at(this.productAddRowIndex);
+
+    itemGroup.patchValue({
+      product: String(newProduct.id), // This sets the dropdown
+      item_id: newProduct.id,
+      description: newProduct.description || '',
+      price: newProduct.price || '',
+      tax: newProduct.tax || '',
+      warrantyChecked: !!newProduct.has_warranty,
+      warrantyType: (newProduct.warranty_unit === 'DAYS')
+        ? 'Days'
+        : (newProduct.warranty_unit === 'MONTHS')
+          ? 'Months'
+          : (newProduct.warranty_unit === 'YEARS')
+            ? 'Years'
+            : 'Days',
+      warrantyPeriod: newProduct.has_warranty ? newProduct.warranty_value : '',
+      guaranteeChecked: !!newProduct.has_guarantee,
+      guaranteeType: (newProduct.guarantee_unit === 'DAYS')
+        ? 'Days'
+        : (newProduct.guarantee_unit === 'MONTHS')
+          ? 'Months'
+          : (newProduct.guarantee_unit === 'YEARS')
+            ? 'Years'
+            : 'Days',
+      guaranteePeriod: newProduct.has_guarantee ? newProduct.guarantee_value : '',
+      unit: '',
+      quantity: 1,
+      total: newProduct.price || '',
+    });
+    this.onProductSelected(itemGroup, String(newProduct.id));
     this.productAddRowIndex = null;
-  });
+  }
 }
 }
