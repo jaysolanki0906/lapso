@@ -120,15 +120,29 @@ selectedCallRow: any = null;
   }
 
   values(orgid: string) {
-    this.service.getItems(orgid, { status: "ACTIVE" }).subscribe({
-      next: (res) => {
-        const serviceNames = res.data.map((data: any) => data.service_name);
-        const options = ['All', ...serviceNames];
-        this.searchFields = this.searchFields.map(field =>
-          field.key === 'quary2' ? { ...field, options } : field)
-      },
-    });
-  }
+  this.service.getItems(orgid, { status: "ACTIVE" }).subscribe({
+    next: (res) => {
+      const services = Array.isArray(res?.data) ? res.data : [];
+      const options = [
+        { value: 'All', label: 'All' },
+        ...services.map((data: any) => ({
+          value:  data.service_name,
+          label: data.service_name
+        }))
+      ];
+
+      console.log('Service options:', options);
+
+      this.searchFields = this.searchFields.map(field =>
+        field.key === 'quary2' ? { ...field, options } : field
+      );
+    },
+    error: (err) => {
+      console.error('Failed to fetch service items for quary2 dropdown', err);
+    }
+  });
+}
+
 
   fetchItems() {
     if (this.status == 'All') {
@@ -281,11 +295,11 @@ selectedCallRow: any = null;
 }
 
   onAddProduct() {
-    this.router.navigate(['servicevoucher', 'add']);
+    this.router.navigate(['vouchers', 'add']);
   }
 
   onEdit(row: any) {
-    this.router.navigate(['servicevoucher', 'edit', row.id]);
+    this.router.navigate(['vouchers', 'edit', row.id]);
   }
 
   getStatusText(status: string): string {
@@ -299,7 +313,7 @@ selectedCallRow: any = null;
   }
 
   onView(row: any) {
-    this.router.navigate(['servicevoucher', 'view', row.id]);
+    this.router.navigate(['vouchers', 'view', row.id]);
   }
 
   async onDelete(row: any) {

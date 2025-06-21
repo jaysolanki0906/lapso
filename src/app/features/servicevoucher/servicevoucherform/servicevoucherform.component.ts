@@ -11,11 +11,16 @@ import { HeaderComponent } from '../../../shared/header/header.component';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { ServicecallService } from '../../../core/services/servicecall.service';
+import { CommonTableCardComponent, SearchField, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
+import { RolePermissionService } from '../../../core/services/role-permission.service';
+import Swal from 'sweetalert2';
+import { ServicecallformComponent } from '../../servicecall/servicecallform/servicecallform.component';
 
 @Component({
   selector: 'app-servicevoucherform',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent, SidebarComponent, CKEditorModule],
+  imports: [CommonModule,FormsModule,CommonTableCardComponent,ServicecallformComponent, HeaderComponent, SidebarComponent, CKEditorModule],
   templateUrl: './servicevoucherform.component.html',
   styleUrl: './servicevoucherform.component.scss',
 })
@@ -26,6 +31,8 @@ export class ServicevoucherformComponent implements OnInit {
   customerMobile: string = '';
   alternateContact: string = '';
   address: string = '';
+  action:boolean=false;
+  selectedServiceCall: any = null;
   serviceName: string = '';
   contractStartDate: string = '';
   contractDuration: string = '';
@@ -33,65 +40,118 @@ export class ServicevoucherformComponent implements OnInit {
   termsConditions: string = '';
   contractDescription: string = '';
   contractAmount: string = '';
+  serviceCallDetails: any;
+  loadingDetails: boolean = false;
+  errorLoadingDetails: boolean = false;
   orgid: string = '';
+  canEdit = false;
+  canDelete = false;
+  canView = false;
+  canCreate = false;
+  id='';
   serviceOptions: Array<{ id: string; service_name: string }> = [];
   productOptions: Array<any> = [];
   contactOptions: Array<{ id: string; name: string; mobile: string; org_name: string }> = [];
   showContactDropdown: boolean = false;
   customerNameInput$ = new Subject<string>();
   customerSearchLoading: boolean = false;
+  selectedVoucherId: string = '';
+  submitting = false;
+  serviceCall: any = {};
   addProducts: boolean = false;
+  formMode: 'add' | 'edit' | 'view'|'action' = 'add';
+  formHeading = 'Add Service Call';
+  filtereddata:any=[];
   addScheduleService: boolean = false;
   mode: 'view' | 'edit' | 'add' = 'view';
   products: Array<any> = [];
   serviceCalls: Array<{ serviceDate: string; serviceType: string; purpose: string; description?: string; user_id?: string; status?: string }> = [];
   serviceVoucherId: string = '';
   public Editor = ClassicEditor;
-  public editorInstance: any; // Add this line
-public editorConfig: any = {
-  toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo']
-};
-
+  public editorInstance: any;
+  public editorConfig: any = {
+    toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo']
+  };
 
   errors: { [key: string]: string } = {};
   productErrors: string[] = [];
   serviceCallErrors: string[] = [];
   fieldTouched: { [key: string]: boolean } = {};
 
+  columns: TableColumn[] = [
+    { key: 'service_date', label: 'Service Date', sortable: true },
+    { key: 'created_at', label: 'Created At', sortable: true },
+    { key: 'customer_name', label: 'Customer Name' },
+    { key: 'customer_number', label: 'Customer Number' },
+    { key: 'complaints_source', label: 'Raised By' },
+    { key: 'user_details.fullname', label: 'Assigned To' },
+    { key: 'purpose', label: 'Purpose' },
+    { key: 'status', label: 'Status' },
+  ];
+
+  searchFields: SearchField[] = [
+    { title: 'Status', type: 'dropdown', key: 'status', multiple: false, options: [
+      { value: '', label: 'All' },
+      { value: 'PENDING', label: 'Pending' },
+      { value: 'COMPLETED', label: 'Completed' }
+    ], placeholder: 'Select Status' },
+    { title: 'Service type', type: 'dropdown',multiple: false, key: 'servicetype', options: [
+      { value: '', label: 'All' },
+      { value: 'SCHEDULED', label: 'Scheduled' },
+      { value: 'COMPLAINTS', label: 'Complaints' }
+    ], placeholder: 'Select Service Type' },
+    { title: 'Assigned', type: 'dropdown', key: 'assigned', multiple: true,options: [], placeholder: 'Select Assigned' },
+  ];
+
+  Status: string = '';
+  Service_type: string = '';
+  Assigned: string[] = [];
+  searchQuery: string = '';
+  page: number = 1;
+
   constructor(
+    private servicecall:ServicecallService,
     private servicesService: ServicevoucherService,
     private organizationService: OrganizationService,
     private router: Router,
+    private role:RolePermissionService,
     private route: ActivatedRoute,
-    private err: ErrorHandlerService
+    private err: ErrorHandlerService,
   ) {}
 
   ngOnInit(): void {
-  this.route.paramMap.subscribe((params) => {
-    if (this.router.url.includes('/edit/')) {
-      this.mode = 'edit';
-      this.serviceVoucherId = params.get('id') || '';
-    } else if (this.router.url.includes('/add')) {
-      this.mode = 'add';
-      this.serviceVoucherId = '';
-    } else if (this.router.url.includes('/view/')) {
-      this.mode = 'view';
-      this.serviceVoucherId = params.get('id') || '';
-    }
-    this.organisation();
-    
-  });
-  
+    this.route.paramMap.subscribe((params) => {
+      if (this.router.url.includes('/edit/')) {
+        this.mode = 'edit';
+        this.serviceVoucherId = params.get('id') || '';
+      } else if (this.router.url.includes('/add')) {
+        this.mode = 'add';
+        this.serviceVoucherId = '';
+      } else if (this.router.url.includes('/view/')) {
+        this.mode = 'view';
+        this.serviceVoucherId = params.get('id') || '';
+      }
+      this.organisation();
+      if(this.mode==='view')
+      {
+        this.fetchServiceCallDetails(this.orgid, this.serviceVoucherId);
+        this.values(this.orgid);
+      }
+    });
 
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${yyyy}-${mm}-${dd}`;
-  this.voucherDate = todayStr;
-  this.contractStartDate = todayStr;
-}
-  // Validation helpers for template
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    this.voucherDate = todayStr;
+    this.contractStartDate = todayStr;
+    this.canCreate = this.role.getPermission('service_call', 'service_call_create');
+    this.canView = this.role.getPermission('service_call', 'service_call_view');
+    this.canEdit = this.role.getPermission('service_call', 'service_call_edit');
+    this.canDelete = this.role.getPermission('service_call', 'service_call_delete');
+  }
+
   isInvalidMobile(num: string): boolean {
     return !!num && !/^\d{10}$/.test(num);
   }
@@ -107,21 +167,272 @@ public editorConfig: any = {
   markFieldTouched(field: string) {
     this.fieldTouched[field] = true;
   }
-onEditorReady(editor: any) {
-  this.editorInstance = editor;
+  onEditorReady(editor: any) {
+    this.editorInstance = editor;
 
-  if (this.isViewMode) {
-    editor.enableReadOnlyMode('readonly-mode');
-    if (editor.ui?.view?.toolbar?.element) {
-      editor.ui.view.toolbar.element.style.display = 'none';
-    }
-  } else {
-    editor.disableReadOnlyMode('readonly-mode');
-    if (editor.ui?.view?.toolbar?.element) {
-      editor.ui.view.toolbar.element.style.display = 'flex';
+    if (this.isViewMode) {
+      editor.enableReadOnlyMode('readonly-mode');
+      if (editor.ui?.view?.toolbar?.element) {
+        editor.ui.view.toolbar.element.style.display = 'none';
+      }
+    } else {
+      editor.disableReadOnlyMode('readonly-mode');
+      if (editor.ui?.view?.toolbar?.element) {
+        editor.ui.view.toolbar.element.style.display = 'flex';
+      }
     }
   }
-}
+   onAdd() {
+    this.formHeading = 'Add Service Call';
+    this.formMode = 'add';
+    this.selectedServiceCall = null;
+    this.action = false;
+    this.id = this.serviceVoucherId; }
+   openOffcanvas() {
+    setTimeout(() => {
+      (window as any).bootstrap
+        ?.Offcanvas.getOrCreateInstance(
+          document.getElementById('serviceCallOffcanvas')
+        )
+        .show();
+    }, 0);
+  }
+   onCall(row: any) {
+    this.formMode = 'action';
+    this.formHeading = 'Take Action on Service Call';
+    this.action = true;
+    this.selectedServiceCall = {
+      ...row,
+      service_voucher_id: row.service_voucher_id || (row.service_vouchers && row.service_vouchers.id),
+      id: row.id,
+      org_id: row.org_id || this.orgid
+    };
+    const offcanvasElement = document.getElementById('serviceCallOffcanvas');
+    if (offcanvasElement && (window as any).bootstrap?.Offcanvas) {
+      const bsOffcanvas = new (window as any).bootstrap.Offcanvas(offcanvasElement);
+      bsOffcanvas.show();
+    } else {
+      console.error('Offcanvas element or Bootstrap Offcanvas not available');
+    }
+  }
+   async onDelete(row?: any) {
+      const orgid = this.orgid;
+      if (row) {
+        const voucherId = row.service_voucher_id || (row.service_vouchers && row.service_vouchers.id);
+        this.selectedVoucherId = voucherId;
+        this.serviceCall = { ...row };
+      }
+      const vid = this.selectedVoucherId;
+      const id = this.serviceCall.id;
+      const isConfirmed = await this.err.confirmSwal('Delete', 'Are you sure you want to delete', `${row.customer_name}`);
+  
+      if (isConfirmed) {
+        if (!orgid || !vid || !id) {
+          Swal.fire('Error', 'Required identifiers are missing.', 'error');
+          return;
+        }
+        this.submitting = true;
+        this.servicecall.deletecall(orgid, vid, id).subscribe(
+          res => {
+            this.submitting = false;
+            this.err.showToast('Service call has been deleted.','success');
+            this.fetchServiceCallDetails(orgid,vid);
+          },
+          err => {
+            this.submitting = false;
+            this.err.showToast(err, 'error');
+          }
+        );
+      }
+    }
+    onFormUpdate() {
+    this.closeOffcanvas();
+    this.fetchServiceCallDetails(this.orgid,this.serviceVoucherId);
+  }
+  closeOffcanvas() {
+    (window as any).bootstrap
+      ?.Offcanvas.getOrCreateInstance(
+        document.getElementById('serviceCallOffcanvas')
+      )
+      .hide();
+      this.action = false;
+  }
+  onEdit(row: any) {
+    this.formMode = 'edit';
+    this.action = false;
+    this.formHeading = 'Edit Service Call';
+    this.selectedServiceCall = row;
+    this.openOffcanvas();
+  }
+  values(orgid: string) {
+    this.servicecall.getusers(orgid).subscribe({
+      next: (res) => {
+        const users = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+        const options = [
+          ...users.map((user: any) => ({
+            value: user.id,
+            label: user.fullname
+          }))
+        ];
+        this.searchFields = this.searchFields.map(field =>
+          field.key === 'assigned' ? { ...field, options } : field
+        );
+      },
+      error: (err) => {
+        console.error('Failed to fetch users for Assigned dropdown', err);
+      }
+    });
+  }
+  onClear() {
+    this.searchQuery = '';
+    this.Status = '';
+    this.Assigned= [];
+    this.page = 1;
+    this.fetchServiceCallDetails(this.orgid,this.serviceVoucherId);
+  }
+   onView(row: any) {
+      const orgId = row.org_id || this.orgid;
+      const voucherId = row.service_voucher_id || (row.service_vouchers && row.service_vouchers.id);
+      const callId = row.id;
+      if (!orgId || !voucherId || !callId) {
+        Swal.fire('Error', 'Missing identifiers for service call.', 'error');
+        return;
+      }
+  
+      Swal.fire({
+        title: 'Loading...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+  
+      this.servicecall.fetchcall(orgId, voucherId, callId).subscribe(
+        (call: any) => {
+          Swal.close();
+          const voucher = call.service_vouchers || {};
+          this.selectedVoucherId = voucher.id;
+          this.serviceCall = { ...call };
+  
+          // Render services action table rows:
+          let servicesTableRows = '';
+          // Use service_call_actions for actions, not services
+          if (Array.isArray(call.service_call_actions) && call.service_call_actions.length > 0) {
+            servicesTableRows = call.service_call_actions.map((action: any) => `
+              <tr>
+                <td style="padding: 4px 8px;">${action.action_date || ''}</td>
+                <td style="padding: 4px 8px;">${action.observation || ''}</td>
+                <td style="padding: 4px 8px;">${action.action_note || ''}</td>
+                <td style="padding: 4px 8px;">
+                  ${action.attachment_details && action.attachment_details.file_url
+                    ? `<a href="${action.attachment_details.file_url}" target="_blank">View</a>`
+                    : ''}
+                </td>
+                <td style="padding: 4px 8px;">${action.status || ''}</td>
+              </tr>
+            `).join('');
+          } else {
+            servicesTableRows = `<tr><td colspan="5" style="text-align:center;color:#7b7b7b;padding:16px 0;">No Actions found</td></tr>`;
+          }
+  
+          Swal.fire({
+            title: '<span style="font-size:1.3rem;font-weight:600;">Service calls</span>',
+            html: `
+              <div style="margin: 10px 0 0 0;">
+                <div style="display: flex; justify-content: space-between;">
+                  <div style="width: 48%;">
+                    <div style="margin-bottom:8px;"><b>Voucher Date</b> <span style="float:right;color:#7b7b7b;">${voucher.voucher_date || ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Voucher Number</b> <span style="float:right;color:#7b7b7b;">${voucher.voucher_number || ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Customer Name</b> <span style="float:right;color:#7b7b7b;">${voucher.cust_name || ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Customer Mobile Number</b> <span style="float:right;color:#7b7b7b;">${voucher.cust_mobile || ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Service Name</b> <span style="float:right;color:#7b7b7b;">${voucher.org_service_plan?.service_name || ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Contract Start Date</b> <span style="float:right;color:#7b7b7b;">${voucher.contract_start_date || ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Contract Expiry</b> <span style="float:right;color:#7b7b7b;">${voucher.contract_end_date || ''}</span></div>
+                  </div>
+                  <div style="width: 48%;">
+                    <div style="margin-bottom:8px;"><b>Service Date</b> <span style="float:right;color:#7b7b7b;">${call.service_date || ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Service Type</b> <span style="float:right;color:#7b7b7b;">${call.service_type === 'SCHEDULED' ? 'Scheduled' : (call.service_type || '')}</span></div>
+                    <div style="margin-bottom:8px;"><b>Purpose</b> <span style="float:right;color:#7b7b7b;">${call.purpose || ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Completed Date</b> <span style="float:right;color:#7b7b7b;">${call.completion_date ? (call.completion_date.split('T')[0]) : ''}</span></div>
+                    <div style="margin-bottom:8px;"><b>Status</b> <span style="float:right;color:#7b7b7b;">${call.status === 'PENDING' ? 'Pending' : (call.status || '')}</span></div>
+                  </div>
+                </div>
+                <hr style="margin:16px -16px 8px -16px;">
+                <div>
+                  <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                      <tr style="text-align:left;">
+                        <th style="padding: 4px 8px;">Action Date</th>
+                        <th style="padding: 4px 8px;">Observation</th>
+                        <th style="padding: 4px 8px;">Action Taken</th>
+                        <th style="padding: 4px 8px;">Attachment</th>
+                        <th style="padding: 4px 8px;">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${servicesTableRows}
+                    </tbody>
+                  </table>
+                </div>
+                <hr style="margin:8px -16px 0 -16px;">
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+                  <button id="voucherDetailBtn" style="background:#ff4250;color:white;padding:8px 20px;border-radius:5px;border:none;font-weight:600;cursor:pointer;">
+                    View Voucher Details
+                  </button>
+                </div>
+              </div>
+            `,
+            showConfirmButton: false,
+            width: 700,
+            didOpen: () => {
+              document.getElementById('voucherDetailBtn')?.addEventListener('click', () => {
+                if (voucher.id) {
+                  window.location.href = `/servicevoucher/view/${voucher.id}`;
+                }
+              });
+            }
+          });
+        },
+        (error:any) => {
+          Swal.fire('Error', 'Could not load service call details.', 'error');
+        }
+      );
+    }
+
+  onSearch(searchObj: any) {
+    let ctn=0;
+    this.Status = searchObj['status'];
+    this.Service_type = searchObj['servicetype'];
+    this.Assigned = searchObj['assigned'];
+    console.log(this.Assigned);
+    this.searchQuery = searchObj.search || '';
+    this.page = 1;
+    ctn++;
+    console.log(ctn);
+    this.fetchServiceCallDetails(this.orgid,this.serviceVoucherId);
+  }
+
+  fetchServiceCallDetails(orgid: string, serviceVoucherId: string) {
+    this.loadingDetails = true;
+    this.errorLoadingDetails = false;
+
+    this.servicecall.getcall(orgid, serviceVoucherId, {
+      search: this.searchQuery,
+      status: this.Status,
+      servicetype: this.Service_type,
+      assigned: this.Assigned
+    }).subscribe({
+      next: (res) => {
+        this.serviceCallDetails = res;
+        this.loadingDetails = false;
+      },
+      error: (error) => {
+        this.errorLoadingDetails = true;
+        this.loadingDetails = false;
+      }
+    });
+  }
 
   organisation() {
     this.organizationService.fetchorginizationid().subscribe((orgid) => {

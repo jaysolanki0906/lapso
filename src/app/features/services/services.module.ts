@@ -12,7 +12,8 @@ import { ServiceformComponent } from './serviceform/serviceform.component';
 
 const routes: Routes = [
   { path: '', component: ServicelistComponent }, 
-  
+  {path:'add',component: ServiceformComponent},
+  { path: 'edit/:id', component: ServiceformComponent },
 ];
 
 @NgModule({

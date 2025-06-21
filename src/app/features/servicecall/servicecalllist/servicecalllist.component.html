@@ -12,8 +12,8 @@
         *ngIf="canCreate"
           class="add-product-btn"
           type="button"
-          (click)="onAddServiceCall()"
-        >
+          (click)="onAddServiceCall()">
+          
           <span class="add-product-icon-circle">
             <mat-icon class="add-product-plus">add</mat-icon>
           </span>
@@ -34,6 +34,7 @@
         <div class="offcanvas-body">
           <app-servicecallform
             [mode]="formMode"
+            [isaction]="action"
             [data]="selectedServiceCall"
             (updateNeeded)="onFormUpdate()"
           ></app-servicecallform>
@@ -42,6 +43,7 @@
 
       <app-common-table-card
         [searchFields]="searchFields"
+        [actionbtn]="true"
         [columns]="columns"
         [showToggle]="false"
         [data]="filteredData"
@@ -52,6 +54,7 @@
         (search)="onSearch($event)"
         (clear)="onClear()"
         (edit)="onEdit($event)"
+        (call)="onCall($event)"
         (view)="onView($event)"
         (delete)="onDelete($event)"
         (pageChange)="onPageChange($event)"

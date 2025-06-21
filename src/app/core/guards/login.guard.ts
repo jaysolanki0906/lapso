@@ -11,16 +11,13 @@ export const loginGuard: CanActivateFn = () => {
 
   const rolePermissionService = inject(RolePermissionService);
 
-  // Use access_token and refresh_token for session check
   const accessToken = localStorage.getItem('access_token');
   const refreshToken = localStorage.getItem('refresh_token');
 
   if (!accessToken || !refreshToken) {
-    // Not logged in, allow access to login page
     return true;
   }
 
-  // If tokens exist, fetch and set user info, then redirect to dashboard
   return userService.fetchAndStoreProfile().pipe(
     tap({
       next: (user) => {
@@ -30,12 +27,10 @@ export const loginGuard: CanActivateFn = () => {
         router.navigate(['/dashboard']);
       },
       error: () => {
-        // If fetching user fails, fallback to default USER and redirect anyway
         rolePermissionService.setRole('USER', {});
         router.navigate(['/dashboard']);
       }
     }),
-    // Prevent navigation to login page when already logged in
     map(() => false),
     catchError(() => {
       rolePermissionService.setRole('USER', {});

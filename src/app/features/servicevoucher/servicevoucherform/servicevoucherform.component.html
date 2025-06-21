@@ -338,6 +338,47 @@
           <div class="button-container" *ngIf="!isViewMode">
             <button class="save-button" (click)="onSaveServiceVoucher()">Save Service Voucher</button>
           </div>
+          <div *ngIf="this.mode==='view'">
+          <app-common-table-card
+        [searchFields]="searchFields"
+        [actionbtn]="true"
+        [columns]="columns"
+        [showToggle]="false"
+        [data]="serviceCallDetails.data"
+        (search)="onSearch($event)"
+        (clear)="onClear()"
+        [addbtn]="true"
+        (add)="onAdd()"
+        [canEdit]="canEdit"
+  [canView]="canView"
+  [canDelete]="canDelete" 
+  (edit)="onEdit($event)"
+        (call)="onCall($event)"
+        (view)="onView($event)"
+        (delete)="onDelete($event)"
+      ></app-common-table-card>
+      <div class="offcanvas offcanvas-end add-product-offcanvas"
+        tabindex="-1"
+        id="serviceCallOffcanvas"
+        aria-labelledby="serviceCallOffcanvasLabel">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="serviceCallOffcanvasLabel">{{ formHeading }}</h5>
+          <button type="button" class="btn-close text-reset"
+                  data-bs-dismiss="offcanvas"
+                  aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <app-servicecallform
+            [mode]="formMode"
+            [isaction]="action"
+            [check]="false"
+            [id]="id"
+            [data]="selectedServiceCall"
+            (updateNeeded)="onFormUpdate()"
+          ></app-servicecallform>
+
+        </div>
+      </div>
         </div>
       </div>
     </div>

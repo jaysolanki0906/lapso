@@ -73,6 +73,7 @@ export interface TableTab {
 export class CommonTableCardComponent implements OnInit {
   @Input() tabs: TableTab[] = [];
   @Input() activeTab: string = '';
+  @Input() actionbtn:boolean=false;
   @Input() tableTitle: string = 'Data Management'; 
   @Input() searchFields: SearchField[] = [];
   searchValues: { [key: string]: string } = {};
@@ -92,12 +93,14 @@ export class CommonTableCardComponent implements OnInit {
   @Input() canEdit: boolean = false;
   @Input() canView: boolean = false;
   @Input() canDelete: boolean = false;
+  @Input() addbtn:boolean=false;
   
   showAllSearchFields = false;
 
   @Output() tabChange = new EventEmitter<string>();
   @Output() search = new EventEmitter<{ [key: string]: string }>();
   @Output() clear = new EventEmitter<void>();
+  @Output() add=new EventEmitter<void>();
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
@@ -168,6 +171,7 @@ export class CommonTableCardComponent implements OnInit {
     this.clear.emit();
   }
   onEdit(row: any) { this.edit.emit(row); }
+  onAdd() { this.edit.emit(); }
   onView(row: any) { this.view.emit(row); }
   onDelete(row: any) { this.delete.emit(row); }
   onCall(row: any) { this.call.emit(row); }
@@ -178,15 +182,32 @@ export class CommonTableCardComponent implements OnInit {
     this.toggle.emit({ row, value: checked, status });
     (event.target as HTMLInputElement).checked = !checked;
   }
-  onSort(column: TableColumn, direction: 'asc' | 'desc') {
-    if (!this.enableSorting || !column.sortable) return;
-    this.currentSortColumn = column.key;
-    this.currentSortDirection = direction;
-    this.sort.emit({
-      column: column.key,
-      direction: direction
-    });
+  onSort(col: any, direction: 'asc' | 'desc') {
+  this.currentSortColumn = col.key;
+  this.currentSortDirection = direction;
+
+  this.data.sort((a, b) => {
+    const valA = a[col.key];
+    const valB = b[col.key];
+    const comparison = valA < valB ? -1 : valA > valB ? 1 : 0;
+    return direction === 'asc' ? comparison : -comparison;
+  });
+}
+onColumnHeaderClick(col: any): void {
+  if (!col.sortable) return;
+  
+  // If clicking on the same column, toggle direction
+  if (this.currentSortColumn === col.key) {
+    this.currentSortDirection = this.currentSortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    // If clicking on a new column, start with ascending
+    this.currentSortColumn = col.key;
+    this.currentSortDirection = 'asc';
   }
+  
+  // Call the existing sort method
+  this.onSort(col, this.currentSortDirection);
+}
   onMaterialPage(event: PageEvent) {
     this.page = event.pageIndex + 1;
     this.pageSize = event.pageSize;

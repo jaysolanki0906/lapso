@@ -1,27 +1,32 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { WebcamImage, WebcamModule } from 'ngx-webcam';
 import { ServicecallService } from '../../../core/services/servicecall.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 
 @Component({
   selector: 'app-servicecallform',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, WebcamModule],
   templateUrl: './servicecallform.component.html',
   styleUrl: './servicecallform.component.scss'
 })
 export class ServicecallformComponent implements OnInit, OnChanges {
   @Input() orgId: string = '';
-  @Input() mode: 'add' | 'edit' | 'view' = 'add';
-  @Input() check:boolean=true;
+  @Input() mode: 'add' | 'edit' | 'view' | 'action' = 'add';
+  @Input() check: boolean = true;
   @Input() data: any = null;
-  @Input() voucherid:string='';
+  @Input() showsearch:boolean=true;
+  @Input() isaction: boolean = false;
+  @Input() voucherid: string = '';
+  @Input() id:string='';
   @Output() updateNeeded = new EventEmitter<void>();
   selectedVoucherId: string = '';
 
   serviceCall: any = {
-    service_date: '', // Set in constructor or onInit
+    service_date: '',
     service_name: '',
     customer_name: '',
     customer_number: '',
@@ -30,9 +35,20 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     address: '',
     status: 'PENDING',
     assigned_to: '',
+    id: null
   };
-  submitting = false;
 
+  actionForm = {
+    action_date: '',
+    observation: '',
+    action_taken: '',
+    status: 'PENDING',
+    attachment: null as File | null,
+    attachmentName: '',
+    attachmentPreview: ''
+  };
+
+  submitting = false;
   searchValue = '';
   searchResults: any[] = [];
   searching = false;
@@ -43,36 +59,23 @@ export class ServicecallformComponent implements OnInit, OnChanges {
   assignedToList: any[] = [];
   loadingAssignees = false;
 
+  showFileTypeModal = false;
+  isWebcamOpen = false;
+  webcamImage: WebcamImage | null = null;
+  private trigger: Subject<void> = new Subject<void>();
+
   constructor(
     private servicecallService: ServicecallService,
     private org: OrganizationService
   ) {}
 
   ngOnInit() {
-    // Set today's date for add mode
     if (!this.data || this.mode === 'add') {
       this.serviceCall.service_date = this.getTodayDateString();
     }
     if (this.data) this.patchFormWithData(this.data);
-
     this.organisation();
-  }
-
-  organisation() {
-    this.org.fetchorginizationid().subscribe(id => {
-      this.orgId = id;
-      if (this.orgId) {
-        this.loadAssignees();
-      }
-    });
-  }
-
-  getTodayDateString(): string {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+    console.log("this is id of voucher ",this.id);
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -95,12 +98,11 @@ export class ServicecallformComponent implements OnInit, OnChanges {
       assigned_to: data.user_id || data.assigned_to || '',
       id: data.id || null
     };
-    // If your data model has the voucher id in a different field, set it here:
     this.selectedVoucherId =
       data.service_voucher_id_form ||
       data.service_voucher_id ||
       data.voucher_id ||
-      ''; // adjust field as per your API
+      '';
     this.searchValue = data.customer_name || '';
   }
 
@@ -115,11 +117,31 @@ export class ServicecallformComponent implements OnInit, OnChanges {
       address: '',
       status: 'PENDING',
       assigned_to: '',
+      id: null
     };
     this.searchValue = '';
     this.searchResults = [];
     this.showDropdown = false;
     this.selectedVoucherId = '';
+    this.actionForm.attachmentName = '';
+    this.actionForm.attachmentPreview = '';
+  }
+
+  getTodayDateString(): string {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  organisation() {
+    this.org.fetchorginizationid().subscribe(id => {
+      this.orgId = id;
+      if (this.orgId) {
+        this.loadAssignees();
+      }
+    });
   }
 
   onSearchInputChange(event: Event) {
@@ -148,6 +170,65 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     }
   }
 
+  // Webcam logic
+  openWebcam() {
+    this.isWebcamOpen = true;
+    this.showFileTypeModal = false;
+    this.webcamImage = null;
+  }
+
+  closeWebcam() {
+    this.isWebcamOpen = false;
+  }
+
+  triggerSnapshot(): void {
+    this.trigger.next();
+  }
+
+  handleImage(webcamImage: WebcamImage): void {
+    this.webcamImage = webcamImage;
+    this.actionForm.attachmentPreview = webcamImage.imageAsDataUrl;
+    this.actionForm.attachmentName = 'Captured Image';
+    this.actionForm.attachment = null;
+    this.isWebcamOpen = false;
+  }
+
+  get triggerObservable() {
+    return this.trigger.asObservable();
+  }
+
+  onFileSelected(event: Event, type: string) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length) {
+      const file = input.files[0];
+      this.actionForm.attachment = file;
+      this.actionForm.attachmentName = file.name;
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.actionForm.attachmentPreview = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        this.actionForm.attachmentPreview = '';
+      }
+    }
+  }
+
+  openUploadGallery() {
+    this.showFileTypeModal = false;
+    setTimeout(() => {
+      (document.querySelector('#galleryInput') as HTMLInputElement)?.click();
+    }, 200);
+  }
+
+  openUploadPdf() {
+    this.showFileTypeModal = false;
+    setTimeout(() => {
+      (document.querySelector('#pdfInput') as HTMLInputElement)?.click();
+    }, 200);
+  }
+
   onSelectVoucher(option: any) {
     this.selectedVoucherId = option.id;
     this.serviceCall.service_name = option.service_name || '';
@@ -173,9 +254,65 @@ export class ServicecallformComponent implements OnInit, OnChanges {
       }
     );
   }
+  openFileTypeModal() {
+    this.showFileTypeModal = true;
+    this.isWebcamOpen = false;
+  }
+  closeFileTypeModal() {
+    this.showFileTypeModal = false;
+  }
 
+  // Utility: convert dataURL to Blob for webcam images
+  dataURLtoBlob(dataurl: string): Blob {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  }
+
+  // --- MAIN SUBMIT LOGIC ---
   onSubmit(form: any) {
-    
+    // ACTION MODE
+    if (this.isaction || this.mode === 'action') {
+      const act = this.actionForm;
+      if (!act.action_date || !act.observation || !act.action_taken || !act.status) {
+        Object.values(form.controls).forEach((control: any) => control.markAsTouched && control.markAsTouched());
+        return;
+      }
+      this.submitting = true;
+      // 1. Check if there is an attachment (file or webcam image)
+      if (act.attachment || act.attachmentPreview) {
+        const formData = new FormData();
+        if (act.attachment) {
+          formData.append('attachment', act.attachment, act.attachmentName);
+          formData.append('owner_type','SERVICE_CALLS')
+        } else if (act.attachmentPreview) {
+          const blob = this.dataURLtoBlob(act.attachmentPreview);
+          formData.append('attachment', blob, 'webcam.jpg');
+          formData.append('owner_type','SERVICE_CALLS');
+        }
+        this.servicecallService.addattachment(formData).subscribe({
+          next: (attachRes) => {
+            const attachment_id = attachRes?.attachment_id || attachRes?.id || null;
+            this.completeActionWithAttachment(attachment_id);
+          },
+          error: () => {
+            this.submitting = false;
+            alert('Attachment upload failed');
+          }
+        });
+      } else {
+        this.completeActionWithAttachment(null);
+      }
+      return;
+    }
+
+    // NORMAL MODES
     if (form.invalid || this.mode === 'view') return;
     this.submitting = true;
 
@@ -190,7 +327,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     };
 
     const orgid = this.orgId;
-    const vid = this.selectedVoucherId||this.voucherid;
+    const vid = this.selectedVoucherId || this.voucherid||this.id;
 
     if (!vid) {
       alert('Please select a service voucher.');
@@ -210,9 +347,8 @@ export class ServicecallformComponent implements OnInit, OnChanges {
         }
       );
     } else if (this.mode === 'edit') {
-      this.submitting = false;
       const id = this.serviceCall.id;
-      this.servicecallService.editcall(orgid, vid, payload,id).subscribe(
+      this.servicecallService.editcall(orgid, vid, payload, id).subscribe(
         (res) => {
           this.submitting = false;
           this.updateNeeded.emit();
@@ -224,5 +360,48 @@ export class ServicecallformComponent implements OnInit, OnChanges {
       );
     }
   }
-  
+
+  completeActionWithAttachment(attachment_id: string | null) {
+  const id = this.serviceCall.id;
+  const vid = this.selectedVoucherId || this.voucherid;
+  const orgid = this.orgId;
+  const act = this.actionForm;
+  const payload = {
+    action_date: act.action_date,
+    action_note: act.action_taken,
+    attachment_id: attachment_id,
+    image_bill_document: null,
+    observation: act.observation,
+    pdf_bill_document: null,
+    status: act.status?.toUpperCase()
+  };
+
+  // Debug
+  console.log('orgid:', orgid);
+  console.log('vid:', vid);
+  console.log('id:', id);
+  console.log('payload:', payload);
+
+  if (!vid) {
+    alert('No voucher ID');
+    this.submitting = false;
+    return;
+  }
+  if (!id) {
+    alert('No service call ID');
+    this.submitting = false;
+    return;
+  }
+
+  this.servicecallService.saveaction(orgid, vid, id, payload).subscribe(
+    () => {
+      this.submitting = false;
+      this.updateNeeded.emit();
+    },
+    () => {
+      this.submitting = false;
+      alert('Error completing action');
+    }
+  );
+}
 }

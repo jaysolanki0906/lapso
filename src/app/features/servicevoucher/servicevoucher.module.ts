@@ -12,6 +12,9 @@ import { ServicecallformComponent } from '../servicecall/servicecallform/service
 
 const routes: Routes = [
   { path: '', component: ServicevoucherlistComponent },
+  { path: 'add', component: ServicevoucherformComponent },
+  { path: 'edit/:id', component: ServicevoucherformComponent },
+  { path: 'view/:id', component: ServicevoucherformComponent },
 ];
 
 @NgModule({

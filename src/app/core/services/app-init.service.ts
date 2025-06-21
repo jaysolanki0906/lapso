@@ -15,10 +15,12 @@ export class AppInitService {
   ) {}
 
   async initApp(): Promise<void> {
-    const profile = await firstValueFrom(
-      this.userService.fetchAndStoreProfile()
-    );
-    this.rolePermissionService.setRole(profile.role, profile.auth_items);
-    await firstValueFrom(this.organizationService.fetchAndStoreOrganization());
-  }
+  //   if(localStorage.getItem('access_token')){
+  //   const profile = await firstValueFrom(
+  //     this.userService.fetchAndStoreProfile()
+  //   );
+  //   this.rolePermissionService.setRole(profile.role, profile.auth_items);
+  //   await firstValueFrom(this.organizationService.fetchAndStoreOrganization());
+  // }
+}
 }

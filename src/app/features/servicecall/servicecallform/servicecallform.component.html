@@ -1,108 +1,270 @@
 <div class="offcanvas-body">
   <form #f="ngForm" (ngSubmit)="onSubmit(f)">
-    <!-- Search Section -->
-    <div class="mb-4 position-relative" *ngIf="check">
-      <label class="form-label fw-semibold text-primary">Search By Customer No, Name or Voucher No</label>
-      <div class="input-group">
+    <!-- ACTION MODE UI -->
+     <ng-container *ngIf="isaction; else normalForm">
+      <div class="mb-4">
+        <label class="form-label fw-semibold text-primary">Action Date <span class="text-danger">*</span></label>
         <input
-          type="text"
+          type="date"
           class="form-control"
-          placeholder="Search By Customer No, Name or Voucher No"
-          [disabled]="mode === 'view'"
-          [(ngModel)]="searchValue"
-          name="searchValue"
+          [(ngModel)]="actionForm.action_date"
+          name="action_date"
+          #actionDate="ngModel"
           required
-          (input)="onSearchInputChange($event)"
-          autocomplete="off">
-        <button class="btn btn-outline-secondary" type="button" tabindex="-1">
-          <i class="fas fa-chevron-down"></i>
+        />
+        <div class="form-text text-danger" *ngIf="(actionDate.touched || f.submitted) && !actionForm.action_date">
+          Action Date is required.
+        </div>
+      </div>
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-primary">Observation<span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            [(ngModel)]="actionForm.observation"
+            name="observation"
+            #observation="ngModel"
+            required
+            rows="3"
+            placeholder="Observation"
+          ></textarea>
+          <div class="form-text text-danger" *ngIf="(observation.touched || f.submitted) && !actionForm.observation">
+            Observation is required.
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-primary">Action Taken<span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            [(ngModel)]="actionForm.action_taken"
+            name="action_taken"
+            #actionTaken="ngModel"
+            required
+            rows="3"
+            placeholder="Action Taken"
+          ></textarea>
+          <div class="form-text text-danger" *ngIf="(actionTaken.touched || f.submitted) && !actionForm.action_taken">
+            Action Taken can not be blank.
+          </div>
+        </div>
+      </div>
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-primary">Status <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            [(ngModel)]="actionForm.status"
+            name="status"
+            #status="ngModel"
+            required
+          >
+            <option value="">Select Status</option>
+            <option value="PENDING">Pending</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+          <div class="form-text text-danger" *ngIf="(status.touched || f.submitted) && !actionForm.status">
+            Status is required.
+          </div>
+        </div>
+        <div class="col-md-6" >
+          <label class="form-label fw-semibold text-primary">Attachment</label>
+          <div >
+            <!-- Hidden inputs for each file type -->
+            <input type="file" id="galleryInput" accept="image/*" style="display:none" (change)="onFileSelected($event, 'gallery')" />
+            <input type="file" id="pdfInput" accept="application/pdf" style="display:none" (change)="onFileSelected($event, 'pdf')" />
+            <button type="button" class="btn btn-danger" (click)="showFileTypeModal=true">
+              <i class="fas fa-paperclip"></i> Attachment
+            </button>
+            <span *ngIf="actionForm.attachmentName" class="ms-2">{{ actionForm.attachmentName }}</span>
+            <img *ngIf="actionForm.attachmentPreview" [src]="actionForm.attachmentPreview" alt="Attachment Preview" style="max-width: 120px; margin-top: 10px; border-radius: 8px; display: block;" />
+          </div>
+        </div>
+      </div>
+      <!-- Webcam Modal -->
+      <div class="modal fade show"  tabindex="-1"
+           [ngStyle]="{display: isWebcamOpen ? 'block' : 'none', background: 'rgba(0,0,0,0.25)'}"
+           *ngIf="isWebcamOpen"
+           aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+          <div class="modal-content" style="border-radius: 10px;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+              <h5 class="modal-title" style="font-weight: 600; color: #1A2447;">Choose File Type</h5>
+              <button type="button" class="btn-close" aria-label="Close" (click)="closeWebcam()"></button>
+            </div>
+            <div class="modal-body pt-2 pb-3" style="padding-top: 0;">
+              <div class="d-flex align-items-center mb-2 py-2" style="border: 1px solid #eee; border-radius: 7px; background: #fff;">
+                <span class="me-2" style="color:#ff4250;">
+                  <i class="fas fa-camera"></i>
+                </span>
+                <span style="font-weight:500;">Capture Image From Camera</span>
+              </div>
+              <webcam [trigger]="triggerObservable"
+                      (imageCapture)="handleImage($event)"
+                      style="width:100%;height:340px;display:block;background:#111;border-radius:8px;"></webcam>
+              <div class="text-end mt-3">
+                <button type="button" class="btn btn-danger" style="padding: 0.5rem 1.5rem;" (click)="triggerSnapshot()">
+                  Take A Snapshot
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal Backdrop for Choose File Type -->
+      <div class="modal fade show" tabindex="-1"
+           [ngStyle]="{display: showFileTypeModal ? 'block' : 'none', background: 'rgba(0,0,0,0.25)'}"
+           *ngIf="showFileTypeModal"
+           aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+          <div class="modal-content" style="border-radius: 10px;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+              <h5 class="modal-title" style="font-weight: 600; color: #1A2447;">Choose File Type</h5>
+              <button type="button" class="btn-close" aria-label="Close" (click)="showFileTypeModal=false"></button>
+            </div>
+            <div class="modal-body pt-2 pb-3" style="padding-top: 0;">
+              <button type="button" class="btn w-100 d-flex align-items-center mb-2 py-2"
+                      style="border: 1px solid #eee; border-radius: 7px; background: #fff;"
+                      (click)="openWebcam()">
+                <span class="me-2" style="color:#ff4250;">
+                  <i class="fas fa-camera"></i>
+                </span>
+                <span style="font-weight:500;">Capture Image From Camera</span>
+              </button>
+              <button type="button" class="btn w-100 d-flex align-items-center mb-2 py-2"
+                      style="border: 1px solid #eee; border-radius: 7px; background: #fff;"
+                      (click)="openUploadGallery()">
+                <span class="me-2" style="color:#ff4250;">
+                  <i class="fas fa-image"></i>
+                </span>
+                <span style="font-weight:500;">Upload Image From Gallery</span>
+              </button>
+              <button type="button" class="btn w-100 d-flex align-items-center py-2"
+                      style="border: 1px solid #eee; border-radius: 7px; background: #fff;"
+                      (click)="openUploadPdf()">
+                <span class="me-2" style="color:#ff4250;">
+                  <i class="fas fa-file-pdf"></i>
+                </span>
+                <span style="font-weight:500;">Upload PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end">
+        <button
+          type="submit"
+          class="btn btn-danger px-4 fw-semibold"
+          [disabled]="submitting"
+        >
+          Save
         </button>
       </div>
-      <div class="form-text text-danger" *ngIf="f.submitted && !searchValue">
-        Please enter Customer No, Name or Voucher No.
-      </div>
-      <ul class="dropdown-menu show w-100 mt-0"
-          *ngIf="showDropdown && mode !== 'view'"
-          style="max-height:200px;overflow:auto;position:absolute;z-index:999;">
-        <li *ngFor="let option of searchResults">
-          <a class="dropdown-item" href="#" (click)="onSelectVoucher(option); $event.preventDefault();">
-            {{option.cust_name}} ({{option.voucher_number}}) - {{option.cust_mobile}}
-          </a>
-        </li>
-        <li *ngIf="!searchResults.length && searchValue.length >= 3 && !searching">
-          <span class="dropdown-item text-muted">No results</span>
-        </li>
-        <li *ngIf="searching">
-          <span class="dropdown-item text-muted">Searching...</span>
-        </li>
-      </ul>
-    </div>
+    </ng-container>
+    <!-- END ACTION MODE -->
 
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <label class="form-label fw-semibold text-primary">Service Type</label>
-        <select class="form-select"
-                [(ngModel)]="serviceCall.service_type"
-                name="service_type"
-                [disabled]="mode === 'view'">
-          <option value="SCHEDULED">Scheduled</option>
-          <option value="COMPLAINTS">Complaints</option>
-        </select>
+    <!-- NORMAL MODE -->
+    <ng-template #normalForm>
+      <!-- (your original form fields go here, unchanged) -->
+      <div class="mb-4 position-relative" *ngIf="check ">
+        <label class="form-label fw-semibold text-primary">Search By Customer No, Name or Voucher No</label>
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search By Customer No, Name or Voucher No"
+            [disabled]="mode === 'view'"
+            [(ngModel)]="searchValue"
+            name="searchValue"
+            required
+            (input)="onSearchInputChange($event)"
+            autocomplete="off">
+          <button class="btn btn-outline-secondary" type="button" tabindex="-1">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </div>
+        <div class="form-text text-danger" *ngIf="f.submitted && !searchValue">
+          Please enter Customer No, Name or Voucher No.
+        </div>
+        <ul class="dropdown-menu show w-100 mt-0"
+            *ngIf="showDropdown && mode !== 'view'"
+            style="max-height:200px;overflow:auto;position:absolute;z-index:999;">
+          <li *ngFor="let option of searchResults">
+            <a class="dropdown-item" href="#" (click)="onSelectVoucher(option); $event.preventDefault();">
+              {{option.cust_name}} ({{option.voucher_number}}) - {{option.cust_mobile}}
+            </a>
+          </li>
+          <li *ngIf="!searchResults.length && searchValue.length >= 3 && !searching">
+            <span class="dropdown-item text-muted">No results</span>
+          </li>
+          <li *ngIf="searching">
+            <span class="dropdown-item text-muted">Searching...</span>
+          </li>
+        </ul>
       </div>
-      <div class="col-md-6">
-        <label class="form-label fw-semibold text-primary">Service Date</label>
-        <input type="date" 
-               class="form-control"
-               [(ngModel)]="serviceCall.service_date"
-               name="service_date"
-               [disabled]="mode === 'view'">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-primary">Service Type</label>
+          <select class="form-select"
+                  [(ngModel)]="serviceCall.service_type"
+                  name="service_type"
+                  [disabled]="mode === 'view'">
+            <option value="SCHEDULED">Scheduled</option>
+            <option value="COMPLAINTS">Complaints</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-primary">Service Date</label>
+          <input type="date" 
+                 class="form-control"
+                 [(ngModel)]="serviceCall.service_date"
+                 name="service_date"
+                 [disabled]="mode === 'view'">
+        </div>
       </div>
-    </div>
-
-    <div class="row mb-4">
-      <div class="col-md-6">
-        <label class="form-label fw-semibold text-primary">Purpose</label>
-        <textarea class="form-control"
-                  [(ngModel)]="serviceCall.purpose"
-                  name="purpose"
-                  rows="3"
-                  placeholder="Purpose"
-                  [disabled]="mode === 'view'"></textarea>
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-primary">Purpose</label>
+          <textarea class="form-control"
+                    [(ngModel)]="serviceCall.purpose"
+                    name="purpose"
+                    rows="3"
+                    placeholder="Purpose"
+                    [disabled]="mode === 'view'"></textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-primary">Assigned To</label>
+          <select class="form-select"
+              [(ngModel)]="serviceCall.assigned_to"
+              name="assigned_to"
+              [disabled]="mode === 'view' || loadingAssignees">
+            <option value="">Select Assigned</option>
+            <option *ngFor="let tech of assignedToList" [value]="tech.id">{{ tech.fullname }}</option>
+          </select>
+          <div *ngIf="loadingAssignees" class="form-text text-primary">Loading technicians...</div>
+        </div>
       </div>
-      <div class="col-md-6">
-        <label class="form-label fw-semibold text-primary">Assigned To</label>
-        <select class="form-select"
-            [(ngModel)]="serviceCall.assigned_to"
-            name="assigned_to"
-            [disabled]="mode === 'view' || loadingAssignees">
-          <option value="">Select Assigned</option>
-          <option *ngFor="let tech of assignedToList" [value]="tech.id">{{ tech.fullname }}</option>
-        </select>
-        <div *ngIf="loadingAssignees" class="form-text text-primary">Loading technicians...</div>
+      <input type="hidden" [(ngModel)]="serviceCall.service_name" name="service_name">
+      <input type="hidden" [(ngModel)]="serviceCall.customer_name" name="customer_name">
+      <input type="hidden" [(ngModel)]="serviceCall.customer_number" name="customer_number">
+      <input type="hidden" [(ngModel)]="serviceCall.address" name="address">
+      <input type="hidden" [(ngModel)]="serviceCall.status" name="status">
+      <div class="d-flex justify-content-end">
+        <button
+          *ngIf="mode !== 'view'"
+          type="submit"
+          class="btn btn-danger px-4 fw-semibold"
+          [attr.data-bs-dismiss]="f.form.valid ? 'offcanvas' : null"
+          [disabled]="submitting">
+          {{ submitting ? (mode === 'edit' ? 'Updating...' : 'Adding...') : (mode === 'edit' ? 'Update call' : 'Add call') }}
+        </button>
+        <button *ngIf="mode === 'view'" 
+                type="button" 
+                class="btn btn-secondary px-4 fw-semibold" 
+                disabled>
+          View Only
+        </button>
       </div>
-    </div>
-
-    <input type="hidden" [(ngModel)]="serviceCall.service_name" name="service_name">
-    <input type="hidden" [(ngModel)]="serviceCall.customer_name" name="customer_name">
-    <input type="hidden" [(ngModel)]="serviceCall.customer_number" name="customer_number">
-    <input type="hidden" [(ngModel)]="serviceCall.address" name="address">
-    <input type="hidden" [(ngModel)]="serviceCall.status" name="status">
-
-    <div class="d-flex justify-content-end">
-      <button
-  *ngIf="mode !== 'view'"
-  type="submit"
-  class="btn btn-danger px-4 fw-semibold"
-  [attr.data-bs-dismiss]="f.form.valid ? 'offcanvas' : null"
-  [disabled]="submitting">
-  {{ submitting ? (mode === 'edit' ? 'Updating...' : 'Adding...') : (mode === 'edit' ? 'Update call' : 'Add call') }}
-</button>
-      <button *ngIf="mode === 'view'" 
-              type="button" 
-              class="btn btn-secondary px-4 fw-semibold" 
-              disabled>
-        View Only
-      </button>
-    </div>
+    </ng-template>
+    <!-- END NORMAL MODE -->
   </form>
 </div>

@@ -23,6 +23,7 @@ export class SalesFormComponent implements OnInit, OnDestroy {
   @Input() orgId: string = '';
   lastAddedProductId: string | null = null;
   productAddRowIndex: number | null = null;
+  selectedRowIndex: number | null = null;
 
   invoiceForm: FormGroup;
   showDropdown = false;
@@ -62,7 +63,11 @@ export class SalesFormComponent implements OnInit, OnDestroy {
     });
   }
 
- ngOnInit(): void {
+  ngOnInit(): void {
+    if (this.items.length === 0) {
+      this.initItems();
+    }
+
     this.orgSub = this.organisationService.organization$.subscribe(org => {
       if (org && org.org_id) {
         this.orgId = org.org_id;
@@ -106,6 +111,7 @@ export class SalesFormComponent implements OnInit, OnDestroy {
       }
     });
   }
+
   setupPriceChangeSubscriptions() {
     this.items.controls.forEach((group: AbstractControl, idx: number) => {
       const fg = group as FormGroup;
@@ -114,7 +120,7 @@ export class SalesFormComponent implements OnInit, OnDestroy {
         (fg as any)._priceSub.unsubscribe();
       }
       (fg as any)._priceSub = fg.get('price')!.valueChanges.subscribe(val => {
-        console.log(`Row ${idx + 1} price changed:`, val);
+        // Row price changed
       });
     });
   }
@@ -149,60 +155,59 @@ export class SalesFormComponent implements OnInit, OnDestroy {
   }
 
   createItemGroup(): FormGroup {
-    const item= this.fb.group({
+    const item = this.fb.group({
       item_id: [''],
       product: ['', Validators.required], // always string for dropdown selection
       description: [''],
       warrantyChecked: [false],
-      warrantyType: ['Days'],
+      warrantyType: ['DAYS'],
       warrantyPeriod: [''],
       guaranteeChecked: [false],
-      guaranteeType: ['Days'],
+      guaranteeType: ['DAYS'],
       guaranteePeriod: [''],
-      quantity: [Validators.required,Validators.min(1)],
+      quantity: [Validators.required, Validators.min(1)],
       unit: [],
       price: ['', [Validators.required, Validators.min(1)]],
       tax: [''],
       total: [{ value: '', disabled: true }],
     });
     item.get('price')?.valueChanges.subscribe(() => {
-    this.updateTotal(item);
-  });
+      this.updateTotal(item);
+    });
 
-  item.get('tax')?.valueChanges.subscribe(() => {
-    this.updateTotal(item);
-  });
-  return item;
+    item.get('tax')?.valueChanges.subscribe(() => {
+      this.updateTotal(item);
+    });
+    return item;
   }
-updateTotal(item: FormGroup) {
-  const price = +item.get('price')?.value || 0;
-  const tax = +item.get('tax')?.value || 0;
 
-  const total = price + (price * tax / 100);
-  item.get('total')?.setValue(total.toFixed(2), { emitEvent: false });
-}
+  updateTotal(item: FormGroup) {
+    const price = +item.get('price')?.value || 0;
+    const tax = +item.get('tax')?.value || 0;
+
+    const total = price + (price * tax / 100);
+    item.get('total')?.setValue(total.toFixed(2), { emitEvent: false });
+  }
 
   addItem() {
     const itemGroup = this.createItemGroup();
     this.items.push(itemGroup);
     this.setupPriceChangeSubscriptions();
   }
+
   updateRowTotal(itemGroup: FormGroup) {
-  const price = parseFloat(itemGroup.get('price')?.value) || 0;
-  const quantity = parseFloat(itemGroup.get('quantity')?.value) || 0;
-  const tax = parseFloat(itemGroup.get('tax')?.value) || 0;
+    const price = parseFloat(itemGroup.get('price')?.value) || 0;
+    const quantity = parseFloat(itemGroup.get('quantity')?.value) || 0;
+    const tax = parseFloat(itemGroup.get('tax')?.value) || 0;
 
-  const subtotal = price * quantity;
-  const taxAmount = (subtotal * tax) / 100;
-  const total = subtotal + taxAmount;
+    const subtotal = price * quantity;
+    const taxAmount = (subtotal * tax) / 100;
+    const total = subtotal + taxAmount;
 
-  // Update the total field without triggering another value change
-  itemGroup.get('total')?.setValue(total.toFixed(2), { emitEvent: false });
-  console.log(itemGroup)
-
-  this.calculateTotals(); // If you also want grand totals updated
-}
-
+    // Update the total field without triggering another value change
+    itemGroup.get('total')?.setValue(total.toFixed(2), { emitEvent: false });
+    this.calculateTotals(); // If you also want grand totals updated
+  }
 
   fetchAndSetInvoiceNumber(orgId: string) {
     if (this.mode === 'add') {
@@ -229,61 +234,31 @@ updateTotal(item: FormGroup) {
     this.router.navigate(['voucher/invoice']);
   }
 
- onProductSelected(item: AbstractControl, productId: string) {
-  const group = item as FormGroup;
-  // Always find the product fresh by ID
-  const product = this.products.find((p: any) => String(p.id) === String(productId));
-  if (product) {
-    group.patchValue({
-      item_id: product.id,
-      product: product.id, // Only the id!
-      description: product.description || '',
-      price: product.price || '',
-      tax: product.tax || '',
-      warrantyChecked: !!product.has_warranty,
-      warrantyType:
-        product.warranty_unit === 'DAYS'
-          ? 'Days'
-          : product.warranty_unit === 'MONTHS'
-            ? 'Months'
-            : product.warranty_unit === 'YEARS'
-              ? 'Years'
-              : 'Days',
-      warrantyPeriod: product.has_warranty ? product.warranty_value : '',
-      guaranteeChecked: !!product.has_guarantee,
-      guaranteeType:
-        product.guarantee_unit === 'DAYS'
-          ? 'Days'
-          : product.guarantee_unit === 'MONTHS'
-            ? 'Months'
-            : product.guarantee_unit === 'YEARS'
-              ? 'Years'
-              : 'Days',
-      guaranteePeriod: product.has_guarantee ? product.guarantee_value : '',
-      unit: '',           // Set if your product has unit, else leave blank
-      quantity: 1,        // Default to 1, or use product.quantity if you want
-      total: product.price || '',
-    }, { emitEvent: false }); // prevent valueChanges recursion
-  } else {
-    group.reset({
-      item_id: '',
-      product: '',
-      description: '',
-      price: '',
-      tax: '',
-      warrantyChecked: false,
-      warrantyType: 'Days',
-      warrantyPeriod: '',
-      guaranteeChecked: false,
-      guaranteeType: 'Days',
-      guaranteePeriod: '',
-      unit: '',
-      quantity: 1,
-      total: '',
-    }, { emitEvent: false });
+  onProductSelected(item: AbstractControl, productId: string, index: number) {
+    this.selectedRowIndex = index;
+    const group = item as FormGroup;
+    // Always find the product fresh by ID
+    const product = this.products.find((p: any) => String(p.id) === String(productId));
+    if (product) {
+      group.patchValue({
+        item_id: product.id,
+        product: product.id, // Only the id!
+        description: product.description || '',
+        price: product.price || '',
+        tax: product.tax || '',
+        warrantyChecked: !!product.has_warranty,
+        warrantyType: product.warranty_unit || 'DAYS',
+        guaranteeType: product.guarantee_unit || 'DAYS',
+        warrantyPeriod: product.has_warranty ? product.warranty_value : '',
+        guaranteeChecked: !!product.has_guarantee,
+        guaranteePeriod: product.has_guarantee ? product.guarantee_value : '',
+        unit: '',
+        quantity: 1,
+        total: product.price || '',
+      }, { emitEvent: false }); // prevent valueChanges recursion
+    }
+    this.calculateTotals();
   }
-  this.calculateTotals();
-}
 
   getTotalControl(item: AbstractControl): FormControl {
     return item.get('total') as FormControl;
@@ -300,21 +275,22 @@ updateTotal(item: FormGroup) {
     this.addItem();
     this.setupPriceChangeSubscriptions();
   }
-onMobileInput(event: any) {
-  let value = event.target.value;
-  
-  value = value.replace(/\D/g, '');
-  
-  if (value.length > 10) {
-    value = value.substring(0, 10);
-  }
-  
-  this.invoiceForm.get('customerMobile')?.setValue(value);
-  
-  event.target.value = value;
-}
 
- patchFormForEdit(voucher: any) {
+  onMobileInput(event: any) {
+    let value = event.target.value;
+
+    value = value.replace(/\D/g, '');
+
+    if (value.length > 10) {
+      value = value.substring(0, 10);
+    }
+
+    this.invoiceForm.get('customerMobile')?.setValue(value);
+
+    event.target.value = value;
+  }
+
+  patchFormForEdit(voucher: any) {
     this.invoiceForm.patchValue({
       invoiceDate: voucher.voucher_date || formatDate(new Date(), 'yyyy-MM-dd', 'en-IN'),
       invoiceNumber: voucher.voucher_number || '',
@@ -355,14 +331,19 @@ onMobileInput(event: any) {
     this.setupPriceChangeSubscriptions();
   }
 
-
   fetchproduct(orgid: string): Observable<any> {
     return this.invoiceservice.filtertostoreproduct(orgid).pipe(
       map((data: any) => {
-        this.products = (Array.isArray(data) ? data : data?.data ?? []).map((prod: any) => ({
+        const newProducts = (Array.isArray(data) ? data : data?.data ?? []).map((prod: any) => ({
           ...prod,
           id: String(prod.id),
         }));
+
+        newProducts.forEach((np:any) => {
+          if (!this.products.some(p => String(p.id) === String(np.id))) {
+            this.products.push(np);
+          }
+        });
         return this.products;
       })
     );
@@ -404,17 +385,17 @@ onMobileInput(event: any) {
   }
 
   fetchItems() {
-    this.fetchproduct(this.orgId).subscribe();
+    // this.fetchproduct(this.orgId).subscribe(); // DO NOT CALL THIS after adding a product, see onProductAdded!
   }
 
   onSubmitInvoice() {
-    this.invoiceForm.markAllAsTouched(); 
-  if (this.invoiceForm.invalid) {
-    this.err.showToast?.('Please fill all required fields!', 'warning');
-    return;
-  }
+    this.invoiceForm.markAllAsTouched();
+    if (this.invoiceForm.invalid) {
+      this.err.showToast?.('Please fill all required fields!', 'warning');
+      return;
+    }
     let valid = true;
-    const itemsArray = this.items; 
+    const itemsArray = this.items;
     itemsArray.controls.forEach((item: AbstractControl, i: number) => {
       const group = item as FormGroup;
       if (item.get('warrantyChecked')?.value) {
@@ -504,21 +485,21 @@ onMobileInput(event: any) {
     if (this.mode === 'edit' && this.voucherId) {
       this.invoiceservice.saveinvoice(this.orgId, this.voucherId, payload).subscribe({
         next: (res) => {
-          this.err.showToast('Updated sucessfully','info');
+          this.err.showToast('Updated sucessfully', 'info');
           this.routeback();
         },
         error: (err) => {
-          this.err.showToast(err,'error');
+          this.err.showToast(err, 'error');
         }
       });
     } else {
       this.invoiceservice.savevincoice(this.orgId, payload).subscribe({
         next: (res) => {
-          this.err.showToast('Invoice saved successfully!','success');
+          this.err.showToast('Invoice saved successfully!', 'success');
           this.routeback();
         },
         error: (err) => {
-          this.err.showToast(err,'error');
+          this.err.showToast(err, 'error');
         }
       });
     }
@@ -595,40 +576,52 @@ onMobileInput(event: any) {
     this.formMode = 'add';
   }
 
- onProductAdded(newProduct: any) {
-  if (newProduct && newProduct.id && this.productAddRowIndex !== null) {
-    const itemGroup = this.items.at(this.productAddRowIndex);
-
-    itemGroup.patchValue({
-      product: String(newProduct.id), // This sets the dropdown
-      item_id: newProduct.id,
-      description: newProduct.description || '',
-      price: newProduct.price || '',
-      tax: newProduct.tax || '',
-      warrantyChecked: !!newProduct.has_warranty,
-      warrantyType: (newProduct.warranty_unit === 'DAYS')
-        ? 'Days'
-        : (newProduct.warranty_unit === 'MONTHS')
-          ? 'Months'
-          : (newProduct.warranty_unit === 'YEARS')
-            ? 'Years'
-            : 'Days',
-      warrantyPeriod: newProduct.has_warranty ? newProduct.warranty_value : '',
-      guaranteeChecked: !!newProduct.has_guarantee,
-      guaranteeType: (newProduct.guarantee_unit === 'DAYS')
-        ? 'Days'
-        : (newProduct.guarantee_unit === 'MONTHS')
-          ? 'Months'
-          : (newProduct.guarantee_unit === 'YEARS')
-            ? 'Years'
-            : 'Days',
-      guaranteePeriod: newProduct.has_guarantee ? newProduct.guarantee_value : '',
-      unit: '',
-      quantity: 1,
-      total: newProduct.price || '',
-    });
-    this.onProductSelected(itemGroup, String(newProduct.id));
-    this.productAddRowIndex = null;
+  /**
+   * Never call fetchItems() here or re-fetch products after add!
+   * Only add the product to the array if missing.
+   */
+  onProductAdded(newProduct: any) {
+    if (newProduct && newProduct.id && this.productAddRowIndex !== null) {
+      // Add the new product to products array only if not already present
+      if (!this.products.some(p => String(p.id) === String(newProduct.id))) {
+        this.products = [...this.products, { ...newProduct, id: String(newProduct.id) }];
+      }
+      this.patchvalueatadd(newProduct);
+    }
   }
-}
+
+  setValueToRow(idx: number, values: any) {
+    const itemsArray = this.invoiceForm.get('items') as FormArray;
+
+    // Ensure the row exists (add rows if needed)
+    while (itemsArray.length <= idx) {
+      itemsArray.push(this.createItemGroup());
+    }
+
+    const row = itemsArray.at(idx) as FormGroup;
+
+    if (row) {
+      row.patchValue(values);
+      this.updateRowTotal(row); // Optionally recalculate totals
+    }
+  }
+
+  patchvalueatadd(newProduct: any) {
+    if (this.productAddRowIndex !== null) {
+      this.setValueToRow(this.productAddRowIndex, {
+        product: String(newProduct.id),
+        description: newProduct.description || '',
+        quantity: 1,
+        price: newProduct.price,
+        unit: 'pcs',
+        tax: newProduct.tax,
+        warrantyChecked: newProduct.has_warranty,
+        warrantyType: newProduct.warranty_unit,
+        warrantyPeriod: newProduct.warranty_value,
+        guaranteeChecked: !!newProduct.has_guarantee,
+        guaranteeType: newProduct.guarantee_unit,
+        guaranteePeriod: newProduct.has_guarantee ? newProduct.guarantee_value : '',
+      });
+    }
+  }
 }

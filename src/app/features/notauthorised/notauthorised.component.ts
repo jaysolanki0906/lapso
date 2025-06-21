@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
   selector: 'app-not-authorized',
   template: `
     <div class="not-authorized-container">
-      <h1>Not Authorized</h1>
+      <h1>You are not Alloed to access this page</h1>
       <p>You do not have permission to access this page.</p>
       <button (click)="goHome()">Go to Home</button>
     </div>

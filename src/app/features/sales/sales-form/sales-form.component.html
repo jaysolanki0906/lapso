@@ -111,7 +111,7 @@
               </tr>
             </thead>
             <tbody formArrayName="items">
-              <tr *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
+              <tr [class.selected-row]="selectedRowIndex === i" *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
                 <td>
                   <span>{{ i + 1 }}</span>
                   <button
@@ -132,7 +132,7 @@
                     <select
                       class="form-select"
                       formControlName="product"
-                      (change)="onProductSelected(item, item.get('product')?.value)">
+                      (change)="onProductSelected(item, item.get('product')?.value,i)">
                       <option value="">Select Product</option>
                       <option *ngFor="let prod of products" [value]="prod.id">{{ prod.name }}</option>
                     </select>
@@ -161,12 +161,12 @@
                   <div class="war-guar-row">
                     <label>
                       <input type="checkbox" formControlName="warrantyChecked" />
-                      <span>{{ item.get('warrantyType')?.value }}</span>
+                      <span>Warranty</span>
                       <select formControlName="warrantyType">
                         <option value="">Select Unit</option>
-                        <option>Days</option>
-                        <option>Months</option>
-                        <option>Years</option>
+                        <option value="DAYS">Days</option>
+                        <option value="MONTHS">Months</option>
+                        <option value="YEARS">Years</option>
                       </select>
                       <input type="text" formControlName="warrantyPeriod" placeholder="Warranty" />
                     </label>
@@ -188,12 +188,12 @@
                   <div class="war-guar-row">
                     <label>
                       <input type="checkbox" formControlName="guaranteeChecked" />
-                      <span>{{ item.get('guaranteeType')?.value }}</span>
+                      <span>Guarantee</span>
                       <select formControlName="guaranteeType">
                         <option value="">Select Unit</option>
-                        <option>Days</option>
-                        <option>Months</option>
-                        <option>Years</option>
+                        <option value="DAYS">Days</option>
+                        <option value="MONTHS">Months</option>
+                        <option value="YEARS">Years</option>
                       </select>
                       <input type="text" formControlName="guaranteePeriod" placeholder="Guarantee" />
                     </label>

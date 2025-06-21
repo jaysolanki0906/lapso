@@ -69,6 +69,262 @@
   color: #388e3c !important; /* Material green 700 */
   font-weight: bold;
 }
+.sort-buttons-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 8px;
+  gap: 1px;
+}
+
+.sort-btn-up,
+.sort-btn-down {
+  width: 22px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  line-height: 1;
+  border-radius: 3px !important;
+  transition: all 0.2s ease;
+}
+
+.sort-btn-up:hover,
+.sort-btn-down:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.sort-btn-up svg,
+.sort-btn-down svg {
+  width: 12px;
+  height: 8px;
+}
+
+/* Table header alignment */
+th {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: row !important;
+  position: relative;
+  white-space: nowrap;
+}
+
+/* Active/Inactive sort styling */
+.active-sort {
+  opacity: 1;
+}
+
+.inactive-sort {
+  opacity: 0.4;
+  background-color: #f8f9fa !important;
+}
+
+.inactive-sort:hover {
+  opacity: 0.6;
+}
+/* Ensure all table headers are horizontal */
+.mat-custom-table thead tr {
+  display: table-row !important;
+}
+
+.mat-custom-table thead th {
+  display: table-cell !important;
+  vertical-align: middle;
+  position: relative;
+}
+
+/* Fix for table header content */
+.mat-custom-table th {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: row !important;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* Ensure search fields are horizontal */
+.search-row-mat {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-field-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+/* Sort buttons container alignment */
+.sort-buttons-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 8px;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+  .search-row-mat {
+    flex-direction: row !important;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  
+  .search-field-group {
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .search-row-mat {
+    flex-direction: column !important;
+    align-items: stretch;
+  }
+  
+  .search-field-group {
+    min-width: 100%;
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+}
+.column-header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.sortable-header:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+}
+
+.column-label {
+  flex: 1;
+}
+
+/* Sort arrows styling */
+.sort-indicator {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.sort-arrows-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.sort-arrow {
+  font-size: 16px !important;
+  height: 16px;
+  width: 16px;
+  line-height: 16px;
+  color: #ccc; /* Light gray for inactive arrows */
+  margin: -2px 0; /* Reduce spacing between arrows */
+}
+
+.sort-arrow-up {
+  margin-bottom: -4px;
+}
+
+.sort-arrow-down {
+  margin-top: -4px;
+}
+
+.sort-arrow-active {
+  font-size: 18px !important;
+  height: 18px;
+  width: 18px;
+  color: #1976d2; /* Primary color for active sort */
+}
+
+/* Hover effects for sortable headers */
+.sortable-header:hover .sort-arrow {
+  color: #666; /* Darker gray on hover */
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.column-header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.add-call-button {
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.add-call-button:hover {
+  background-color: #e60000;
+}
+
+.add-call-button:active {
+  background-color: #cc0000;
+}
+
+/* Alternative with slightly different red shade */
+.add-call-button-alt {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.add-call-button-alt:hover {
+  background-color: #c82333;
+}
+
+.add-call-button-alt:active {
+  background-color: #b21e2c;
+}
+.column-label {
+  flex: 1;
+}
 
 .status-expired {
   color: #d32f2f !important; /* Material red 700 */

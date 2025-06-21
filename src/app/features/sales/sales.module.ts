@@ -16,6 +16,8 @@ const routes: Routes = [
     path: 'invoice',
     children: [
       { path: '', component: TableComponent }, 
+      { path: 'add', component: SalesFormComponent }, 
+      { path: 'edit/:voucherId', component: SalesFormComponent }, 
     ]
   }
 ];
