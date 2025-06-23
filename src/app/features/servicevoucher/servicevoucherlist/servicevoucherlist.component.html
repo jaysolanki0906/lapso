@@ -68,6 +68,7 @@
             [check]="false"
             [mode]="'add'"
             [voucherid]="idval"
+            (callParent)="onCall($event)"
             (updateNeeded)="onServiceCallAdded()"
           ></app-servicecallform>
 </div>

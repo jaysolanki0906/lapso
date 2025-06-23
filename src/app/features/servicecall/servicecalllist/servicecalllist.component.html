@@ -13,7 +13,6 @@
           class="add-product-btn"
           type="button"
           (click)="onAddServiceCall()">
-          
           <span class="add-product-icon-circle">
             <mat-icon class="add-product-plus">add</mat-icon>
           </span>
@@ -61,8 +60,8 @@
         (sort)="onSort($event)"
         [enableSorting]="true"
         [canEdit]="canEdit"
-  [canView]="canView"
-  [canDelete]="canDelete" 
+        [canView]="canView"
+        [canDelete]="canDelete" 
       ></app-common-table-card>
     </div>
   </div>

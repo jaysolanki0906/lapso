@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { WebcamImage, WebcamModule } from 'ngx-webcam';
 import { ServicecallService } from '../../../core/services/servicecall.service';
 import { OrganizationService } from '../../../core/services/organization.service';
+import { TreeGridMatchingRecordsOnlyFilteringStrategy } from 'igniteui-angular';
 
 @Component({
   selector: 'app-servicecallform',
@@ -70,6 +71,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit() {
+    console.log("this is being recived",this.voucherid);
     if (!this.data || this.mode === 'add') {
       this.serviceCall.service_date = this.getTodayDateString();
     }
@@ -275,9 +277,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     return new Blob([u8arr], { type: mime });
   }
 
-  // --- MAIN SUBMIT LOGIC ---
   onSubmit(form: any) {
-    // ACTION MODE
     if (this.isaction || this.mode === 'action') {
       const act = this.actionForm;
       if (!act.action_date || !act.observation || !act.action_taken || !act.status) {
@@ -285,7 +285,6 @@ export class ServicecallformComponent implements OnInit, OnChanges {
         return;
       }
       this.submitting = true;
-      // 1. Check if there is an attachment (file or webcam image)
       if (act.attachment || act.attachmentPreview) {
         const formData = new FormData();
         if (act.attachment) {
@@ -312,7 +311,6 @@ export class ServicecallformComponent implements OnInit, OnChanges {
       return;
     }
 
-    // NORMAL MODES
     if (form.invalid || this.mode === 'view') return;
     this.submitting = true;
 

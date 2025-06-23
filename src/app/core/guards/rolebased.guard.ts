@@ -46,6 +46,5 @@ export const rolebaseGuard: CanActivateFn = async (
     router.navigate(['not-authorized'], { skipLocationChange: true });
     return false;
   }
-
   return true;
 };

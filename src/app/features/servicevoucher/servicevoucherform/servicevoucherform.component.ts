@@ -187,7 +187,10 @@ export class ServicevoucherformComponent implements OnInit {
     this.formMode = 'add';
     this.selectedServiceCall = null;
     this.action = false;
-    this.id = this.serviceVoucherId; }
+    this.id = this.serviceVoucherId;
+  this.openOffcanvas();
+  // this.idval=this.serviceVoucherId;
+ }
    openOffcanvas() {
     setTimeout(() => {
       (window as any).bootstrap

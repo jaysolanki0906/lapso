@@ -16,10 +16,11 @@ import { loginGuard } from './core/guards/login.guard';
 import { SalesFormComponent } from './features/sales/sales-form/sales-form.component';
 
 export const routes: Routes = [
-  { path: 'register', component: RegisterComponent },
+  { path: 'register', component: RegisterComponent,canActivate:[loginGuard] },
   { path: 'login', component: LoginComponent,canActivate:[loginGuard]},
-  { path: 'voucher/invoice/add', component: SalesFormComponent }, 
-  { path: 'voucher/invoice/edit/:voucherId', component: SalesFormComponent }, 
+  
+  // { path: 'voucher/invoice/add', component: SalesFormComponent }, 
+  // { path: 'voucher/invoice/edit/:voucherId', component: SalesFormComponent }, 
 
   {
     path: '',

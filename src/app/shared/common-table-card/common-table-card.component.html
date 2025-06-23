@@ -54,7 +54,9 @@
       <button mat-icon-button class="clear-btn-red" (click)="onClear()" matTooltip="Clear filters" [disabled]="loading">
         <mat-icon>clear</mat-icon>
       </button>
-      
+      <button mat-button class="add-call-button"(click)="onAdd()" style="color:white" *ngIf="addbtn" matTooltip="Call" [disabled]="loading">
+        <mat-icon>add</mat-icon>Add Call
+      </button>
     </div>
   </div>
   <div class="search-row-mat search-row-red" *ngIf="showAllSearchFields && searchFields.length > 3">

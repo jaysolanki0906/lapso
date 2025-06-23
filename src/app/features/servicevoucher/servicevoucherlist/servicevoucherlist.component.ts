@@ -33,6 +33,7 @@ export class ServicevoucherlistComponent implements OnInit, OnDestroy {
   v_c_date = '';
   voucher_start_date = '';
   idval='';
+   selectedRowForView: any = null;
 voucher_end_date = '';
 contract_expiry_start_date = '';
 contract_expiry_end_date = '';
@@ -281,6 +282,7 @@ selectedCallRow: any = null;
     // this.closeOffcanvas();
   }
   onCall(row: any) {
+    console.log(row);
   this.selectedCallRow = row;
   this.idval=row.id;
   

@@ -100,7 +100,7 @@ export class CommonTableCardComponent implements OnInit {
   @Output() tabChange = new EventEmitter<string>();
   @Output() search = new EventEmitter<{ [key: string]: string }>();
   @Output() clear = new EventEmitter<void>();
-  @Output() add=new EventEmitter<void>();
+  @Output() add=new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
@@ -171,7 +171,7 @@ export class CommonTableCardComponent implements OnInit {
     this.clear.emit();
   }
   onEdit(row: any) { this.edit.emit(row); }
-  onAdd() { this.edit.emit(); }
+  onAdd() { this.add.emit(); }
   onView(row: any) { this.view.emit(row); }
   onDelete(row: any) { this.delete.emit(row); }
   onCall(row: any) { this.call.emit(row); }
@@ -196,16 +196,13 @@ export class CommonTableCardComponent implements OnInit {
 onColumnHeaderClick(col: any): void {
   if (!col.sortable) return;
   
-  // If clicking on the same column, toggle direction
   if (this.currentSortColumn === col.key) {
     this.currentSortDirection = this.currentSortDirection === 'asc' ? 'desc' : 'asc';
   } else {
-    // If clicking on a new column, start with ascending
     this.currentSortColumn = col.key;
     this.currentSortDirection = 'asc';
   }
   
-  // Call the existing sort method
   this.onSort(col, this.currentSortDirection);
 }
   onMaterialPage(event: PageEvent) {
