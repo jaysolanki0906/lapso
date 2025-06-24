@@ -22,9 +22,13 @@ setRole(role: string, auth_items?: any): void {
 }
 
   private moduleMap: { [key: string]: string } = {
-    items: 'item',
-    interests: 'interest',
-    users: 'user'
+    items: 'product',
+  'voucher/invoice': 'sales_voucher',
+  service: 'services',
+  vouchers: 'service_voucher',
+  servicecall: 'service_call',
+  users: 'user',
+  interests: 'interest'
   };
 
   getPermission(module: string, permission?: string): boolean {

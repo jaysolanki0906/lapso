@@ -45,6 +45,7 @@ export class ServicevoucherformComponent implements OnInit {
   errorLoadingDetails: boolean = false;
   orgid: string = '';
   canEdit = false;
+  submitted = false;
   canDelete = false;
   canView = false;
   canCreate = false;
@@ -167,6 +168,38 @@ export class ServicevoucherformComponent implements OnInit {
   markFieldTouched(field: string) {
     this.fieldTouched[field] = true;
   }
+
+  markAllFieldsTouched() {
+    [
+      'contractAmount',
+      'voucherDate',
+      'voucherNumber',
+      'customerName',
+      'customerMobile',
+      'alternateContact',
+      'address',
+      'serviceName',
+      'contractStartDate',
+      'contractDuration',
+      'termsConditions',
+      'contractAmount'
+    ].forEach(field => this.fieldTouched[field] = true);
+
+    if (this.addProducts) {
+      for (let i = 0; i < this.products.length; i++) {
+        this.fieldTouched[`product_product_${i}`] = true;
+        this.fieldTouched[`product_quantity_${i}`] = true;
+      }
+    }
+
+    if (this.addScheduleService) {
+      for (let i = 0; i < this.serviceCalls.length; i++) {
+        this.fieldTouched[`serviceCallDate${i}`] = true;
+        this.fieldTouched[`serviceCallPurpose${i}`] = true;
+      }
+    }
+  }
+
   onEditorReady(editor: any) {
     this.editorInstance = editor;
 
@@ -188,8 +221,7 @@ export class ServicevoucherformComponent implements OnInit {
     this.selectedServiceCall = null;
     this.action = false;
     this.id = this.serviceVoucherId;
-  this.openOffcanvas();
-  // this.idval=this.serviceVoucherId;
+    this.openOffcanvas();
  }
    openOffcanvas() {
     setTimeout(() => {
@@ -303,7 +335,6 @@ export class ServicevoucherformComponent implements OnInit {
       }
   
       Swal.fire({
-        title: 'Loading...',
         allowOutsideClick: false,
         didOpen: () => {
           Swal.showLoading();
@@ -408,11 +439,9 @@ export class ServicevoucherformComponent implements OnInit {
     this.Status = searchObj['status'];
     this.Service_type = searchObj['servicetype'];
     this.Assigned = searchObj['assigned'];
-    console.log(this.Assigned);
     this.searchQuery = searchObj.search || '';
     this.page = 1;
     ctn++;
-    console.log(ctn);
     this.fetchServiceCallDetails(this.orgid,this.serviceVoucherId);
   }
 
@@ -607,59 +636,59 @@ export class ServicevoucherformComponent implements OnInit {
     let valid = true;
 
     if (!this.voucherDate) {
-      if (this.fieldTouched['voucherDate']) this.errors['voucherDate'] = 'Voucher Date is required';
+      this.errors['voucherDate'] = 'Voucher Date is required';
       valid = false;
     }
     if (!this.voucherNumber) {
-      if (this.fieldTouched['voucherNumber']) this.errors['voucherNumber'] = 'Voucher Number is required';
+      this.errors['voucherNumber'] = 'Voucher Number is required';
       valid = false;
     }
     if (!this.customerName) {
-      if (this.fieldTouched['customerName']) this.errors['customerName'] = 'Customer Name is required';
+      this.errors['customerName'] = 'Customer Name is required';
       valid = false;
     }
     if (!this.customerMobile) {
-      if (this.fieldTouched['customerMobile']) this.errors['customerMobile'] = 'Customer Mobile Number is required';
+      this.errors['customerMobile'] = 'Customer Mobile Number is required';
       valid = false;
     } else if (this.isInvalidMobile(this.customerMobile)) {
-      if (this.fieldTouched['customerMobile']) this.errors['customerMobile'] = 'Enter a valid 10-digit mobile number';
+      this.errors['customerMobile'] = 'Enter a valid 10-digit mobile number';
       valid = false;
     }
     if (!this.alternateContact) {
-      if (this.fieldTouched['alternateContact']) this.errors['alternateContact'] = 'Alternate Contact Number is required';
+      this.errors['alternateContact'] = 'Alternate Contact Number is required';
       valid = false;
     } else if (this.isInvalidMobile(this.alternateContact)) {
-      if (this.fieldTouched['alternateContact']) this.errors['alternateContact'] = 'Enter a valid 10-digit number';
+      this.errors['alternateContact'] = 'Enter a valid 10-digit number';
       valid = false;
     }
     if (!this.address) {
-      if (this.fieldTouched['address']) this.errors['address'] = 'Address is required';
+      this.errors['address'] = 'Address is required';
       valid = false;
     }
     if (!this.serviceName) {
-      if (this.fieldTouched['serviceName']) this.errors['serviceName'] = 'Service Name is required';
+      this.errors['serviceName'] = 'Service Name is required';
       valid = false;
     }
     if (!this.contractStartDate) {
-      if (this.fieldTouched['contractStartDate']) this.errors['contractStartDate'] = 'Contract Start Date is required';
+      this.errors['contractStartDate'] = 'Contract Start Date is required';
       valid = false;
     }
     if (!this.contractDuration) {
-      if (this.fieldTouched['contractDuration']) this.errors['contractDuration'] = 'Contract Duration is required';
+      this.errors['contractDuration'] = 'Contract Duration is required';
       valid = false;
     } else if (this.isInvalidPositiveNumber(this.contractDuration)) {
-      if (this.fieldTouched['contractDuration']) this.errors['contractDuration'] = 'Contract Duration must be a positive number';
+      this.errors['contractDuration'] = 'Contract Duration must be a positive number';
       valid = false;
     }
     if (!this.termsConditions || !this.termsConditions.trim() || this.termsConditions === '<br>') {
-      if (this.fieldTouched['termsConditions']) this.errors['termsConditions'] = 'Terms & Conditions are required';
+      this.errors['termsConditions'] = 'Terms & Conditions are required';
       valid = false;
     }
     if (!this.contractAmount) {
-      if (this.fieldTouched['contractAmount']) this.errors['contractAmount'] = 'Contract Amount is required';
+      this.errors['contractAmount'] = 'Contract Amount is required';
       valid = false;
     } else if (this.isInvalidNonNegativeNumber(this.contractAmount)) {
-      if (this.fieldTouched['contractAmount']) this.errors['contractAmount'] = 'Contract Amount must be a valid number';
+      this.errors['contractAmount'] = 'Contract Amount must be a valid number';
       valid = false;
     }
 
@@ -698,8 +727,9 @@ export class ServicevoucherformComponent implements OnInit {
   }
 
   onSaveServiceVoucher() {
+    this.submitted = true;
+    this.markAllFieldsTouched();
     if (!this.validate()) {
-      this.err.showToast('Please correct the errors in the form before saving.', 'error');
       return;
     }
 
@@ -750,7 +780,7 @@ export class ServicevoucherformComponent implements OnInit {
     if (this.isEditMode) {
       this.servicesService.editrequest(this.orgid, this.serviceVoucherId, payload).subscribe({
         next: (res) => {
-          this.err.showToast('Service Voucher Updated!', res);
+          this.err.showToast('Service Voucher Updated!', 'success');
           this.router.navigate(['/vouchers']);
         },
         error: (err) => {

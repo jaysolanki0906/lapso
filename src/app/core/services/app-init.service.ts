@@ -14,13 +14,9 @@ export class AppInitService {
     private organizationService: OrganizationService
   ) {}
 
-  async initApp(): Promise<void> {
-  //   if(localStorage.getItem('access_token')){
-  //   const profile = await firstValueFrom(
-  //     this.userService.fetchAndStoreProfile()
-  //   );
-  //   this.rolePermissionService.setRole(profile.role, profile.auth_items);
-  //   await firstValueFrom(this.organizationService.fetchAndStoreOrganization());
-  // }
-}
+  initApp(): Promise<void> {
+    return firstValueFrom(
+      this.userService.fetchAndStoreProfile()
+    ).then(() => undefined).catch(() => undefined); // Swallow errors silently
+  }
 }

@@ -28,15 +28,18 @@
           <h5 class="offcanvas-title" id="serviceCallOffcanvasLabel">{{ formHeading }}</h5>
           <button type="button" class="btn-close text-reset"
                   data-bs-dismiss="offcanvas"
+                  (click)="onCloseServiceCallForm()"
                   aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
           <app-servicecallform
-            [mode]="formMode"
-            [isaction]="action"
-            [data]="selectedServiceCall"
-            (updateNeeded)="onFormUpdate()"
-          ></app-servicecallform>
+  #serviceCallForm
+  [mode]="formMode"
+  [isaction]="action"
+  [data]="selectedServiceCall"
+  (updateNeeded)="onFormUpdate()"
+></app-servicecallform>
+
         </div>
       </div>
 
@@ -60,6 +63,7 @@
         (sort)="onSort($event)"
         [enableSorting]="true"
         [canEdit]="canEdit"
+        [canComplete]="canComplete"
         [canView]="canView"
         [canDelete]="canDelete" 
       ></app-common-table-card>

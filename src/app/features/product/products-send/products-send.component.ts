@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { TableTab, TableColumn } from '../../../shared/common-table-card/common-table-card.component';
 import { ProductService } from '../../../core/services/product.service';
@@ -6,6 +6,7 @@ import { OrganizationService } from '../../../core/services/organization.service
 import { finalize } from 'rxjs/operators';
 import { RolePermissionService } from '../../../core/services/role-permission.service';
 import { ErrorHandlerService } from '../../../core/services/error-handler.service';
+import { FormComponent } from '../form/form.component';
 
 @Component({
   selector: 'app-products-send',
@@ -15,6 +16,8 @@ import { ErrorHandlerService } from '../../../core/services/error-handler.servic
 })
 export class ProductsSendComponent implements OnInit, OnDestroy {
 
+  @ViewChild('productForm') productFormComponent!: FormComponent;
+  private offcanvasHiddenHandler: any;
   tabs: TableTab[] = [
     { label: 'Active', value: 'ACTIVE' },
     { label: 'Inactive', value: 'INACTIVE' }
@@ -80,10 +83,6 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
     this.canEdit = this.role.getPermission("product", "product_edit");
     this.canView = this.role.getPermission("product", "product_view");
     this.canDelete = this.role.getPermission("product", "product_delete");
-  }
-
-  ngOnDestroy() {
-    this.orgSub?.unsubscribe();
   }
 
   fetchItems() {
@@ -208,6 +207,7 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             this.fetchItems();
+            this.err.showToast("The action is completed",'success')
           },
           error: (err) => {
             this.err.showToast(err, 'warning');
@@ -230,7 +230,25 @@ export class ProductsSendComponent implements OnInit, OnDestroy {
     this.page = 1;
     this.fetchItems();
   }
+  ngAfterViewInit() {
+  const offcanvasEl = document.getElementById('addProductOffcanvas');
+  if (offcanvasEl) {
+    this.offcanvasHiddenHandler = () => {
+      if (this.productFormComponent) {
+        this.productFormComponent.resetForm();
+      }
+      this.fetchItems();
+    };
+    offcanvasEl.addEventListener('hidden.bs.offcanvas', this.offcanvasHiddenHandler);
+  }
+}
 
+  ngOnDestroy() {
+    const offcanvasEl = document.getElementById('addProductOffcanvas');
+    if (offcanvasEl && this.offcanvasHiddenHandler) {
+      offcanvasEl.removeEventListener('hidden.bs.offcanvas', this.offcanvasHiddenHandler);
+    }
+  }
   openOffcanvas() {
     setTimeout(() => {
       (window as any).bootstrap

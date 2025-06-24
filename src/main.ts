@@ -2,10 +2,11 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 import { importProvidersFrom, APP_INITIALIZER } from '@angular/core';
-import { AppInitService } from './app/core/services/app-init.service'
+import { AppInitService } from './app/core/services/app-init.service';
 
+// This function tells Angular to run your init logic before the app bootstraps
 export function initializeApp(appInitService: AppInitService) {
-  return () => appInitService.initApp();
+  return () => appInitService.initApp(); // should return a Promise or Observable
 }
 
 bootstrapApplication(AppComponent, {
@@ -17,7 +18,7 @@ bootstrapApplication(AppComponent, {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
       deps: [AppInitService],
-      multi: true,
+      multi: true
     }
   ]
 })

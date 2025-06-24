@@ -36,11 +36,12 @@
       </div>
       <div class="offcanvas-body">
         <app-form
-          [orgId]="orgId"
-          [mode]="formMode"
-          [productData]="selectedProduct"
-          (updateNeeded)="fetchItems()"
-        ></app-form>
+  #productForm
+  [orgId]="orgId"
+  [mode]="formMode"
+  [productData]="selectedProduct"
+  (updateNeeded)="fetchItems()"
+></app-form>
       </div>
     </div>
 

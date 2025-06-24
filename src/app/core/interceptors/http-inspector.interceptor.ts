@@ -26,7 +26,7 @@ export class HttpInspectorService implements HttpInterceptor {
       ? req.clone({ setHeaders: { Authorization: `Bearer ${accessToken}` } })
       : req;
 
-    this.loaderService.show(); // <-- Show loader
+    this.loaderService.show(); 
 
     return next.handle(clonedReq).pipe(
       catchError((error: HttpErrorResponse) => {

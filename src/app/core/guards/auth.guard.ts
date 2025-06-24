@@ -20,10 +20,11 @@ export const authGuard: CanActivateFn = async (
   const accessToken = localStorage.getItem('access_token');
   const refreshToken = localStorage.getItem('refresh_token');
   if (!accessToken || !refreshToken) {
-    router.navigate(['login']);
+    router.navigate(['login'], { replaceUrl: true });
     return false;
   }
 
+  // 3. Ensure user profile is loaded
   let user = userService.userProfile;
   if (!user) {
     try {
@@ -34,7 +35,9 @@ export const authGuard: CanActivateFn = async (
     }
   }
 
+ 
 
+  // 5. Set role/permissions
   rolePermissionService.setRole(user.role, user.auth_items);
 
   // 6. Check for required permissions (if any)
@@ -49,5 +52,6 @@ export const authGuard: CanActivateFn = async (
     }
   }
 
+  // All checks passed!
   return true;
 };

@@ -23,7 +23,7 @@
               [disabled]="mode === 'view' || !filteredBrands.length">
         <option *ngFor="let brand of filteredBrands" [value]="brand.id">{{ brand.title }}</option>
       </select>
-      <div class="form-text text-danger" *ngIf="!selectedBrandIds.length && f.submitted">Please select at least one Brand.</div>
+      <div class="form-text text-danger" *ngIf="f.submitted">Please select at least one Brand.</div>
     </div>
   </div>
   <div class="row">

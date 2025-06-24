@@ -68,10 +68,10 @@ export class LoginComponent {
         this.rolePermissionService.setRole(profile.role, profile.auth_items);
         this.router.navigate(['/dashboard']);
       },
-      error: () => this.err.showError('Failed to load profile', 'error')
+      error: () => this.err.showToast('Failed to load profile', 'error')
     });
   },
-  error: (error) => this.err.showError(error, 'error')
+  error: (error) => this.err.showToast(error, 'error')
 });
     }
   }

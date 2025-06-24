@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { ServicecallService } from '../../../core/services/servicecall.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { Subscription } from 'rxjs';
@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import { RolePermissionService } from '../../../core/services/role-permission.service';
 import { ErrorHandlerService } from '../../../core/services/error-handler.service';
 import { SearchField } from '../../../shared/common-table-card/common-table-card.component';
+import { ServicecallformComponent } from '../servicecallform/servicecallform.component';
 
 @Component({
   selector: 'app-servicecalllist',
@@ -15,6 +16,7 @@ import { SearchField } from '../../../shared/common-table-card/common-table-card
   styleUrls: ['./servicecalllist.component.scss']
 })
 export class ServicecalllistComponent implements OnInit, OnDestroy {
+  @ViewChild('serviceCallForm') serviceCallFormComponent!: ServicecallformComponent;
   columns: TableColumn[] = [
     { key: 'service_date', label: 'Service Date', sortable: true },
     { key: 'created_at', label: 'Created At', sortable: true },
@@ -25,24 +27,45 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
     { key: 'purpose', label: 'Purpose' },
     { key: 'status', label: 'Status' },
   ];
-  formMode: 'add' | 'edit' | 'view'|'action' = 'add';
+  formMode: 'add' | 'edit' | 'view' | 'action' = 'add';
   formHeading = 'Add Service Call';
   selectedServiceCall: any = null;
-  serviceaction:any;
-  idval:string='';
+  serviceaction: any;
+  idval: string = '';
 
   searchFields: SearchField[] = [
-    { title: 'Status', type: 'dropdown', key: 'status', multiple: false, options: [
-      { value: '', label: 'All' },
-      { value: 'PENDING', label: 'Pending' },
-      { value: 'COMPLETED', label: 'Completed' }
-    ], placeholder: 'Select Status' },
-    { title: 'Service type', type: 'dropdown',multiple: false, key: 'servicetype', options: [
-      { value: '', label: 'All' },
-      { value: 'SCHEDULED', label: 'Scheduled' },
-      { value: 'COMPLAINTS', label: 'Complaints' }
-    ], placeholder: 'Select Service Type' },
-    { title: 'Assigned', type: 'dropdown', key: 'assigned', multiple: true,options: [], placeholder: 'Select Assigned' },
+    {
+      title: 'Status',
+      type: 'dropdown',
+      key: 'status',
+      multiple: false,
+      options: [
+        { value: '', label: 'All' },
+        { value: 'PENDING', label: 'Pending' },
+        { value: 'COMPLETED', label: 'Completed' }
+      ],
+      placeholder: 'Select Status'
+    },
+    {
+      title: 'Service type',
+      type: 'dropdown',
+      multiple: false,
+      key: 'servicetype',
+      options: [
+        { value: '', label: 'All' },
+        { value: 'SCHEDULED', label: 'Scheduled' },
+        { value: 'COMPLAINTS', label: 'Complaints' }
+      ],
+      placeholder: 'Select Service Type'
+    },
+    {
+      title: 'Assigned',
+      type: 'dropdown',
+      key: 'assigned',
+      multiple: true,
+      options: [],
+      placeholder: 'Select Assigned'
+    },
     { title: 'Service date', type: 'date', key: 'servicedate', placeholder: 'Select Service Date' }
   ];
 
@@ -60,17 +83,18 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   loading = false;
   searchQuery = '';
   submitting = false;
-  action:boolean=false;
+  action: boolean = false;
 
   selectedVoucherId: string = '';
   serviceCall: any = {};
 
-  sortColumn: string = 'created_at'; 
+  sortColumn: string = 'created_at';
   sortDirection: 'asc' | 'desc' = 'desc';
   canEdit = false;
   canDelete = false;
   canView = false;
   canCreate = false;
+  canComplete = false;
 
   constructor(
     private servicecallService: ServicecallService,
@@ -94,6 +118,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
     this.canView = this.role.getPermission('service_call', 'service_call_view');
     this.canEdit = this.role.getPermission('service_call', 'service_call_edit');
     this.canDelete = this.role.getPermission('service_call', 'service_call_delete');
+    this.canComplete = this.role.getPermission('service_call', 'service_call_complete');
   }
 
   values(orgid: string) {
@@ -119,6 +144,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.orgSub?.unsubscribe();
   }
+
   onCall(row: any) {
     this.formMode = 'action';
     this.formHeading = 'Take Action on Service Call';
@@ -139,6 +165,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   }
 
   fetchItems() {
+    console.log("Service type ",this.Service_type,"Status",this.Status);
     if (!this.orgId) return;
     this.loading = true;
     const offset = (this.page - 1) * this.pageSize;
@@ -147,14 +174,17 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
       offset,
       limit: this.pageSize,
       Assigned: this.Assigned,
-      servicetype: this.Service_type.toUpperCase(),
-      status: this.Status.toUpperCase(),
+      servicetype: this.Service_type?this.Service_type.toString().toUpperCase():"",
+      status: this.Status?this.Status.toString().toUpperCase():"",
       Service_date_start: this.Service_date_start,
       service_date_end: this.Service_date_end,
-      order_by:this.sortColumn,
-      order_type:this.sortDirection
+      order_by: this.sortColumn,
+      order_type: this.sortDirection
     }).subscribe(res => {
-      this.filteredData = res.data || [];
+      this.filteredData = (res.data || []).map((row: any) => ({
+      ...row,
+      created_at: row.created_at.substring(0, 10),
+    }));
       this.total = res.count ?? res.total ?? 0;
       this.loading = false;
     }, _ => {
@@ -192,7 +222,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
   onClear() {
     this.searchQuery = '';
     this.Status = '';
-    this.Assigned= [];
+    this.Assigned = [];
     this.Service_date_start = '';
     this.Service_date_end = '';
     this.page = 1;
@@ -252,18 +282,21 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
         this.selectedVoucherId = voucher.id;
         this.serviceCall = { ...call };
 
-        // Render services action table rows:
         let servicesTableRows = '';
-        // Use service_call_actions for actions, not services
         if (Array.isArray(call.service_call_actions) && call.service_call_actions.length > 0) {
-          servicesTableRows = call.service_call_actions.map((action: any) => `
+          servicesTableRows = call.service_call_actions.map((action: any, idx: number) => `
             <tr>
               <td style="padding: 4px 8px;">${action.action_date || ''}</td>
               <td style="padding: 4px 8px;">${action.observation || ''}</td>
               <td style="padding: 4px 8px;">${action.action_note || ''}</td>
               <td style="padding: 4px 8px;">
-                ${action.attachment_details && action.attachment_details.file_url
-                  ? `<a href="${action.attachment_details.file_url}" target="_blank">View</a>`
+                ${action.attachment_details && action.attachment_id
+                  ? `<button
+                        type="button"
+                        class="btn btn-link p-0 attachment-btn"
+                        data-url="${action.attachment_id}">
+                        View
+                      </button>`
                   : ''}
               </td>
               <td style="padding: 4px 8px;">${action.status || ''}</td>
@@ -272,7 +305,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
         } else {
           servicesTableRows = `<tr><td colspan="5" style="text-align:center;color:#7b7b7b;padding:16px 0;">No Actions found</td></tr>`;
         }
-
+        console.log("This is voucher ", voucher);
         Swal.fire({
           title: '<span style="font-size:1.3rem;font-weight:600;">Service calls</span>',
           html: `
@@ -323,10 +356,20 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
           showConfirmButton: false,
           width: 700,
           didOpen: () => {
+            // Voucher details button
             document.getElementById('voucherDetailBtn')?.addEventListener('click', () => {
               if (voucher.id) {
                 window.location.href = `/servicevoucher/view/${voucher.id}`;
               }
+            });
+            // Attachment view buttons
+            document.querySelectorAll('.attachment-btn').forEach(btn => {
+              btn.addEventListener('click', (event) => {
+                const url = (event.currentTarget as HTMLElement).getAttribute('data-url');
+                if (url) {
+                  this.viewAttachment(url);
+                }
+              });
             });
           }
         });
@@ -335,6 +378,19 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
         Swal.fire('Error', 'Could not load service call details.', 'error');
       }
     );
+  }
+
+  viewAttachment(fileId: string) {
+    console.log("this is id of image/pdf ", fileId);
+    this.servicecallService.getattachment(fileId).subscribe({
+      next: (res: any) => {
+        // Always treat response as PDF
+        const pdfUrl = res.url;
+        window.open(pdfUrl, '_blank');
+        console.log(res);
+      },
+      error: (err: any) => { this.err.showToast(err, 'error') }
+    });
   }
 
   async onDelete(row?: any) {
@@ -357,7 +413,7 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
       this.servicecallService.deletecall(orgid, vid, id).subscribe(
         res => {
           this.submitting = false;
-          this.err.showToast('Service call has been deleted.','success');
+          this.err.showToast('Service call has been deleted.', 'success');
           this.fetchItems();
         },
         err => {
@@ -367,7 +423,17 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
       );
     }
   }
+  onCloseServiceCallForm() {
+    this.selectedServiceCall = null;
+    this.formMode = 'add';
+    this.action = false;
 
+    setTimeout(() => {
+      if (this.serviceCallFormComponent) {
+        this.serviceCallFormComponent.resetForm();
+      }
+    });
+  }
   openOffcanvas() {
     setTimeout(() => {
       (window as any).bootstrap
@@ -389,6 +455,6 @@ export class ServicecalllistComponent implements OnInit, OnDestroy {
         document.getElementById('serviceCallOffcanvas')
       )
       .hide();
-      this.action = false;
+    this.action = false;
   }
 }

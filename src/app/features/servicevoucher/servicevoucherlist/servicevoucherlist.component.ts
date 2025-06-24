@@ -28,7 +28,7 @@ export class ServicevoucherlistComponent implements OnInit, OnDestroy {
   v_Date = '';
   m_val = '';
   status = '';
-  s_name = '';
+  s_name = 'All';
   c_date = '';
   v_c_date = '';
   voucher_start_date = '';
@@ -125,7 +125,6 @@ selectedCallRow: any = null;
     next: (res) => {
       const services = Array.isArray(res?.data) ? res.data : [];
       const options = [
-        { value: 'All', label: 'All' },
         ...services.map((data: any) => ({
           value:  data.service_name,
           label: data.service_name
@@ -164,7 +163,7 @@ selectedCallRow: any = null;
       service_name: this.s_name,
       order_by: this.sortColumn,     // <- pass the sort column
       order_type: this.sortDirection,
-      status: this.status.toUpperCase(),
+      status: this.status.toString().toUpperCase(),
       voucher_start_date: this.voucher_start_date,
     voucher_end_date: this.voucher_end_date,
     contract_expiry_start_date: this.contract_expiry_start_date,
@@ -185,6 +184,7 @@ selectedCallRow: any = null;
         this.allData = (res.items || res.data || []).map((item: any) => ({
           ...item,
           service_name: item.service_name || item.org_service_plan?.service_name || '',
+      created_at: item.created_at.substring(0, 10),
         }));
         this.filteredData = this.allData;
         this.total = res.count ?? res.total ?? 0;

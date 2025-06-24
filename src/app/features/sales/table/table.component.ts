@@ -87,14 +87,16 @@ canEdit = false;
   if (searchObj) {
     Object.assign(params, searchObj);
   }
-  // Add sorting params if set
   if (this.sortColumn) {
     params.order_by = this.sortColumn;
     params.order_type = this.sortDirection;
   }
   this.invoice.getdata(this.orgId, params.page, params.pageSize, params).subscribe({
     next: (data: any) => {
-      this.filteredData = data.rows;
+      this.filteredData = (data.rows || []).map((row: any) => ({
+      ...row,
+      created_at: row.created_at.substring(0, 10),
+    }));
       this.total = data.count ?? data.total ?? 0;
     },
     error: (error: any) => {
@@ -133,7 +135,10 @@ canEdit = false;
   }
 
   onEdit(event: any) {
-  this.router.navigate(['edit', event.id], { relativeTo: this.route });
+  this.router.navigate(['edit', event.id], {
+    relativeTo: this.route,
+    queryParams: { mode: 'edit' }
+  });
 }
 
   onFormDone() {
@@ -147,7 +152,7 @@ canEdit = false;
 
   onTabChange(event: any) {}
   async onDelete(event: any) {
-    const conf=await this.err.confirmSwal('Delet voucher',`Are you sure you want to delete voucher number `,`${event.voucher_number}`);
+    const conf=await this.err.confirmSwal('Delete voucher',`Are you sure you want to delete voucher number `,`${event.voucher_number}`);
     if (conf) {
     this.invoice.deletinvoice(this.orgId,event.id).subscribe({
       next: res => {

@@ -64,6 +64,19 @@ export class SalesFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+    const mode = params.get('mode');
+    if (mode === 'edit' || mode === 'add') {
+      this.mode = mode;
+    }
+  });
+    if (this.mode === 'edit') {
+    this.invoiceForm.get('customerName')?.disable();
+    this.invoiceForm.get('customerMobile')?.disable();
+  } else {
+    this.invoiceForm.get('customerName')?.enable();
+    this.invoiceForm.get('customerMobile')?.enable();
+  }
     if (this.items.length === 0) {
       this.initItems();
     }
@@ -145,7 +158,7 @@ export class SalesFormComponent implements OnInit, OnDestroy {
         }
       },
       error: (err: any) => {
-        alert('Error fetching voucher for edit');
+        this.err.showToast(err,'error');
       }
     });
   }
@@ -217,7 +230,7 @@ export class SalesFormComponent implements OnInit, OnDestroy {
           this.invoiceForm.get('invoiceNumber')?.setValue(invoiceNumber);
         },
         error: (err: any) => {
-          alert('Error fetching invoice number');
+          this.err.showToast(err,'error');
         }
       });
     }
@@ -310,15 +323,15 @@ export class SalesFormComponent implements OnInit, OnDestroy {
           product: vi.item_id,
           description: vi.desc || asset.desc || '',
           quantity: vi.qty || 1,
-          unit: vi.unit || 'Pice',
+          unit: vi.unit ,
           price: vi.price || '',
           tax: vi.tax || '',
           total: vi.total_price || '',
           warrantyChecked: vi.has_warranty,
-          warrantyType: this.reverseWarrantyUnit(vi.warranty_unit),
+          warrantyType: vi.warranty_unit,
           warrantyPeriod: vi.warranty_value || '',
           guaranteeChecked: vi.has_guarantee,
-          guaranteeType: this.reverseWarrantyUnit(vi.guarantee_unit),
+          guaranteeType: vi.guarantee_unit,
           guaranteePeriod: vi.guarantee_value || '',
         });
         this.items.push(group);
@@ -387,6 +400,22 @@ export class SalesFormComponent implements OnInit, OnDestroy {
   fetchItems() {
     // this.fetchproduct(this.orgId).subscribe(); // DO NOT CALL THIS after adding a product, see onProductAdded!
   }
+  calculateEndDate(type: string, period: number, startDate?: Date): string {
+  if (!type || !period || period < 1) return '';
+  let date = startDate ? new Date(startDate) : new Date();
+  switch (type) {
+    case 'DAYS':
+      date.setDate(date.getDate() + period);
+      break;
+    case 'MONTHS':
+      date.setMonth(date.getMonth() + period);
+      break;
+    case 'YEARS':
+      date.setFullYear(date.getFullYear() + period);
+      break;
+  }
+  return date.toISOString().slice(0, 10); 
+}
 
   onSubmitInvoice() {
     this.invoiceForm.markAllAsTouched();
@@ -576,13 +605,9 @@ export class SalesFormComponent implements OnInit, OnDestroy {
     this.formMode = 'add';
   }
 
-  /**
-   * Never call fetchItems() here or re-fetch products after add!
-   * Only add the product to the array if missing.
-   */
+  
   onProductAdded(newProduct: any) {
     if (newProduct && newProduct.id && this.productAddRowIndex !== null) {
-      // Add the new product to products array only if not already present
       if (!this.products.some(p => String(p.id) === String(newProduct.id))) {
         this.products = [...this.products, { ...newProduct, id: String(newProduct.id) }];
       }
@@ -593,7 +618,6 @@ export class SalesFormComponent implements OnInit, OnDestroy {
   setValueToRow(idx: number, values: any) {
     const itemsArray = this.invoiceForm.get('items') as FormArray;
 
-    // Ensure the row exists (add rows if needed)
     while (itemsArray.length <= idx) {
       itemsArray.push(this.createItemGroup());
     }
@@ -602,7 +626,7 @@ export class SalesFormComponent implements OnInit, OnDestroy {
 
     if (row) {
       row.patchValue(values);
-      this.updateRowTotal(row); // Optionally recalculate totals
+      this.updateRowTotal(row); 
     }
   }
 
@@ -611,9 +635,9 @@ export class SalesFormComponent implements OnInit, OnDestroy {
       this.setValueToRow(this.productAddRowIndex, {
         product: String(newProduct.id),
         description: newProduct.description || '',
-        quantity: 1,
+        quantity: newProduct.quantity||1,
         price: newProduct.price,
-        unit: 'pcs',
+        unit: newProduct.unit,
         tax: newProduct.tax,
         warrantyChecked: newProduct.has_warranty,
         warrantyType: newProduct.warranty_unit,

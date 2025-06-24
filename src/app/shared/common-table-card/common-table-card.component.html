@@ -16,13 +16,18 @@
         <div class="search-field-title">{{ field.title }}</div>
         <ng-container [ngSwitch]="field.type">
           <!-- Dropdown -->
-          <mat-form-field appearance="outline" class="search-mat search-mat-extended" *ngSwitchCase="'dropdown'">
-            <mat-select [(ngModel)]="searchValues[field.key]" [multiple]="field.multiple" [placeholder]="field.placeholder">
+          <mat-form-field appearance="outline" class="search-mat search-mat-extended bootstrap-like-mat-form" *ngSwitchCase="'dropdown'">
+           <mat-select
+              [(ngModel)]="searchValues[field.key]"
+              [multiple]="field.multiple"
+              [placeholder]="field.placeholder"
+              class="bootstrap-like-mat-select"
+>
               <mat-option *ngFor="let opt of field.options" [value]="isOptionObject(opt) ? opt.value : opt">
                 {{ isOptionObject(opt) ? opt.label : opt }}
               </mat-option>
-            </mat-select>
-            <mat-icon matSuffix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+           </mat-select>
+           <mat-icon matSuffix *ngIf="field.icon">{{ field.icon }}</mat-icon>
           </mat-form-field>
           <!-- Native date input -->
           <input
@@ -35,10 +40,15 @@
             style="background: #fff;"
           />
           <!-- Text -->
-          <mat-form-field appearance="outline" class="search-mat search-mat-extended" *ngSwitchDefault>
-            <input matInput [(ngModel)]="searchValues[field.key]" (keyup.enter)="onSearch()" [placeholder]="field.placeholder"/>
-            <mat-icon matSuffix *ngIf="field.icon">{{ field.icon }}</mat-icon>
-          </mat-form-field>
+         <div class="mb-3 search-mat search-mat-extended" *ngSwitchDefault>
+  <input
+    class="form-control"
+    [(ngModel)]="searchValues[field.key]"
+    (keyup.enter)="onSearch()"
+    [placeholder]="field.placeholder"
+  />
+  <!-- Icon support would require different logic in Bootstrap, not shown here -->
+</div>
         </ng-container>
       </div>
     </ng-container>
@@ -155,7 +165,6 @@
               </button>
             </ng-container>
             <ng-template #noActions>
-              <span>-</span>
             </ng-template>
             <!-- Other action buttons (call/copy/toggle) can remain as needed -->
             <button class="action-btn copy" *ngIf="callbtn" (click)="onCall(row)" title="Copy">
@@ -163,7 +172,7 @@
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
               </svg>
             </button>
-            <button class="action-btn copy" *ngIf="actionbtn" (click)="onCall(row)" title="Copy">
+            <button class="action-btn copy" *ngIf="actionbtn && canComplete" (click)="onCall(row)" title="Copy">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
                 <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -180,11 +189,8 @@
       </tbody>
     </table>
     <ng-template #emptyOrLoading>
-      <div class="mat-table-empty" *ngIf="loading">
-        <mat-progress-spinner diameter="40" mode="indeterminate" color="primary"></mat-progress-spinner>
-        <p>Loading data...</p>
-      </div>
-      <div class="mat-table-empty" *ngIf="!loading && !data.length">
+      
+      <div class="mat-table-empty" *ngIf="!data.length">
         <mat-icon style="font-size: 48px;">inbox</mat-icon>
         <p>No records found.</p>
         <p style="font-size: 14px;">Try adjusting your search criteria.</p>

@@ -74,6 +74,10 @@ export class ServicecallService {
   addattachment(formData: FormData): Observable<any> {
   return this.api.post('attachment', formData);
 }
+getattachment(id:string):Observable<any>
+{
+  return this.api.get(`attachment/${id}`);
+}
   saveaction(orgid:string,vid:string,cid:string,paylod:any):Observable<any>
   {
     return this.api.post(`${orgid}/service_voucher/${vid}/service_calls/${cid}/actions`,paylod);

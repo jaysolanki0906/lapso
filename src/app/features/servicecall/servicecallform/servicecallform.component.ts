@@ -6,6 +6,8 @@ import { WebcamImage, WebcamModule } from 'ngx-webcam';
 import { ServicecallService } from '../../../core/services/servicecall.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { TreeGridMatchingRecordsOnlyFilteringStrategy } from 'igniteui-angular';
+import jsPDF from 'jspdf';
+import { ErrorHandlerService } from '../../../core/services/error-handler.service';
 
 @Component({
   selector: 'app-servicecallform',
@@ -19,10 +21,13 @@ export class ServicecallformComponent implements OnInit, OnChanges {
   @Input() mode: 'add' | 'edit' | 'view' | 'action' = 'add';
   @Input() check: boolean = true;
   @Input() data: any = null;
+  fileError: string = '';
   @Input() showsearch:boolean=true;
   @Input() isaction: boolean = false;
   @Input() voucherid: string = '';
   @Input() id:string='';
+  image_bill_document: string | null = null;
+  pdf_bill_document: string | null = null;
   @Output() updateNeeded = new EventEmitter<void>();
   selectedVoucherId: string = '';
 
@@ -67,7 +72,8 @@ export class ServicecallformComponent implements OnInit, OnChanges {
 
   constructor(
     private servicecallService: ServicecallService,
-    private org: OrganizationService
+    private org: OrganizationService,
+    private err:ErrorHandlerService
   ) {}
 
   ngOnInit() {
@@ -109,25 +115,37 @@ export class ServicecallformComponent implements OnInit, OnChanges {
   }
 
   resetForm() {
-    this.serviceCall = {
-      service_date: this.getTodayDateString(),
-      service_name: '',
-      customer_name: '',
-      customer_number: '',
-      service_type: 'SCHEDULED',
-      purpose: '',
-      address: '',
-      status: 'PENDING',
-      assigned_to: '',
-      id: null
-    };
-    this.searchValue = '';
-    this.searchResults = [];
-    this.showDropdown = false;
-    this.selectedVoucherId = '';
-    this.actionForm.attachmentName = '';
-    this.actionForm.attachmentPreview = '';
-  }
+  this.serviceCall = {
+    service_date: this.getTodayDateString(),
+    service_name: '',
+    customer_name: '',
+    customer_number: '',
+    service_type: 'SCHEDULED',
+    purpose: '',
+    address: '',
+    status: 'PENDING',
+    assigned_to: '',
+    id: null
+  };
+
+  this.actionForm = {
+    action_date: '',
+    observation: '',
+    action_taken: '',
+    status: 'PENDING',
+    attachment: null,
+    attachmentName: '',
+    attachmentPreview: ''
+  };
+
+  this.searchValue = '';
+  this.searchResults = [];
+  this.showDropdown = false;
+  this.selectedVoucherId = '';
+  this.image_bill_document = null;
+  this.pdf_bill_document = null;
+}
+
 
   getTodayDateString(): string {
     const today = new Date();
@@ -137,6 +155,30 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     return `${yyyy}-${mm}-${dd}`;
   }
 
+  async imageToPdfBlob(image: File | string): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const convert = (imgData: string) => {
+        pdf.addImage(imgData, 'JPEG', 10, 10, 190, 0); // width fit to page
+        resolve(pdf.output('blob'));
+      };
+
+      if (typeof image === 'string') {
+        convert(image);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e: any) => convert(e.target.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(image);
+      }
+    });
+  }
+
   organisation() {
     this.org.fetchorginizationid().subscribe(id => {
       this.orgId = id;
@@ -144,6 +186,50 @@ export class ServicecallformComponent implements OnInit, OnChanges {
         this.loadAssignees();
       }
     });
+  }
+
+  async sendImageAsPdf() {
+    let imageSource: File | string | null = null;
+
+    if (this.actionForm.attachment) {
+      if (this.actionForm.attachment.type === 'application/pdf') {
+        const formData = new FormData();
+        formData.append('attachment', this.actionForm.attachment, this.actionForm.attachmentName);
+        formData.append('owner_type', 'SERVICE_CALLS');
+        this.servicecallService.addattachment(formData).subscribe({
+          next: (attachRes) => {
+            const attachment_id = attachRes?.attachment_id || attachRes?.id || null;
+            this.completeActionWithAttachment(attachment_id);
+          },
+          error: (err) => {
+            this.submitting = false;
+            this.err.showToast(err, 'error');
+          }
+        });
+        return;
+      }
+      imageSource = this.actionForm.attachment;
+    } else if (this.actionForm.attachmentPreview) {
+      imageSource = this.actionForm.attachmentPreview;
+    }
+
+    if (imageSource) {
+      this.submitting = true;
+      const pdfBlob = await this.imageToPdfBlob(imageSource);
+      const formData = new FormData();
+      formData.append('attachment', pdfBlob, 'document.pdf');
+      formData.append('owner_type', 'SERVICE_CALLS');
+      this.servicecallService.addattachment(formData).subscribe({
+        next: (attachRes) => {
+          const attachment_id = attachRes?.attachment_id || attachRes?.id || null;
+          this.completeActionWithAttachment(attachment_id);
+        },
+        error: (err) => {
+          this.submitting = false;
+          this.err.showToast(err, 'error');
+        }
+      });
+    }
   }
 
   onSearchInputChange(event: Event) {
@@ -199,23 +285,71 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     return this.trigger.asObservable();
   }
 
-  onFileSelected(event: Event, type: string) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length) {
-      const file = input.files[0];
-      this.actionForm.attachment = file;
-      this.actionForm.attachmentName = file.name;
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          this.actionForm.attachmentPreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        this.actionForm.attachmentPreview = '';
+  setBillDocumentFields(file: File | null) {
+    this.image_bill_document = null;
+    this.pdf_bill_document = null;
+    if (file) {
+      const name = file.name || '';
+      const ext = name.split('.').pop()?.toLowerCase() || '';
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
+        this.image_bill_document = `C:\\fakepath\\${name}`;
+      } else if (ext === 'pdf') {
+        this.pdf_bill_document = `C:\\fakepath\\${file.name}`;
       }
     }
   }
+
+  onFileSelected(event: Event, type: string) {
+  this.fileError = '';
+  const input = event.target as HTMLInputElement;
+
+  if (input.files && input.files.length) {
+    const file = input.files[0];
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+
+    if (type === 'gallery') {
+      if (!isImage) {
+        this.fileError = 'Please upload an image file (jpg, png, etc).';
+        this.clearAttachment();
+        return;
+      }
+    }
+
+    if (type === 'pdf') {
+      if (!isPdf) {
+        this.fileError = 'Please upload a valid PDF file.';
+        this.clearAttachment();
+        return;
+      }
+    }
+
+    // Set file and preview
+    this.actionForm.attachment = file;
+    this.actionForm.attachmentName = file.name;
+    this.setBillDocumentFields(file);
+
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.actionForm.attachmentPreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.actionForm.attachmentPreview = '';
+    }
+  }
+}
+
+// Utility function to clear attachment info
+clearAttachment() {
+  this.actionForm.attachment = null;
+  this.actionForm.attachmentName = '';
+  this.actionForm.attachmentPreview = '';
+  this.image_bill_document = null;
+  this.pdf_bill_document = null;
+}
 
   openUploadGallery() {
     this.showFileTypeModal = false;
@@ -264,7 +398,6 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     this.showFileTypeModal = false;
   }
 
-  // Utility: convert dataURL to Blob for webcam images
   dataURLtoBlob(dataurl: string): Blob {
     const arr = dataurl.split(',');
     const mime = arr[0].match(/:(.*?);/)![1];
@@ -286,25 +419,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
       }
       this.submitting = true;
       if (act.attachment || act.attachmentPreview) {
-        const formData = new FormData();
-        if (act.attachment) {
-          formData.append('attachment', act.attachment, act.attachmentName);
-          formData.append('owner_type','SERVICE_CALLS')
-        } else if (act.attachmentPreview) {
-          const blob = this.dataURLtoBlob(act.attachmentPreview);
-          formData.append('attachment', blob, 'webcam.jpg');
-          formData.append('owner_type','SERVICE_CALLS');
-        }
-        this.servicecallService.addattachment(formData).subscribe({
-          next: (attachRes) => {
-            const attachment_id = attachRes?.attachment_id || attachRes?.id || null;
-            this.completeActionWithAttachment(attachment_id);
-          },
-          error: () => {
-            this.submitting = false;
-            alert('Attachment upload failed');
-          }
-        });
+        this.sendImageAsPdf();
       } else {
         this.completeActionWithAttachment(null);
       }
@@ -328,7 +443,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
     const vid = this.selectedVoucherId || this.voucherid||this.id;
 
     if (!vid) {
-      alert('Please select a service voucher.');
+      this.err.showToast('Voucher id is not slected','error');
       this.submitting = false;
       return;
     }
@@ -341,7 +456,7 @@ export class ServicecallformComponent implements OnInit, OnChanges {
         },
         (err) => {
           this.submitting = false;
-          alert('Error adding call');
+          this.err.showToast(err,'error');
         }
       );
     } else if (this.mode === 'edit') {
@@ -353,53 +468,59 @@ export class ServicecallformComponent implements OnInit, OnChanges {
         },
         (err) => {
           this.submitting = false;
-          alert('Error adding call');
+          this.err.showToast(err,'error');
         }
       );
     }
   }
 
   completeActionWithAttachment(attachment_id: string | null) {
-  const id = this.serviceCall.id;
-  const vid = this.selectedVoucherId || this.voucherid;
-  const orgid = this.orgId;
-  const act = this.actionForm;
-  const payload = {
-    action_date: act.action_date,
-    action_note: act.action_taken,
-    attachment_id: attachment_id,
-    image_bill_document: null,
-    observation: act.observation,
-    pdf_bill_document: null,
-    status: act.status?.toUpperCase()
-  };
+    const id = this.serviceCall.id;
+    const vid = this.selectedVoucherId || this.voucherid;
+    const orgid = this.orgId;
+    const act = this.actionForm;
+    this.actionForm = {
+      action_date: '',
+      observation: '',
+      action_taken: '',
+      status: 'PENDING',
+      attachment: null,
+      attachmentName: '',
+      attachmentPreview: ''
+    };
 
-  // Debug
-  console.log('orgid:', orgid);
-  console.log('vid:', vid);
-  console.log('id:', id);
-  console.log('payload:', payload);
+    this.setBillDocumentFields(act.attachment);
 
-  if (!vid) {
-    alert('No voucher ID');
-    this.submitting = false;
-    return;
-  }
-  if (!id) {
-    alert('No service call ID');
-    this.submitting = false;
-    return;
-  }
+    const payload = {
+      action_date: act.action_date,
+      action_note: act.action_taken,
+      attachment_id: attachment_id,
+      image_bill_document: this.image_bill_document,
+      observation: act.observation,
+      pdf_bill_document: this.pdf_bill_document,
+      status: act.status?.toUpperCase()
+    };
 
-  this.servicecallService.saveaction(orgid, vid, id, payload).subscribe(
-    () => {
+    if (!vid) {
+      alert('No voucher ID');
       this.submitting = false;
-      this.updateNeeded.emit();
-    },
-    () => {
-      this.submitting = false;
-      alert('Error completing action');
+      return;
     }
-  );
-}
+    if (!id) {
+      alert('No service call ID');
+      this.submitting = false;
+      return;
+    }
+
+    this.servicecallService.saveaction(orgid, vid, id, payload).subscribe(
+      () => {
+        this.submitting = false;
+        this.updateNeeded.emit();
+      },
+      (err) => {
+        this.submitting = false;
+        this.err.showToast(err,'error');
+      }
+    );
+  }
 }

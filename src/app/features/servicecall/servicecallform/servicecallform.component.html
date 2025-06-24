@@ -3,7 +3,7 @@
     <!-- ACTION MODE UI -->
      <ng-container *ngIf="isaction; else normalForm">
       <div class="mb-4">
-        <label class="form-label fw-semibold text-primary">Action Date <span class="text-danger">*</span></label>
+        <label class="form-label fw-semibold ">Action Date <span class="text-danger">*</span></label>
         <input
           type="date"
           class="form-control"
@@ -78,6 +78,10 @@
             <span *ngIf="actionForm.attachmentName" class="ms-2">{{ actionForm.attachmentName }}</span>
             <img *ngIf="actionForm.attachmentPreview" [src]="actionForm.attachmentPreview" alt="Attachment Preview" style="max-width: 120px; margin-top: 10px; border-radius: 8px; display: block;" />
           </div>
+          <div *ngIf="fileError" class="error-message" style="color: red; font-size: 12px;">
+  {{ fileError }}
+</div>
+
         </div>
       </div>
       <!-- Webcam Modal -->

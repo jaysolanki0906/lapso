@@ -82,7 +82,6 @@ export class FormComponent implements OnInit, OnChanges {
     this.productService.fetchcategory().subscribe((data: any[]) => {
       this.products = data;
 
-      // Build parent-child structure for display: prodBrandMap
       this.prodBrandMap = data
         .filter(item => item.id)
         .map(item => ({
@@ -91,7 +90,6 @@ export class FormComponent implements OnInit, OnChanges {
           brands: item.brands || []
         }));
 
-      // Categories will be the products themselves (parent)
       this.categories = this.prodBrandMap.map(item => ({
         id: item.id,
         title: item.title
@@ -168,12 +166,10 @@ export class FormComponent implements OnInit, OnChanges {
       status: data.status ?? true
     };
 
-    // Set filtered brands based on selected product
     if (this.product.categoryId) {
       this.onCategorySelect(this.product.categoryId);
     }
 
-    // Set selectedBrandIds if editing/viewing
     if (Array.isArray(data.brand_ids)) {
       this.selectedBrandIds = data.brand_ids;
     } else if (data.brand_id) {
@@ -244,6 +240,7 @@ export class FormComponent implements OnInit, OnChanges {
 
   closeDialog(form:any) {
     form.resetForm();
+    console.log("this is close form");
     const offcanvas = (window as any).bootstrap?.Offcanvas.getInstance(
       document.getElementById('addProductOffcanvas')
     );
@@ -272,9 +269,9 @@ export class FormComponent implements OnInit, OnChanges {
           this.submitting = false;
           form.resetForm();
           this.closeDialog(form);
-          this.updateNeeded.emit(res);
+        this.updateNeeded.emit(res);
           this.err.showToast("Edit is done sucessfully",'success');
-          window.location.reload();
+          // window.location.reload();
 
         },
         error: () => {

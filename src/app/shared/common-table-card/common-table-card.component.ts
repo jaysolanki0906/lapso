@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -64,6 +65,7 @@ export interface TableTab {
     MatPaginatorModule, 
     FormsModule,
     CommonModule,
+    NgSelectModule,
     MatCardModule,
     MatTooltipModule,
     MatDatepickerModule,
@@ -92,11 +94,12 @@ export class CommonTableCardComponent implements OnInit {
   @Input() enableSorting: boolean = true;
   @Input() canEdit: boolean = false;
   @Input() canView: boolean = false;
+  @Input() canComplete: boolean=false;
   @Input() canDelete: boolean = false;
   @Input() addbtn:boolean=false;
   
   showAllSearchFields = false;
-
+  dropdownOpen: { [key: string]: boolean } = {};
   @Output() tabChange = new EventEmitter<string>();
   @Output() search = new EventEmitter<{ [key: string]: string }>();
   @Output() clear = new EventEmitter<void>();
@@ -192,6 +195,7 @@ export class CommonTableCardComponent implements OnInit {
     const comparison = valA < valB ? -1 : valA > valB ? 1 : 0;
     return direction === 'asc' ? comparison : -comparison;
   });
+  this.sort.emit({ column: col.key, direction });
 }
 onColumnHeaderClick(col: any): void {
   if (!col.sortable) return;
@@ -205,6 +209,14 @@ onColumnHeaderClick(col: any): void {
   
   this.onSort(col, this.currentSortDirection);
 }
+toggleDropdown(key: string) {
+  Object.keys(this.dropdownOpen).forEach(k => {
+    this.dropdownOpen[k] = false;
+  });
+  this.dropdownOpen[key] = !this.dropdownOpen[key];
+}
+
+
   onMaterialPage(event: PageEvent) {
     this.page = event.pageIndex + 1;
     this.pageSize = event.pageSize;

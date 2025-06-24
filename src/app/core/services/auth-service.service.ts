@@ -20,7 +20,7 @@ export class AuthServiceService {
   refreshToken(): Observable<any> {
     const refreshToken = this.tokenService.getRefreshToken();
     if (!refreshToken) {
-      return throwError(() => this.error.showError('No refresh token found','error'));
+      return throwError((err:any) => this.error.showError('No refresh token found',err));
     }
     return this.api.post<any>(this.REFRESH_URL, { refresh_token: refreshToken });
   }
